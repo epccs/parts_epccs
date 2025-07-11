@@ -14,7 +14,7 @@ I want to import JSON files from a git repo that holds parts data. I'd like to k
 > Recommended JSON Structure ... The JSON file should be an array of objects, where each object represents a part with fields corresponding to InvenTree’s Part model. Categories must exist before importing parts.
 > File Organization: Store JSON files in a clear structure within the Git repository, e.g., /parts/electronics/resistors.json, /parts/electronics/capacitors.json. Use descriptive filenames and maintain a README.md to document the structure and fields.
 
-''' JSON
+```JSON
 [
   {
     "id": "",
@@ -50,9 +50,9 @@ I want to import JSON files from a git repo that holds parts data. I'd like to k
     }
   }
 ]
-'''
+```
 
-''' JSON
+``` JSON
 [
   {
     "id": "",
@@ -89,16 +89,16 @@ I want to import JSON files from a git repo that holds parts data. I'd like to k
     }
   }
 ]
-'''
+```
 
 > Git Repository Workflow ... Store JSON files in a dedicated folder (e.g., /data/parts/).
 > Incremental Updates: For large datasets, import in smaller batches (e.g., 50-100 parts) to avoid server timeouts, as noted in discussions about large imports stalling.
 
-''' bash
+``` bash
 git pull origin main
 jq . data/parts/resistors.json  # Validate JSON
 inventree-part-import --configure data/parts/resistors.json
-'''
+```
 
 Can you tell me how the location (e.g., default_location)  is done? I want to set up some automation that lights up the shelf when I am trying to find a part.
 
@@ -115,7 +115,7 @@ Can you tell me how the location (e.g., default_location)  is done? I want to se
 > To import parts with default_location in your JSON files (stored in a Git repository), ensure the location references are valid and exist in InvenTree. 
 > Here’s how to structure the JSON and pre-create locations if needed.
 
-''' JSON
+``` JSON
 [
   {
     "id": "",
@@ -144,11 +144,11 @@ Can you tell me how the location (e.g., default_location)  is done? I want to se
     "purchaseable": true
   }
 ]
-'''
+```
 
 > ... pre-import StockLocation data ...
 
-''' JSON
+``` JSON
 [
   {
     "id": "",
@@ -181,7 +181,7 @@ Can you tell me how the location (e.g., default_location)  is done? I want to se
     "parent": "Warehouse1/ShelfB"
   }
 ]
-'''
+```
 
 > Import this file via the admin interface (/admin/stock/location/) or API (/api/stock/location/) before importing parts. ...or... Use a script to automate location creation
 > Setting Up Automation to Light Up Shelves
