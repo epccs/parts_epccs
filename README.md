@@ -184,10 +184,10 @@ Can you tell me how the location (e.g., default_location)  is done? I want to se
 ```
 
 > Import this file via the admin interface (/admin/stock/location/) or API (/api/stock/location/) before importing parts. ...or... Use a script to automate location creation
-> Setting Up Automation to Light Up Shelves
+>> Setting Up Automation to Light Up Shelves
 > To light up a shelf when searching for a part, you can integrate InvenTree’s API with an IoT system (e.g., Raspberry Pi, Arduino, or smart LEDs like Philips Hue or ESP32-based devices).
 > The automation will query the part’s default_location and trigger a signal to illuminate the corresponding shelf. Below is a step-by-step guide to achieve this.
-> ...
+>> ...
 
 ## Notes
 
