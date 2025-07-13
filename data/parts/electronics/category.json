@@ -1,0 +1,8 @@
+  [
+	{
+    "id": "",
+    "name": "SMD",
+    "parent": "Electronics/Resistors",
+    "description": "Surface-mount resistors"
+	}
+]
