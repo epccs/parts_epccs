@@ -1,8 +1,8 @@
   [
 	{
 	"id": "",
-	"name": "Resistors",
-	"parent": "Electronics/Resistors",
-	"description": "Resistors"
-	},
+	"name": "Electronics",
+	"parent": "",
+	"description": "Electronic Parts"
+	}
 ]
