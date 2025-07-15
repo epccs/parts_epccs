@@ -18,12 +18,6 @@ I want to import JSON files from a git repo that holds parts data. I'd like to k
 [
   {
     "id": "",
-    "name": "SMD",
-    "parent": "Electronics/Resistors",
-    "description": "Surface-mount resistors"
-  },
-  {
-    "id": "",
     "name": "Resistor 10k Ohm 1% 0603",
     "description": "SMD Resistor, 10k Ohm, 1% tolerance, 0603 package",
     "category": "Electronics/Resistors/SMD",
@@ -54,12 +48,6 @@ I want to import JSON files from a git repo that holds parts data. I'd like to k
 
 ``` JSON
 [
-  {
-    "id": "",
-    "name": "SMD",
-    "parent": "Electronics/Capacitors",
-    "description": "Surface-mount resistors"
-  },
   {
     "id": "",
     "name": "Capacitor 100nF 10V X7R 0603",

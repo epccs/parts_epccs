@@ -1,0 +1,44 @@
+[
+  {
+    "id": "",
+    "name": "Inverness1627",
+    "description": "location at Inverness 1627",
+    "parent": null
+  },
+  {
+    "id": "",
+    "name": "Inverness1627/Reciving",
+    "description": "location reciving all parts for storage, all goes here first, full or partial",
+    "parent": "Inverness1627"
+  },
+  {
+    "id": "",
+    "name": "Inverness1627/Discrepancy",
+    "description": "location addressing inconsistencies or errors in received shipments",
+    "parent": "Inverness1627"
+  },
+  {
+    "id": "",
+    "name": "Inverness1627/C1-1of22",
+    "description": "Shelf C1 bin 1 of 22",
+    "parent": "Inverness1627"
+  },
+  {
+    "id": "",
+    "name": "Inverness1627/C1-2of22",
+    "description": "Shelf C1 bin 2 of 22",
+    "parent": "Inverness1627"
+  },
+  {
+    "id": "",
+    "name": "Inverness1627/C1-3of22",
+    "description": "Shelf C1 bin 3 of 22",
+    "parent": "Inverness1627"
+  },
+  {
+    "id": "",
+    "name": "Inverness1627/C1-4of22",
+    "description": "Shelf C1 bin 4 of 22",
+    "parent": "Inverness1627"
+  }
+]
