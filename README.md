@@ -398,9 +398,11 @@ Map the JSON fields to the corresponding InvenTree Company model fields (e.g., n
 Submit the import to create the manufacturer records.
 Using the InvenTree API:
 You can use the InvenTree API to import manufacturers programmatically. The endpoint for creating companies is typically /api/company/.
-Example using curl to POST the JSON data:
+```
 
-```TEXT
+> Example using curl to POST the JSON data:
+
+```bash
 bash
 curl -X POST \
   -H "Authorization: Token YOUR_API_TOKEN" \
