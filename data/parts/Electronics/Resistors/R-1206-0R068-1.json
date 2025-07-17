@@ -4,7 +4,7 @@
     "name": "Resistor 0.068 Ohm 1% 1206",
     "description": "SMD Resistor, 0.068 Ohm, 1% tolerance, 1206 package",
     "category": "Electronics/Resistors",
-    "IPN": "RES-1206-0R068-1",
+    "IPN": "R-1206-0R068-1",
     "revision": "A",
     "keywords": "resistor, SMD, 0.068, 1206",
     "units": "pcs",

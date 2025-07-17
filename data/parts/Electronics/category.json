@@ -3,6 +3,12 @@
     "id": "",
     "name": "Resistors",
     "parent": "Electronics",
-    "description": "Surface-mount resistors"
+    "description": "Resistors"
+	},
+	{
+    "id": "",
+    "name": "Capacitors",
+    "parent": "Electronics",
+    "description": "Capacitors"
 	}
 ]

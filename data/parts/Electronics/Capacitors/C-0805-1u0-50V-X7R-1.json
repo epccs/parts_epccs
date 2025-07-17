@@ -1,0 +1,66 @@
+[
+  {
+    "id": "",
+    "name": "Capacitor 1uF 50V X7R 0805",
+    "description": "Ceramic Capacitor, 1uF, 50V, X7R, 0805 package",
+    "category": "Electronics/Capacitors",
+    "IPN": "C-0805-1u0-50V-X7R-1",
+    "revision": "A",
+    "keywords": "capacitor, ceramic, 1uF, 0805",
+    "units": "pcs",
+    "minimum_stock": 100,
+    "active": true,
+    "assembly": false,
+    "component": true,
+    "trackable": true,
+    "purchaseable": true,
+    "salable": false,
+    "virtual": false,
+    "notes": "focus is on core specs: capacitance (1uF), voltage (50 V), type (X7R), and tolerance (±20%)",
+    "default_location": "Inverness1627/Reciving",
+    "default_supplier": "Anyapproved",
+    "parameters": {
+      "Capacitance": "1uF",
+      "Voltage": "50V",
+      "Type": "X7R",
+      "Package": "0805"
+    },
+    "manufacturer_parts": [
+      {
+        "manufacturer": "Samsung",
+        "MPN": "CL21B105KBFNNNE",
+        "description": "see IPN description",
+        "link": "https://product.samsungsem.com/mlcc/CL21B105KBFNNN.do",
+        "note": "cost $0.01061 ea on a 2k reel from Digikey 7/16/25"
+      },
+      {
+        "manufacturer": "Taiyo",
+        "MPN": "UMK212B7105KG-T",
+        "description": "see IPN description",
+        "link": "https://ds.yuden.co.jp/TYCOMPAS/ut/detail?pn=MLASU21GSB7105KTNA01&u=M",
+        "note": "cost $0.02815 ea on a 3k reel from Digikey 7/16/25"
+      },
+      {
+        "manufacturer": "Yageo",
+        "MPN": "CC0805KKX7R9BB105",
+        "description": "see IPN description",
+        "link": "https://www.yageo.com/upload/media/product/productsearch/datasheet/mlcc/UPY-GPHC_X7R_6.3V-to-250V_24.pdf",
+        "note": "cost $0.03878 ea on a 3k reel from Digikey 7/16/25"
+      },
+      {
+        "manufacturer": "Murata",
+        "MPN": "GCM21BR71H105KA03L",
+        "description": "see IPN description",
+        "link": "https://search.murata.co.jp/Ceramy/image/img/A01X/G101/ENG/GCJ188R71H104KA12-02B.pdf",
+        "note": "cost $0.04725 ea on a 3k reel from Digikey 7/16/25"
+      },
+      {
+        "manufacturer": "KYOCERA AVX",
+        "MPN": "08055C105K4T2A",
+        "description": "see IPN description",
+        "link": "https://datasheets.kyocera-avx.com/AutoMLCC.pdf",
+        "note": "cost $0.05499 ea on a 2k reel from Digikey 7/16/25"
+      }
+    ]
+  }
+]

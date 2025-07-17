@@ -4,7 +4,7 @@
     "name": "Resistor 2.2k Ohm 1% 0603",
     "description": "SMD Resistor, 2.2k Ohm, 1% tolerance, 0603 package",
     "category": "Electronics/Resistors",
-    "IPN": "RES-0603-2K2-1",
+    "IPN": "R-0603-2K2-1",
     "revision": "A",
     "keywords": "resistor, SMD, 2.2k, 0603",
     "units": "pcs",

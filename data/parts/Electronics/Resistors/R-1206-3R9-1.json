@@ -1,12 +1,12 @@
 [
   {
     "id": "",
-    "name": "Resistor 200k Ohm 1% 0603",
-    "description": "SMD Resistor, 200k Ohm, 1% tolerance, 0603 package",
+    "name": "Resistor 3.9 Ohm 1% 1206",
+    "description": "SMD Resistor, 3.9 Ohm, 1% tolerance, 1206 package",
     "category": "Electronics/Resistors",
-    "IPN": "RES-0603-200K-1",
+    "IPN": "R-1206-3R9-1",
     "revision": "A",
-    "keywords": "resistor, SMD, 200k, 0603",
+    "keywords": "resistor, SMD, 3.9, 1206",
     "units": "pcs",
     "minimum_stock": 100,
     "active": true,
@@ -16,42 +16,42 @@
     "purchaseable": true,
     "salable": false,
     "virtual": false,
-    "notes": "package size disipates 100mW w/ 75V and 1A working voltage and current, as well as 5A peak pulse",
+    "notes": "package size disipates 250mW w/ 200V and 2A working voltage and current, as well as 10A peak pulse",
     "default_location": "Inverness1627/Reciving",
     "default_supplier": "Anyapproved",
     "parameters": {
-      "Resistance": "200k Ohm",
+      "Resistance": "3.9 Ohm",
       "Tolerance": "1%",
-      "Package": "0603"
+      "Package": "1206"
     },
     "manufacturer_parts": [
       {
         "manufacturer": "Yageo",
-        "MPN": "RC0603FR-10200KL",
+        "MPN": "RC1206FR-073R9L",
         "description": "see IPN description",
-        "link": "https://www.seielect.com/catalog/sei-rmcf_rmcp.pdf",
-        "note": "cost $0.00204 ea on 10k reel from Digikey 7/13/25"
+        "link": "https://www.yageo.com/upload/media/product/products/datasheet/rchip/PYu-RC_Group_51_RoHS_L_12.pdf",
+        "note": "cost $0.01326 ea on a 5k reel from Digikey 7/13/25"
       },
       {
         "manufacturer": "Stackpole",
-        "MPN": "RMCF0603FT200K",
+        "MPN": "RMCF1206FT3R90",
         "description": "see IPN description",
         "link": "https://www.seielect.com/catalog/sei-rmcf_rmcp.pdf",
-        "note": "cost $0.00233 ea on a 5k reel from Digikey 7/13/25"
+        "note": "cost $0.006 ea on a 5k reel from Mouser 7/13/25"
       },
       {
         "manufacturer": "Bourns",
-        "MPN": "CR0603-FX-2003ELF",
+        "MPN": "CR1206-F/-3R90ELF",
         "description": "see IPN description",
-        "link": "https://bourns.com/docs/product-datasheets/cr.pdf?sfvrsn=574d41f6_14",
-        "note": "cost $0.00333 ea on a 5k reel from Digikey 7/13/25"
+        "link": "https://www.seielect.com/catalog/sei-rmcf_rmcp.pdf",
+        "note": "cost $0.008 ea on a 5k reel from Mouser 7/13/25"
       },
       {
         "manufacturer": "Royalohm",
-        "MPN": "0603WAF2003T5E",
+        "MPN": "CQ06W4F390KT5E",
         "description": "see IPN description",
         "link": "https://www.mouser.com/datasheet/2/1365/10-3358738.pdf",
-        "note": "cost $0.001 ea on a 5k reel from Mouser 7/13/25"
+        "note": "cost $0.008 ea on a 5k reel from Mouser 7/13/25 w/ 4 wk lead"
       }
     ]
   }
