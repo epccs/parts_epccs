@@ -1,0 +1,45 @@
+[
+  {
+    "id": "",
+    "name": "Capacitor 10uF 100V X7S 1210",
+    "description": "Ceramic Capacitor, 10uF, 100V, X7S, 1210 package",
+    "category": "Electronics/Capacitors",
+    "IPN": "C-1210-10u0-100V-X7S-1",
+    "revision": "A",
+    "keywords": "capacitor, ceramic, 10uF, 1210",
+    "units": "pcs",
+    "minimum_stock": 100,
+    "active": true,
+    "assembly": false,
+    "component": true,
+    "trackable": true,
+    "purchaseable": true,
+    "salable": false,
+    "virtual": false,
+    "notes": "focus is on core specs: capacitance (10uF), voltage (100 V), type (X7S), and tolerance (±20%)",
+    "default_location": "Inverness1627/Reciving",
+    "default_supplier": "Anyapproved",
+    "parameters": {
+      "Capacitance": "10uF",
+      "Voltage": "100V",
+      "Type": "X7S",
+      "Package": "1210"
+    },
+    "manufacturer_parts": [
+      {
+        "manufacturer": "Samsung",
+        "MPN": "CL32Y106KCVZ4NE",
+        "description": "see IPN description",
+        "link": "https://product.samsungsem.com/mlcc/CL32Y106KCVZ4N.do",
+        "note": "cost $0.39022 ea on a 1k reel from Digikey 7/17/25"
+      },
+      {
+        "manufacturer": "Murata",
+        "MPN": "GRM32EC72A106ME05K",
+        "description": "see IPN description",
+        "link": "https://search.murata.co.jp/Ceramy/image/img/A01X/G101/ENG/GRM32EC72A106ME05-01A.pdf",
+        "note": "cost $0.3372 ea on a 4k reel from Digikey 7/17/25"
+      }
+    ]
+  }
+]

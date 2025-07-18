@@ -1,0 +1,52 @@
+[
+  {
+    "id": "",
+    "name": "Capacitor 4.7uF 100V X7R 1206",
+    "description": "Ceramic Capacitor, 4.7uF, 100V, X7R, 1206 package",
+    "category": "Electronics/Capacitors",
+    "IPN": "C-1206-4u7-100V-X7R-1",
+    "revision": "A",
+    "keywords": "capacitor, ceramic, 4.7uF, 1206",
+    "units": "pcs",
+    "minimum_stock": 100,
+    "active": true,
+    "assembly": false,
+    "component": true,
+    "trackable": true,
+    "purchaseable": true,
+    "salable": false,
+    "virtual": false,
+    "notes": "focus is on core specs: capacitance (4.7uF), voltage (100 V), type (X7R), and tolerance (±20%)",
+    "default_location": "Inverness1627/Reciving",
+    "default_supplier": "Anyapproved",
+    "parameters": {
+      "Capacitance": "4.7uF",
+      "Voltage": "100V",
+      "Type": "X7R",
+      "Package": "1206"
+    },
+    "manufacturer_parts": [
+      {
+        "manufacturer": "Samsung",
+        "MPN": "CL31Y475KCK6PNE",
+        "description": "see IPN description",
+        "link": "https://product.samsungsem.com/mlcc/CL31Y475KCK6PN.do",
+        "note": "cost $0.27694 ea on a 2k reel from Digikey 7/17/25"
+      },
+      {
+        "manufacturer": "Murata",
+        "MPN": "GRM31CC72A475KE11L",
+        "description": "see IPN description",
+        "link": "https://search.murata.co.jp/Ceramy/image/img/A01X/G101/ENG/GRM31CC72A475KE11-01A.pdf",
+        "note": "cost $0.20637 ea on a 2k reel from Digikey 7/17/25"
+      },
+      {
+        "manufacturer": "KYOCERA AVX",
+        "MPN": "KGM31HS72A475KU",
+        "description": "see IPN description",
+        "link": "https://datasheets.kyocera-avx.com/KGM_X7S.pdf",
+        "note": "cost $0.46250 ea on a 2k reel from Digikey 7/17/25"
+      }
+    ]
+  }
+]
