@@ -1,0 +1,38 @@
+[
+  {
+    "id": "",
+    "name": "Capacitor 10uF 50V X7R 1206",
+    "description": "Ceramic Capacitor, 10uF, 50V, X7R, 1206 package",
+    "category": "Electronics/Capacitors",
+    "IPN": "C-1206-10u-50V-X7R-1",
+    "revision": "A",
+    "keywords": "capacitor, ceramic, 10uF, 1206",
+    "units": "pcs",
+    "minimum_stock": 100,
+    "active": true,
+    "assembly": false,
+    "component": true,
+    "trackable": true,
+    "purchaseable": true,
+    "salable": false,
+    "virtual": false,
+    "notes": "focus is on core specs of standard-grade MLCC designed for general-purpose applications: capacitance (10 uF), voltage (50 V), type (X7R), and tolerance (±10%)",
+    "default_location": "Inverness1627/Reciving",
+    "default_supplier": "Anyapproved",
+    "parameters": {
+      "Capacitance": "10uF",
+      "Voltage": "50V",
+      "Type": "X7R",
+      "Package": "1206"
+    },
+    "manufacturer_parts": [
+      {
+        "manufacturer": "Samsung",
+        "MPN": "CL31B106KBHNNNE",
+        "description": "see IPN description",
+        "link": "https://product.samsungsem.com/mlcc/CL10B104KB8NNN.do",
+        "note": "cost $0.05573 ea a 2k reel from Digikey 7/16/25 out of scock atm"
+      }
+    ]
+  }
+]

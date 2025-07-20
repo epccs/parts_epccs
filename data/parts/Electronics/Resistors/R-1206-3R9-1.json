@@ -1,0 +1,58 @@
+[
+  {
+    "id": "",
+    "name": "Resistor 3.9 Ohm 1% 1206",
+    "description": "SMD Resistor, 3.9 Ohm, 1% tolerance, 1206 package",
+    "category": "Electronics/Resistors",
+    "IPN": "R-1206-3R9-1",
+    "revision": "A",
+    "keywords": "resistor, SMD, 3.9, 1206",
+    "units": "pcs",
+    "minimum_stock": 100,
+    "active": true,
+    "assembly": false,
+    "component": true,
+    "trackable": true,
+    "purchaseable": true,
+    "salable": false,
+    "virtual": false,
+    "notes": "package size disipates 250mW w/ 200V and 2A working voltage and current, as well as 10A peak pulse",
+    "default_location": "Inverness1627/Reciving",
+    "default_supplier": "Anyapproved",
+    "parameters": {
+      "Resistance": "3.9 Ohm",
+      "Tolerance": "1%",
+      "Package": "1206"
+    },
+    "manufacturer_parts": [
+      {
+        "manufacturer": "Yageo",
+        "MPN": "RC1206FR-073R9L",
+        "description": "see IPN description",
+        "link": "https://www.yageo.com/upload/media/product/products/datasheet/rchip/PYu-RC_Group_51_RoHS_L_12.pdf",
+        "note": "cost $0.01326 ea on a 5k reel from Digikey 7/13/25"
+      },
+      {
+        "manufacturer": "Stackpole",
+        "MPN": "RMCF1206FT3R90",
+        "description": "see IPN description",
+        "link": "https://www.seielect.com/catalog/sei-rmcf_rmcp.pdf",
+        "note": "cost $0.006 ea on a 5k reel from Mouser 7/13/25"
+      },
+      {
+        "manufacturer": "Bourns",
+        "MPN": "CR1206-F/-3R90ELF",
+        "description": "see IPN description",
+        "link": "https://www.seielect.com/catalog/sei-rmcf_rmcp.pdf",
+        "note": "cost $0.008 ea on a 5k reel from Mouser 7/13/25"
+      },
+      {
+        "manufacturer": "Royalohm",
+        "MPN": "CQ06W4F390KT5E",
+        "description": "see IPN description",
+        "link": "https://www.mouser.com/datasheet/2/1365/10-3358738.pdf",
+        "note": "cost $0.008 ea on a 5k reel from Mouser 7/13/25 w/ 4 wk lead"
+      }
+    ]
+  }
+]

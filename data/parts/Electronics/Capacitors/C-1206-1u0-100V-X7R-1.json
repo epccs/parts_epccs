@@ -1,0 +1,66 @@
+[
+  {
+    "id": "",
+    "name": "Capacitor 1uF 100V X7R 1206",
+    "description": "Ceramic Capacitor, 1uF, 100V, X7R, 1206 package",
+    "category": "Electronics/Capacitors",
+    "IPN": "C-1206-1u0-100V-X7R-1",
+    "revision": "A",
+    "keywords": "capacitor, ceramic, 1uF, 1206",
+    "units": "pcs",
+    "minimum_stock": 100,
+    "active": true,
+    "assembly": false,
+    "component": true,
+    "trackable": true,
+    "purchaseable": true,
+    "salable": false,
+    "virtual": false,
+    "notes": "focus is on core specs: capacitance (1uF), voltage (100 V), type (X7R), and tolerance (±20%)",
+    "default_location": "Inverness1627/Reciving",
+    "default_supplier": "Anyapproved",
+    "parameters": {
+      "Capacitance": "1uF",
+      "Voltage": "100V",
+      "Type": "X7R",
+      "Package": "1206"
+    },
+    "manufacturer_parts": [
+      {
+        "manufacturer": "Samsung",
+        "MPN": "CL31B105KCHNNNE",
+        "description": "see IPN description",
+        "link": "https://product.samsungsem.com/mlcc/CL31B105KCHNNN.do",
+        "note": "cost $0.02943 ea on a 2k reel from Digikey 7/17/25"
+      },
+      {
+        "manufacturer": "Taiyo",
+        "MPN": "HMK316B7105KL-T",
+        "description": "see IPN description",
+        "link": "https://ds.yuden.co.jp/TYCOMPAS/ut/detail?pn=MSASH31LSB7105KTNA01&u=M",
+        "note": "cost $0.06876 ea on a 2k reel from Digikey 7/17/25 new MPN is MSASH31LSB7105KTNA01"
+      },
+      {
+        "manufacturer": "Yageo",
+        "MPN": "CC1206KKX7R0BB105",
+        "description": "see IPN description",
+        "link": "https://www.yageo.com/upload/media/product/app/datasheet/mlcc/upy-np0x7r_mv_100-to-630v.pdf",
+        "note": "cost $0.09621 ea on a 2k reel from Digikey 7/17/25 no stock"
+      },
+      {
+        "manufacturer": "Murata",
+        "MPN": "GRJ31CR72A105KE11L",
+        "description": "see IPN description",
+        "link": "https://search.murata.co.jp/Ceramy/image/img/A01X/G101/ENG/GRJ31CR72A105KE11-01.pdf",
+        "note": "cost $0.11201 ea on a 2k reel from Digikey 7/17/25"
+      },
+      {
+        "manufacturer": "KYOCERA AVX",
+        "MPN": "12061C105KAT2A",
+        "description": "see IPN description",
+        "link": "https://datasheets.kyocera-avx.com/KGM_X7R.pdf",
+        "note": "cost $0.12042 ea on a 2k reel from Digikey 7/17/25"
+      }
+    ]
+  }
+]

@@ -1,0 +1,74 @@
+[
+  {
+    "name": "Bourns",
+    "description": "Bourns Inc.",
+    "website": "https://bourns.com/",
+    "is_manufacturer": true,
+    "is_supplier": false,
+    "is_customer": false
+  },
+    {
+    "name": "Murata",
+    "description": "Murata Electronics",
+    "website": "https://www.murata.com/en-us/",
+    "is_manufacturer": true,
+    "is_supplier": false,
+    "is_customer": false
+  },
+  {
+    "name": "Royalohm",
+    "description": "Royal Electronic Factory Co., Ltd.",
+    "website": "https://www.royalohm.com/",
+    "is_manufacturer": true,
+    "is_supplier": false,
+    "is_customer": false
+  },
+  {
+    "name": "Samsung",
+    "description": "Samsung Electro-Mechanics",
+    "website": "https://www.samsungsem.com/global/index.do",
+    "is_manufacturer": true,
+    "is_supplier": false,
+    "is_customer": false
+  },
+  {
+    "name": "Stackpole",
+    "description": "Stackpole Electronics, Inc.",
+    "website": "https://www.seielect.com/",
+    "is_manufacturer": true,
+    "is_supplier": false,
+    "is_customer": false
+  },
+  {
+    "name": "Taiyo",
+    "description": "Taiyo Yuden",
+    "website": "https://www.yuden.co.jp/en/",
+    "is_manufacturer": true,
+    "is_supplier": false,
+    "is_customer": false
+  },
+  {
+    "name": "TI",
+    "description": "Texas Instruments",
+    "website": "https://www.ti.com",
+    "is_manufacturer": true,
+    "is_supplier": false,
+    "is_customer": false
+  },
+  {
+    "name": "Vishay",
+    "description": "Manufacturer of discrete semiconductors and passive components",
+    "website": "https://www.vishay.com",
+    "is_manufacturer": true,
+    "is_supplier": false,
+    "is_customer": false
+  },
+  {
+    "name": "Yageo",
+    "description": "Global manufacturer of resistors and capacitors",
+    "website": "https://www.yageo.com",
+    "is_manufacturer": true,
+    "is_supplier": false,
+    "is_customer": false
+  }
+]

@@ -1,0 +1,14 @@
+  [
+	{
+    "id": "",
+    "name": "Resistors",
+    "parent": "Electronics",
+    "description": "Resistors"
+	},
+	{
+    "id": "",
+    "name": "Capacitors",
+    "parent": "Electronics",
+    "description": "Capacitors"
+	}
+]

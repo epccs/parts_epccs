@@ -1,0 +1,58 @@
+[
+  {
+    "id": "",
+    "name": "Resistor 4.99k Ohm 1% 0603",
+    "description": "SMD Resistor, 4.99k Ohm, 1% tolerance, 0603 package",
+    "category": "Electronics/Resistors",
+    "IPN": "R-0603-4K99-1",
+    "revision": "A",
+    "keywords": "resistor, SMD, 4.99k, 0603",
+    "units": "pcs",
+    "minimum_stock": 100,
+    "active": true,
+    "assembly": false,
+    "component": true,
+    "trackable": true,
+    "purchaseable": true,
+    "salable": false,
+    "virtual": false,
+    "notes": "package size disipates 100mW w/ 75V and 1A working voltage and current, as well as 5A peak pulse",
+    "default_location": "Inverness1627/Reciving",
+    "default_supplier": "Anyapproved",
+    "parameters": {
+      "Resistance": "4.99k Ohm",
+      "Tolerance": "1%",
+      "Package": "0603"
+    },
+    "manufacturer_parts": [
+       {
+        "manufacturer": "Yageo",
+        "MPN": "RC0603FR-074K99L",
+        "description": "see IPN description",
+        "link": "https://www.yageo.com/upload/media/product/products/datasheet/rchip/PYu-RC_Group_51_RoHS_L_12.pdf",
+        "note": "cost $0.00306 ea on a 5k reel from Digikey 7/13/25"
+      },
+      {
+        "manufacturer": "Stackpole",
+        "MPN": "RMCF0603FT4K99",
+        "description": "see IPN description",
+        "link": "https://www.seielect.com/catalog/sei-rmcf_rmcp.pdf",
+        "note": "cost $0.00233 ea on a 5k reel from Digikey 7/13/25"
+      },
+      {
+        "manufacturer": "Bourns",
+        "MPN": "CR0603-FX-4991ELF",
+        "description": "see IPN description",
+        "link": "https://bourns.com/docs/product-datasheets/cr.pdf?sfvrsn=574d41f6_14",
+        "note": "cost $0.00278 ea on a 5k reel from Digikey 7/13/25"
+      },
+      {
+        "manufacturer": "Royalohm",
+        "MPN": "0603WAF4991T5E",
+        "description": "see IPN description",
+        "link": "https://www.mouser.com/datasheet/2/1365/1-3571082.pdf",
+        "note": "cost $0.001 ea on a 5k reel from Mouser 7/13/25"
+      }
+    ]
+  }
+]
