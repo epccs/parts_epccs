@@ -58,3 +58,40 @@ sudo rm -rf /var/lib/containerd
 ```
 
 I think apt (Ubuntu) will automaticly update these packages but that will be a lessen for another day.
+
+## Install Inventree's Docker packages
+
+Inventree wants to use port 80 so I need to remove Apache which I was looking at for some reason.
+
+```bash
+sudo systemctl stop apache2
+sudo apt-get purge apache2 apache2-utils apache2-bin apache2-data
+sudo apt-get autoremove
+```
+
+These notes are for my setup, for your own it is better to use the ones Inventree provides.
+
+<https://docs.inventree.org/en/stable/start/docker/>
+
+remove previous setup then get the latest: "docker-compose.yml", ".env", and  "Caddyfile". My working folder is ~/InvenTree_prod.
+
+```bash
+cd ~/InvenTree_prod
+docker volume rm -f inventree-production_inventree_data
+curl -o ~/InvenTree_prod/docker-compose.yml https://raw.githubusercontent.com/inventree/inventree/bca375dae5ac1d49bb5388393360c461639dbbb8/contrib/container/docker-compose.yml
+curl -o ~/InvenTree_prod/.env https://raw.githubusercontent.com/inventree/inventree/bca375dae5ac1d49bb5388393360c461639dbbb8/contrib/container/.env
+curl -o ~/InvenTree_prod/Caddyfile https://raw.githubusercontent.com/inventree/inventree/bca375dae5ac1d49bb5388393360c461639dbbb8/contrib/container/Caddyfile
+```
+
+Change the .env file to match the setup. I need to name the host as inventree next time, but for now it will stay what it is. The host is setup with with an HD (/dev/sdaX) and an NVM (/dev/nvme0n1pX). I have maped 100Gb (/dev/sda1) to /home/inventree/database, but next time I will map it to /home/inventree/inventree-data.
+
+Now run "docker compose" which will take some time.
+
+```bash
+cd ~/InvenTree_prod
+docker compose run --rm inventree-server invoke update
+# bring up the containers
+docker compose up -d
+# and to stop it 
+docker compose down
+```
