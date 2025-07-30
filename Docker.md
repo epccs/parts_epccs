@@ -2,19 +2,19 @@
 
 Docker has been the recomended way to Install Inventree. These are some things that I needed to know to use Docker on Linux.
 
-## Create the inventree user and add them to the wheel and docker group (if it doesn't exist)
+## Add Docker group to admin account
+
+When using Docker, you typically don't create a dedicated system user for InvenTree itself. Instead, InvenTree runs inside its Docker containers, and the containers operate with their own internal user (often a non-root user for security).
 
 Running "docker container ls" without sudo results in a "permission denied" error.
 
 The Docker daemon runs as the root user and communicates through a Unix socket located at /var/run/docker.sock. By default, this socket is owned by the root user, limiting access to the root user or members of the docker group.
 
-Look for docker group, if missingd create the group:
-
 ```bash
-cat /etc/group | grep "docker" 
+# if the group exist it will be reported
 sudo groupadd docker
+sudo usermod -aG docker admin_account
 # log out for change to take effect next add the inventree user
-sudo useradd -m -G sudo,docker inventree
 ```
 
 For security you will not want to add the group, just keep using sudo.
