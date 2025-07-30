@@ -14,7 +14,7 @@ Look for docker group, if missingd create the group:
 cat /etc/group | grep "docker" 
 sudo groupadd docker
 # log out for change to take effect next add the inventree user
-sudo useradd -m -G wheel,docker inventree
+sudo useradd -m -G sudo,docker inventree
 ```
 
 For security you will not want to add the group, just keep using sudo.
