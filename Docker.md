@@ -14,7 +14,7 @@ The Docker daemon runs as the root user and communicates through a Unix socket l
 # if the group exist it will be reported
 sudo groupadd docker
 sudo usermod -aG docker admin_account
-# log out for change to take effect next add the inventree user
+# log out for change to take effect
 ```
 
 For security you will not want to add the group, just keep using sudo.
