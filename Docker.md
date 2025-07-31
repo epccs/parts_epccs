@@ -60,15 +60,19 @@ sudo rm -rf /var/lib/containerd
 
 I think apt (Ubuntu) will automaticly update these packages but that will be a lessen for another day.
 
-## Database Storage
+## Database Storage and Backup
 
-The host I have to run this on has an NVM which has two mounts one for the root and the other for Linux EFI images. It also has a slow HDD. I was thinking of puting the PostgreSQL storage on the HDD but that will make Inventree slow, it would probably be better to use the HDD for backups, and just operate out of the NVM. The best way to do this would be mirrord NVM that is seperate from the host system NVM, which means I need three NVM hardware locations on a motherboard (but monies need to flow first).
+The host I have to run this on has an NVM which has two mounts one for the root and the other for Linux EFI images. It also has a slow HDD. I was thinking of puting the PostgreSQL storage on the HDD but that will make Inventree slow, it would be better to use the HDD for backups, and just operate out of the NVM/SSD.
 
 ```bash
-sudo umount /home/inventree/somthing
-inventree@beryllium:~$ mkdir inventree-database-backup
-inventree@beryllium:~$ sudo nano /etc/fstab
-inventree@beryllium:~$ cat /etc/fstab
+# place working database on fast NVM/SSD e.g., in the .env file set INVENTREE_EXT_VOLUME=/homer/sutherland/inventree-data
+rsutherland@inventree2:~$ mkdir -p ~/inventree-data/{data,media,static,backup}
+# To do a backup run (schedule it with cron). Restore with "invoke restore". ### this is for later not now ###
+docker compose exec inventree-server invoke backup
+# use samba to make the backup visable, so make a mount ponit for the HDD (dev/sda on my setup).
+rsutherland@inventree2:~$ mkdir -p ~/samba
+# instructions for seting up the partition are not provided here
+rsutherland@beryllium:~$ cat /etc/fstab
 # /etc/fstab: static file system information.
 #
 # Use 'blkid' to print the universally unique identifier for a
@@ -76,18 +80,20 @@ inventree@beryllium:~$ cat /etc/fstab
 # that works even if disks are added and removed. See fstab(5).
 #
 # <file system> <mount point>   <type>  <options>       <dump>  <pass>
-# / was on /dev/nvme0n1p2 during curtin installation
-/dev/disk/by-uuid/8dd1f84c-7995-4f36-8b1b-350c47b7d244 / ext4 defaults 0 1
-# /boot/efi was on /dev/nvme0n1p1 during curtin installation
-/dev/disk/by-uuid/DEC0-88E3 /boot/efi vfat defaults 0 1
+# / was on /dev/sdb2 during curtin installation
+/dev/disk/by-uuid/abd83287-89b8-4edc-9baa-6a14f1f3d5cf / ext4 defaults 0 1
+# /boot/efi was on /dev/sdb1 during curtin installation
+/dev/disk/by-uuid/F9ED-2F9C /boot/efi vfat defaults 0 1
 /swap.img       none    swap    sw      0       0
-/dev/sda1 /home/inventree/inventree-database-backup ext4 defaults,auto_da_alloc 0 0
-#/dev/sda2 /home/rsutherland/samba auto defaults,auto_da_alloc 0 0
-# end of fstab ... next mount it
-inventree@beryllium:~$ sudo mount -a
-mount: (hint) your fstab has been modified, but systemd still uses
-       the old version; use 'systemctl daemon-reload' to reload.
-inventree@beryllium:~$ systemctl daemon-reload
+# end of fstab
+
+# use an editor to add the mount to to the end of fstab
+rsutherland@beryllium:~$ sudo nano /etc/fstab
+# e.g., 
+/dev/sda1 /home/rsutherland/samba auto defaults,auto_da_alloc 0 0
+# next mount it. Old comand was: sudo mount -a
+rsutherland@beryllium:~$ systemctl daemon-reload
+# rsync ~/inventree-data/backup to your Samba mount periodically (e.g., via a cron job). This avoids runtime issues.
 ```
 
 ## Install Inventree's Docker packages
