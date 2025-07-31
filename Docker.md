@@ -67,12 +67,14 @@ The host I have to run this on has an NVM which has two mounts one for the root 
 ```bash
 # place working database on fast NVM/SSD e.g., in the .env file set INVENTREE_EXT_VOLUME=/homer/sutherland/inventree-data
 rsutherland@inventree2:~$ mkdir -p ~/inventree-data/{data,media,static,backup}
+# set permissions for inventree docker container’s internal user (UID/GID 1000)
+rsutherland@inventree2:~$ sudo chown -R 1000:1000 ~/inventree_data
 # To do a backup run (schedule it with cron). Restore with "invoke restore". ### this is for later not now ###
-docker compose exec inventree-server invoke backup
+rsutherland@inventree2:~$ docker compose exec inventree-server invoke backup
 # use samba to make the backup visable, so make a mount ponit for the HDD (dev/sda on my setup).
 rsutherland@inventree2:~$ mkdir -p ~/samba
 # instructions for seting up the partition are not provided here
-rsutherland@beryllium:~$ cat /etc/fstab
+rsutherland@inventree2:~$ cat /etc/fstab
 # /etc/fstab: static file system information.
 #
 # Use 'blkid' to print the universally unique identifier for a
@@ -88,12 +90,39 @@ rsutherland@beryllium:~$ cat /etc/fstab
 # end of fstab
 
 # use an editor to add the mount to to the end of fstab
-rsutherland@beryllium:~$ sudo nano /etc/fstab
+rsutherland@inventree2:~$ sudo nano /etc/fstab
 # e.g., 
-/dev/sda1 /home/rsutherland/samba auto defaults,auto_da_alloc 0 0
-# next mount it. Old comand was: sudo mount -a
-rsutherland@beryllium:~$ systemctl daemon-reload
-# rsync ~/inventree-data/backup to your Samba mount periodically (e.g., via a cron job). This avoids runtime issues.
+/dev/sda1 /home/rsutherland/samba auto nosuid,nodev,nofail 0 0
+# next mount it and set premission. Old comand was: sudo mount -a
+rsutherland@inventree2:~$ systemctl daemon-reload
+sudo chown rsutherland:rsutherland /home/rsutherland/samba
+sudo chmod 755 /home/rsutherland/samba
+# with the HDD mounted create the backup volume
+rsutherland@inventree2:~$ mkdir -p ~/samba/inventree-backup
+# one option is to rsync ~/inventree-data/backup to ~/samba/inventree-backup periodically (e.g., via a cron job). 
+# But that will need two jobs, one to invoke backup, the other to rsync.
+# another option is to set the HDD locations permisions
+sudo chown -R 1000:1000 /home/rsutherland/samba/inventree-backup
+# the docker-compose.yml needs this volume added 
+```
+
+Add HDD location (mounted at ~/samba) to docker-compose.yml to be used for backup.
+
+```yaml
+volumes:
+  # ... other volumes ...
+  - /home/rsutherland/samba/inventree-backup:/var/lib/inventree/backup
+```
+
+Note that samba is serving the HDD mount, and it is not clear if that will be problems.
+
+```conf 
+    # add this to the very end of the /etc/samba/smb.conf file
+    [Samba]
+    path = /home/rsutherland/samba
+    valid users = rsutherland
+    read only = no
+
 ```
 
 ## Install Inventree's Docker packages
