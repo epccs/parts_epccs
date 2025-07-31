@@ -13,7 +13,7 @@ The Docker daemon runs as the root user and communicates through a Unix socket l
 ```bash
 # if the group exist it will be reported
 sudo groupadd docker
-sudo usermod -aG docker admin_account
+sudo usermod -aG docker $USER
 # log out for change to take effect
 ```
 
@@ -48,7 +48,7 @@ if somthing is wrong this is how to nuke docker
 ```bash
 apt list --installed docker-ce docker-ce-cli containerd.io
 docker version
-# the latest atm is 28.3.2
+# the latest atm is 28.3.3
 docker container ls
 # That should tell you what is going to stop, and this will stop the current Docker.
 service docker.socket stop
@@ -62,11 +62,7 @@ I think apt (Ubuntu) will automaticly update these packages but that will be a l
 
 ## Database Storage
 
-Lets ask an AI.
-
-[Budget-Friendly Storage for InvenTree](https://x.com/i/grok/share/qg3VEC01fZTSgROn6w8SIjZTa)
-
-The host I have to run this on has an NVM which has two mounts one for the root and the other for Linux EFI images. It also has a slow HDD. I was thinking of puting the PostgreSQL storage on the HDD but that will make slow, it would probably be better to use the HDD for backups, and just operate out of the NVM. The best way to do this woudl be mirrord NVM that is seperate from the host system NVM, which means I need three NVM hardware locations on a motherboard (but monies need to flow first).
+The host I have to run this on has an NVM which has two mounts one for the root and the other for Linux EFI images. It also has a slow HDD. I was thinking of puting the PostgreSQL storage on the HDD but that will make Inventree slow, it would probably be better to use the HDD for backups, and just operate out of the NVM. The best way to do this would be mirrord NVM that is seperate from the host system NVM, which means I need three NVM hardware locations on a motherboard (but monies need to flow first).
 
 ```bash
 sudo umount /home/inventree/somthing
@@ -86,7 +82,7 @@ inventree@beryllium:~$ cat /etc/fstab
 /dev/disk/by-uuid/DEC0-88E3 /boot/efi vfat defaults 0 1
 /swap.img       none    swap    sw      0       0
 /dev/sda1 /home/inventree/inventree-database-backup ext4 defaults,auto_da_alloc 0 0
-/dev/sda2 /home/rsutherland/samba auto defaults,auto_da_alloc 0 0
+#/dev/sda2 /home/rsutherland/samba auto defaults,auto_da_alloc 0 0
 # end of fstab ... next mount it
 inventree@beryllium:~$ sudo mount -a
 mount: (hint) your fstab has been modified, but systemd still uses
