@@ -122,32 +122,20 @@ Note that samba is serving the HDD mount, and it is not clear if that will be pr
     path = /home/rsutherland/samba
     valid users = rsutherland
     read only = no
-
 ```
 
 ## Install Inventree's Docker packages
-
-Inventree wants to use port 80 so I need to remove Apache which I was looking at for some reason.
-
-```bash
-sudo systemctl stop apache2
-sudo apt-get purge apache2 apache2-utils apache2-bin apache2-data
-sudo apt-get autoremove
-```
 
 These notes are for my setup, for your own it is better to use the ones Inventree provides.
 
 <https://docs.inventree.org/en/stable/start/docker/>
 
-remove previous setup then get the latest: "docker-compose.yml", ".env", and  "Caddyfile". My working folder is ~/InvenTree_prod.
-
 ```bash
 cd ~
-mkdir inventree-docker
-docker volume rm -f inventree-production_inventree_data
-curl -o ~/inventree-docker/docker-compose.yml https://raw.githubusercontent.com/inventree/inventree/stable/contrib/container/docker-compose.yml
-curl -o ~/inventree-docker/.env https://raw.githubusercontent.com/inventree/inventree/stable/contrib/container/.env
-curl -o ~/inventree-docker/Caddyfile https://raw.githubusercontent.com/inventree/inventree/stable/contrib/container/Caddyfile
+#  do I put the Inventree docker init files in ~/inventree-data
+curl -o ~/inventree-data/docker-compose.yml https://raw.githubusercontent.com/inventree/inventree/stable/contrib/container/docker-compose.yml
+curl -o ~/inventree-data/.env https://raw.githubusercontent.com/inventree/inventree/stable/contrib/container/.env
+curl -o ~/inventree-data/Caddyfile https://raw.githubusercontent.com/inventree/inventree/stable/contrib/container/Caddyfile
 ```
 
 Change the .env file to match the setup. I need to name the host as inventree next time, but for now it will stay what it is. I have maped 100Gb (/dev/sda1) to /home/inventree/inventree-database-backup. The live database will run on the NVM at /home/inventree/inventree-docker/inventree-data.
