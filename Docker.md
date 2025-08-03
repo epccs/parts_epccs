@@ -68,7 +68,7 @@ The host I have to run this on has an NVM which has two mounts one for the root 
 # place working database on fast NVM/SSD e.g., in the .env file set INVENTREE_EXT_VOLUME=/homer/sutherland/inventree-data
 rsutherland@inventree2:~$ mkdir -p ~/inventree-data/{data,media,static,backup}
 # set permissions for inventree docker container’s internal user (UID/GID 1000)
-rsutherland@inventree2:~$ sudo chown -R 1000:1000 ~/inventree_data
+rsutherland@inventree2:~$ sudo chown -R 1000:1000 ~/inventree-data
 # To do a backup run (schedule it with cron). Restore with "invoke restore". ### this is for later not now ###
 rsutherland@inventree2:~$ docker compose exec inventree-server invoke backup
 # make a mount ponit for the HDD (dev/sda on my setup)
@@ -106,11 +106,21 @@ rsutherland@inventree2:~$ sudo nano /etc/fstab
 ```bash
 # next mount it and set premission.
 rsutherland@inventree2:~$ systemctl daemon-reload
-# next use samba to make the backup visabl and mounted to this location
+rsutherland@inventree2:~$ sudo chown -R 1000:1000 /srv/samba-share
+# Create the backup subdirectory and set premissions (is sudo needed?)
+rsutherland@inventree2:~$ sudo mkdir -p /srv/samba-share/inventree_backup
+rsutherland@inventree2:~$ sudo chown -R 1000:1000 /srv/samba-share/inventree_backup
+# install samba if not done
+rsutherland@inventree2:~$ sudo apt-get install samba cifs-utils samba-common
+# Set passwd for your user in Samba:
+rsutherland@inventree2:~$ sudo smbpasswd -a rsutherland
+
+# [optional:] use samba to make the backup visabl and mounted to this location
 rsutherland@inventree2:~$ mkdir -p ~/samba
+rsutherland@inventree2:~$ sudo nano /etc/samba/smb.conf
 ```
 
-Note that samba is serving the HDD mount, and it is not clear if that will be problems.
+Note that samba is serving the HDD mount. This forces all files created via Samba (e.g., from Windows) to be owned by 1000:1000 on the server, matching the InvenTree container user. No client-side UID/GID config needed—Windows users just map the drive with credentials.
 
 ```conf
 # add this to the very end of the /etc/samba/smb.conf file
@@ -123,17 +133,27 @@ guest ok = no
 create mask = 0775
 directory mask = 0775
 valid users = rsutherland
+force user = rsutherland   # Forces ownership to UID 1000 (the first user made e.g., the admin user)
+force group = rsutherland  # Forces ownership to GID 1000 (I used rsutherland when installing Ubuntu)
 ```
 
-The Samba share at ~/samba needs to be setup with uid=1000,gid=1000,forceuid,forcegid to avoid permission issues with Inventree. Example /etc/fstab entry:
+```bash
+# restart samba
+rsutherland@inventree2:~$ sudo service smbd restart
+# Check for errors
+rsutherland@inventree2:~$ testparm
+# Windows can mount \\inventree2\Samba-Inventree with credentials (and so can Linux)
+```
+
+The Samba share can be mounted on the local system, and will work simular to how it does from Windows. To delay mounting the CIFS share, you can use the noauto and x-systemd.automount options in your /etc/fstab entry. This will prevent the system from mounting the share at boot and instead use systemd to automatically mount it when it is first accessed. Example /etc/fstab entry:
 
 ```bash
-# use an editor to add the mount to to the end of fstab
+# use an editor to mount the cifs device (note the direction of // used on Linux)
 rsutherland@inventree2:~$ sudo nano /etc/fstab
 ```
 
 ```conf
-//inventree2/Samba-Inventree /home/rsutherland/samba cifs credentials=/etc/samba/samba_credentials.conf,uid=1000,gid=1000,forceuid,forcegid 0 0
+//inventree2/Samba-Inventree /home/rsutherland/samba cifs credentials=/etc/samba/samba_credentials.conf,noauto,x-systemd.automount 0 0
 ```
 
 Create a file to store your credentials. A good location is in a secure system location. E.g., /etc/samba/samba_credentials.conf for a system-wide mount.
@@ -144,15 +164,20 @@ rsutherland@inventree2:~$ sudo nano /etc/samba/samba_credentials.conf
 ```
 
 ```conf
-username=your_samba_user
+username=rsutherland
 password=your_password
 ```
 
 ```bash
-# save and exit then secure so only the root user look at it
+# save and then secure so only the root user can look at it
 sudo chmod 600 /etc/samba/samba_credentials.conf
-sudo smbpasswd -a your_samba_user
+# next restart things (how many differet ways are available?)
 sudo systemctl restart smbd nmbd
+sudo systemctl daemon-reload
+# systemd automatically translates the mount point path (/home/rsutherland/samba) into the unit name (home-rsutherland-samba.mount). For the automount unit, it appends .automount to the name.
+sudo systemctl start home-rsutherland-samba.automount
+# check samba logs
+sudo journalctl -u smbd
 # with the HDD mounted create the backup volume
 rsutherland@inventree2:~$ mkdir -p ~/samba/inventree-backup
 # the samba mount will force the uid and gid to be what the container is happy with
@@ -176,17 +201,16 @@ Add samba provided HDD location (mounted at ~/samba) to docker-compose.yml to be
 ```yaml
 volumes:
   # ... other volumes ...
-  - /home/rsutherland/samba/inventree-backup:/var/lib/inventree/backup
+  - /srv/samba-share/inventree-backup:/var/lib/inventree/backup
 ```
 
-Change the .env file to match the setup. I need to name the host as inventree next time, but for now it will stay what it is. I have maped 100Gb (/dev/sda1) to /home/inventree/inventree-database-backup. The live database will run on the NVM at /home/inventree/inventree-docker/inventree-data.
+Change the .env file to match the setup. The source and docker configuration files are at ~/git/InvenTree. The Inventree containers will operate on data that is on a NVM (or SSD) at ~/inventree-data/{data,media,static,backup}.
 
 Now run "docker compose" which will take some time.
 
 ```bash
 cd ~
-mkdir inventree-docker
-cd ~/inventree-docker
+cd ~/InvenTree
 # 4. Pull Latest Docker Images
 docker compose pull
 # Start the InvenTree stack in detached mode:
@@ -206,7 +230,7 @@ docker compose down -v
 sudo rm -rf ~/inventree-docker/inventree-data
 ```
 
-This goes in stages, so when I need to fix some things.
+This has been progressing in stages, so when I need to step back.
 
 ```bash
 cd ~/InvenTree_prod
