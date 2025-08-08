@@ -205,6 +205,11 @@ chmod 600 .env
 
 ```conf
 # ...
+# InvenTree server URL - update this to match your server URL.
+#INVENTREE_SITE_URL="http://inventree2.local"
+INVENTREE_SITE_URL="http://192.168.4.39"  # You can specify a local IP address here
+#INVENTREE_SITE_URL="https://inventree.my-domain.com"  # Or a public domain name (which you control)
+
 # Specify the location of the external data volume
 # By default, placed in local directory 'inventree-data'
 # INVENTREE_EXT_VOLUME=./inventree-data
@@ -353,7 +358,9 @@ rsutherland@inventree2:~$ docker compose run --rm inventree-server invoke update
 # bring up the containers (-d is detached mode)
 rsutherland@inventree2:~$ docker compose up -d
 # test pgsql
-docker compose exec inventree-db psql -U inventree -d inventree -c "\l"
+rsutherland@inventree2:~$ docker compose exec inventree-db psql -U inventree -d inventree -c "\l"
+# Verify services are running
+docker compose ps
 # Look for database or permission errors
 rsutherland@inventree2:~$ docker compose logs inventree-server inventree-db
 # Test volume access
@@ -363,8 +370,10 @@ rsutherland@inventree2:~$ docker compose exec inventree-db psql -U $INVENTREE_DB
 # Test with a backup run (later schedule it with cron). Restore with "docker compose exec inventree-server invoke restore".
 rsutherland@inventree2:~$ docker compose exec inventree-server invoke backup
 # there is no backup log? e.g., docker compose logs inventree-server | grep backup
+# Since curl isn’t in caddy:alpine, use a temporary container:
+rsutherland@inventree2:~$ docker run --rm --network inventree_default curlimages/curl curl http://inventree-server:8000
 # Test e-mail
-rsutherland@inventree2:~$ docker compose exec inventree-server invoke test-email
+rsutherland@inventree2:~$ docker compose exec inventree-server invoke send-test-email
 rsutherland@inventree2:~$ docker compose logs inventree-server | grep email
 # To stop Inventree (this will presist until "docker compose up" is run again)
 rsutherland@inventree2:~$ docker compose down
