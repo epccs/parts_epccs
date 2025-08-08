@@ -66,15 +66,13 @@ The host I have to run this on has an NVM which has two mounts one for the root 
 
 ```bash
 # place working database on fast NVM/SSD e.g., in the .env file set INVENTREE_EXT_VOLUME=/homer/sutherland/inventree-data
-rsutherland@inventree2:~$ mkdir -p ~/inventree-data/{data,media,static,backup}
+rsutherland@inventree2:~$ mkdir -p ~/inventree-data/{pgdata,data,media,static}
 # set permissions for inventree docker container’s internal user (UID/GID 1000)
 rsutherland@inventree2:~$ sudo chown -R 1000:1000 ~/inventree-data
-# To do a backup run (schedule it with cron). Restore with "invoke restore". ### this is for later not now ###
-rsutherland@inventree2:~$ docker compose exec inventree-server invoke backup
-# make a mount ponit for the HDD (dev/sda on my setup)
+# make a mount ponit for the HDD (dev/sda on my setup), it needs chown -R 1000:1000 as well after HDD automount is setup.
 rsutherland@inventree2:~$ sudo mkdir /srv/samba-share
 
-# instructions for seting up the partition are not provided here
+# instructions for seting up the partition is not provided here (I used gparted.)
 rsutherland@inventree2:~$ cat /etc/fstab
 ```
 
@@ -93,7 +91,7 @@ rsutherland@inventree2:~$ cat /etc/fstab
 /swap.img       none    swap    sw      0       0
 ```
 
-Use an editor to add the mount to to the end of fstab
+Use an editor to add the HDD mount to to the end of fstab
 
 ```bash
 rsutherland@inventree2:~$ sudo nano /etc/fstab
@@ -107,7 +105,7 @@ rsutherland@inventree2:~$ sudo nano /etc/fstab
 # next mount it and set premission.
 rsutherland@inventree2:~$ systemctl daemon-reload
 rsutherland@inventree2:~$ sudo chown -R 1000:1000 /srv/samba-share
-# Create the backup subdirectory and set premissions (is sudo needed?)
+# Create the backup subdirectory and set premissions for containers to use
 rsutherland@inventree2:~$ sudo mkdir -p /srv/samba-share/inventree_backup
 rsutherland@inventree2:~$ sudo chown -R 1000:1000 /srv/samba-share/inventree_backup
 # install samba if not done
@@ -189,14 +187,14 @@ These notes are for my setup, for your own it is better to use the ones Inventre
 
 <https://docs.inventree.org/en/stable/start/docker/>
 
-Place the docker files in a dedicated directory like ~/InvenTree (i.e., mine is /home/rsutherland/git/InvenTree). This is where you’d typically clone the official InvenTree repository (git clone https://github.com/inventree/git/InvenTree.git ~/git/InvenTree) or create a working directory for your Docker setup. This keeps configuration files separate from data and aligns with standard InvenTree Docker practices.
+Place the docker files in a dedicated directory like ~/git/InvenTree. This keeps configuration files separate from data and aligns with standard InvenTree Docker practices.
 
 ```bash
 rsutherland@inventree2:~$ cd ~
 rsutherland@inventree2:~$ git clone --branch stable https://github.com/inventree/InvenTree.git ~/git/InvenTree
 ```
 
-Change the .env file (note that it is a hidden file by convinsion on Linux) to match the setup. 
+Change the .env file (note that it is a hidden file by convinsion on Linux) to match the setup. Ensure .env includes required database variables (INVENTREE_DB_USER, INVENTREE_DB_PASSWORD, INVENTREE_DB_NAME). 
 
 ```bash
 cd ~/git/InvenTree/contrib/container/
@@ -206,16 +204,49 @@ chmod 600 .env
 ```
 
 ```conf
-...
+# ...
 # Specify the location of the external data volume
 # By default, placed in local directory 'inventree-data'
 # INVENTREE_EXT_VOLUME=./inventree-data
 # the defult above might work if I had named the first user inventree... ¯\_(ツ)_/¯
 INVENTREE_HOST_DATA_DIR=/home/rsutherland/inventree-data
-...
+# ...
+# Database configuration options
+# DO NOT CHANGE THESE SETTINGS (unless you really know what you are doing)
+INVENTREE_DB_ENGINE=postgresql
+INVENTREE_DB_NAME=inventree
+INVENTREE_DB_HOST=inventree-db
+INVENTREE_DB_PORT=5432
+
+# Database credentials - These !!!SHOULD BE!!! changed from the default values!
+# Note: These are *NOT* the InvenTree server login credentials,
+#       they are the credentials for the PostgreSQL database
+INVENTREE_DB_USER=pguser_<<<change_me
+INVENTREE_DB_PASSWORD=your_secret
+# ...
 ```
 
-Edit docker-compose.yml. The :z in the InvenTree example (- ${INVENTREE_EXT_VOLUME}:/home/inventree/data:z) is a Docker volume mount option related to SELinux (Security-Enhanced Linux), which is common on Red Hat-based systems (e.g., CentOS, Fedora) but typically not enabled on Ubuntu 24.04 by default.
+InvenTree requires email settings for notifications (e.g., user invites, alerts). Configure these in the `.env` file. I am going to use a gmail account.
+
+```conf
+INVENTREE_EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+INVENTREE_EMAIL_HOST=smtp.gmail.com
+INVENTREE_EMAIL_PORT=587
+INVENTREE_EMAIL_HOST_USER=your_google_email@gmail.com
+INVENTREE_EMAIL_HOST_PASSWORD=your_app_password
+INVENTREE_EMAIL_USE_TLS=True
+INVENTREE_EMAIL_SENDER=your_google_email@gmail.com
+```
+
+Important:
+
+- INVENTREE_EMAIL_HOST_PASSWORD: You cannot use your regular Google account password here. You must generate an App Password for InvenTree. This is a security measure required by Google to use third-party applications with your account. You can generate an App Password in your Google Account settings under "Security" and then "2-Step Verification". If you have Google Workspace (<https://workspace.google.com/lp/business/>) the admin account can not be used to generate an App Password.
+
+- INVENTREE_EMAIL_HOST_USER and INVENTREE_EMAIL_SENDER: It's best practice to use the same email address for both of these variables.
+
+Next the docker-compose.yml needs setup for Ubuntu 24.04 (use an expert, I used Grok.) 
+
+Edit docker-compose.yml. The :z in the InvenTree example (- ${INVENTREE_EXT_VOLUME}:/home/inventree/data:z) is a Docker volume mount option related to SELinux (Security-Enhanced Linux), which is common on Red Hat-based systems (e.g., CentOS, Fedora) but typically not enabled on Ubuntu 24.04 by default. Service inventree-cache doesn’t need volumes unless persistent Redis data is desired.
 
 ```bash
 cd ~/git/InvenTree/contrib/container/
@@ -262,10 +293,10 @@ services:
         env_file:
             - .env
         volumes:
-            - ${INVENTREE_HOST_DATA_DIR}/data:/var/lib/inventree/data
-            - ${INVENTREE_HOST_DATA_DIR}/media:/var/lib/inventree/media
-            - ${INVENTREE_HOST_DATA_DIR}/static:/var/lib/inventree/static
-            - /srv/samba-share/inventree-backup:/var/lib/inventree/backup
+            - ${INVENTREE_HOST_DATA_DIR}/data:/home/inventree/data
+            - ${INVENTREE_HOST_DATA_DIR}/media:/home/inventree/data/media
+            - ${INVENTREE_HOST_DATA_DIR}/static:/home/inventree/data/static
+            - /srv/samba-share/inventree-backup:/home/inventree/data/backup
         restart: unless-stopped
 
     # Background worker process
@@ -278,9 +309,9 @@ services:
         env_file:
             - .env
         volumes:
-            - ${INVENTREE_HOST_DATA_DIR}/data:/var/lib/inventree/data
-            - ${INVENTREE_HOST_DATA_DIR}/media:/var/lib/inventree/media
-            - /srv/samba-share/inventree-backup:/var/lib/inventree/backup
+            - ${INVENTREE_HOST_DATA_DIR}/data:/home/inventree/data
+            - ${INVENTREE_HOST_DATA_DIR}/media:/home/inventree/data/media
+            - /srv/samba-share/inventree-backup:/home/inventree/data/backup
         restart: unless-stopped
 
     # Caddy reverse proxy
@@ -299,36 +330,18 @@ services:
             - ./Caddyfile:/etc/caddy/Caddyfile:ro
             - ${INVENTREE_HOST_DATA_DIR}/static:/var/www/static
             - ${INVENTREE_HOST_DATA_DIR}/media:/var/www/media
+
 ```
 
 Understanding inventree-server Service Volumes: The Inventree containers will operate on data that is on a NVM (or SSD) at ~/inventree-data/{data,media,static,backup}. Host Path: The left side (e.g., ${INVENTREE_HOST_DATA_DIR}/data) is the directory on your Ubuntu host (e.g., /home/rsutherland/inventree-data/data). Container Path: The right side (e.g., /var/lib/inventree/data) is where the container accesses the data inside its filesystem. Inside the Container: When InvenTree runs invoke backup, it writes backup files (e.g., DB dumps, media archives) to /var/lib/inventree/backup. Docker’s volume mapping ensures these files appear on the host at /srv/samba-share/inventree-backup, accessible via Samba (\\inventree2\Samba-Inventree\inventree-backup).
 
-The Inventree source and docker configuration files are at ~/git/InvenTree. 
-
-Setting up e-mail is tricky, I am going to use a gmail account, in my .env file.
-
-```conf
-INVENTREE_EMAIL_HOST=smtp.gmail.com
-INVENTREE_EMAIL_PORT=587
-INVENTREE_EMAIL_HOST_USER=your_google_email@gmail.com
-INVENTREE_EMAIL_HOST_PASSWORD=your_app_password
-INVENTREE_EMAIL_USE_TLS=True
-INVENTREE_EMAIL_SENDER=your_google_email@gmail.com
-```
-
-Important:
-
-- INVENTREE_EMAIL_HOST_PASSWORD: You cannot use your regular Google account password here. You must generate an App Password for InvenTree. This is a security measure required by Google to use third-party applications with your account. You can generate an App Password in your Google Account settings under "Security" and then "2-Step Verification". If you have Google Workspace (<https://workspace.google.com/lp/business/>) the admin account can not be used to generate an App Password.
-
-- INVENTREE_EMAIL_HOST_USER and INVENTREE_EMAIL_SENDER: It's best practice to use the same email address for both of these variables.
-
 Now run "docker compose" which will take some time.
 
 ```bash
-rsutherland@inventree2:~$ cd ~/git/InvenTree
+rsutherland@inventree2:~$ cd ~/git/InvenTree/contrib/container/
 # validate the config
 rsutherland@inventree2:~$ docker compose config
-# 4. Pull Latest Docker Images
+# Pull Latest Docker Images
 rsutherland@inventree2:~$ docker compose pull
 # Start the InvenTree stack in detached mode:
 rsutherland@inventree2:~$ docker compose up -d
@@ -337,30 +350,43 @@ rsutherland@inventree2:~$ docker compose up -d
 # Perform necessary schema updates to create database tables.
 # Update translation and static files.
 rsutherland@inventree2:~$ docker compose run --rm inventree-server invoke update
-# If superuser (admin) account is not set up in .env
-rsutherland@inventree2:~$ docker compose run inventree-server invoke superuser
 # bring up the containers (-d is detached mode)
 rsutherland@inventree2:~$ docker compose up -d
-# and to stop it. The -v flag removes associated volumes, including PostgreSQL data, to ensure clean start
-rsutherland@inventree2:~$ docker compose down -v
-# Clear the persistent database data to avoid conflicts:
-rsutherland@inventree2:~$ sudo rm -rf ~/inventree-docker/inventree-data
+# test pgsql
+docker compose exec inventree-db psql -U inventree -d inventree -c "\l"
+# Look for database or permission errors
+rsutherland@inventree2:~$ docker compose logs inventree-server inventree-db
+# Test volume access
+rsutherland@inventree2:~$ docker compose exec inventree-server ls -l /var/lib/inventree/{data,media,static,backup}
+rsutherland@inventree2:~$ docker compose exec inventree-worker ls -l /var/lib/inventree/backup
+rsutherland@inventree2:~$ docker compose exec inventree-db psql -U $INVENTREE_DB_USER -d $INVENTREE_DB_NAME -c "\l"
+# Test with a backup run (later schedule it with cron). Restore with "docker compose exec inventree-server invoke restore".
+rsutherland@inventree2:~$ docker compose exec inventree-server invoke backup
+# there is no backup log? e.g., docker compose logs inventree-server | grep backup
+# Test e-mail
+rsutherland@inventree2:~$ docker compose exec inventree-server invoke test-email
+rsutherland@inventree2:~$ docker compose logs inventree-server | grep email
+# To stop Inventree (this will presist until "docker compose up" is run again)
+rsutherland@inventree2:~$ docker compose down
 ```
 
 This has been progressing in stages, so when I need to step back.
 
 ```bash
 rsutherland@inventree2:~$ cd ~/InvenTree_prod
+# Removes associated volumes, including PostgreSQL data, to ensure a clean start
 rsutherland@inventree2:~$ docker compose down --volumes --rmi all --remove-orphans
 rsutherland@inventree2:~$ docker system prune
+# Clear the persistent database data to avoid conflicts:
+rsutherland@inventree2:~$ sudo rm -rf ~/inventree-docker/inventree-data
 ```
 
 ## To Do List
 
 Notes to remind me what I am working on
 
-- Redo storage to mount the HDD on /srv/samba-share and serve it with Samba. Ensure it’s owned by UID/GID 1000:1000 (e.g., the first user created at system install). Samba can Force ownership to the UID and GID for any Windows computer that uses the share.
+- (done) Redo storage to mount the HDD on /srv/samba-share and serve it with Samba. Ensure it’s owned by UID/GID 1000:1000 (e.g., the first user created at system install). Samba can Force ownership to the UID and GID for any Windows computer that uses the share.
 
-- The host name, "inventree.local," has an issue of locking up at somewhat random times. It seems to be temperature dependent. It is currently running Windows with some stress tests to see if the problem duplicates. The machine is an HP Pavilion from 2017 or 2018 with an 8-core AMD (1700, Zen 1) processor. I could not figure out how to update the BIOS with Linux, so I put Windows 10 back on it to do that. It has a TPM chip, but Windows 11 does not support the AMD 1700 processor, which seems odd. It's a second-hand computer, so there are no worries about it. Looking at the HP forums, it seems they got themselves into trouble with this product line. They appear to have pushed an AMI F.57 update that caused all sorts of issues. The version I installed, AMI F.60, was released years later. The lesson seems to be that if you are going to do automated installs, this stuff needs to be well-tested. It might be better to let customers do manual BIOS updates; we just need a way to do that in Linux. Anyway, the BIOS is updated, but now I am running some stress tests in Windows 10 to see if it locks up before putting Linux back on it.
+- (wip) The host name, "inventree.local," has an issue of locking up at somewhat random times. It seems to be temperature dependent. It is currently running Windows with some stress tests to see if the problem duplicates. The machine is an HP Pavilion from 2017 or 2018 with an 8-core AMD (1700, Zen 1) processor. I could not figure out how to update the BIOS with Linux, so I put Windows 10 back on it to do that. It has a TPM chip, but Windows 11 does not support the AMD 1700 processor, which seems odd. It's a second-hand computer, so there are no worries about it. Looking at the HP forums, it seems they got themselves into trouble with this product line. They appear to have pushed an AMI F.57 update that caused all sorts of issues. The version I installed, AMI F.60, was released years later. The lesson seems to be that if you are going to do automated installs, this stuff needs to be well-tested. It might be better to let customers do manual BIOS updates; we just need a way to do that in Linux. Anyway, the BIOS is updated, I run some stress tests in Windows 10 and did not see a lock up. Now I am runing some test with Ubuntu 24.04 to see if it will lock up.
 
 - The host name, "inventree2.local," is an older machine but should allow progress until the issue with the other is sorted. 
