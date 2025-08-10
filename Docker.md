@@ -259,86 +259,107 @@ nano docker-compose.yml
 ```
 
 ```yaml
-# Docker compose recipe for a production-ready InvenTree setup
 services:
-    # Database service (PostgreSQL)
-    inventree-db:
-        image: postgres:13
-        container_name: inventree-db
-        expose:
-            - ${INVENTREE_DB_PORT:-5432}/tcp
-        environment:
-            - PGDATA=/var/lib/postgresql/data/pgdb
-            - POSTGRES_USER=${INVENTREE_DB_USER:?You must provide the 'INVENTREE_DB_USER' variable in the .env file}
-            - POSTGRES_PASSWORD=${INVENTREE_DB_PASSWORD:?You must provide the 'INVENTREE_DB_PASSWORD' variable in the .env file}
-            - POSTGRES_DB=${INVENTREE_DB_NAME:?You must provide the 'INVENTREE_DB_NAME' variable in the .env file}
-        volumes:
-            - ${INVENTREE_HOST_DATA_DIR}/pgdata:/var/lib/postgresql/data
-        restart: unless-stopped
+  inventree-db:
+    image: postgres:13
+    container_name: inventree-db
+    expose:
+      - ${INVENTREE_DB_PORT:-5432}/tcp
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdb
+      - POSTGRES_USER=${INVENTREE_DB_USER}
+      - POSTGRES_PASSWORD=${INVENTREE_DB_PASSWORD}
+      - POSTGRES_DB=${INVENTREE_DB_NAME}
+    volumes:
+      - ${INVENTREE_HOST_DATA_DIR}/pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
 
-    # Redis cache manager
-    inventree-cache:
-        image: redis:7.0
-        container_name: inventree-cache
-        env_file:
-            - .env
-        expose:
-            - ${INVENTREE_CACHE_PORT:-6379}
-        restart: always
+  inventree-cache:
+    image: redis:7.0
+    container_name: inventree-cache
+    env_file:
+      - .env
+    expose:
+      - ${INVENTREE_CACHE_PORT:-6379}
+    restart: always
 
-    # InvenTree web server service
-    inventree-server:
-        image: inventree/inventree:${INVENTREE_TAG:-stable}
-        container_name: inventree-server
-        expose:
-            - 8000
-        depends_on:
-            - inventree-db
-            - inventree-cache
-        env_file:
-            - .env
-        volumes:
-            - ${INVENTREE_HOST_DATA_DIR}/data:/home/inventree/data
-            - ${INVENTREE_HOST_DATA_DIR}/media:/home/inventree/data/media
-            - ${INVENTREE_HOST_DATA_DIR}/static:/home/inventree/data/static
-            - /srv/samba-share/inventree-backup:/home/inventree/data/backup
-        restart: unless-stopped
+  inventree-server:
+    image: inventree/inventree:${INVENTREE_TAG:-stable}
+    container_name: inventree-server
+    expose:
+      - 8000
+    depends_on:
+      - inventree-db
+      - inventree-cache
+    env_file:
+      - .env
+    volumes:
+      - ${INVENTREE_HOST_DATA_DIR}/data:/home/inventree/data
+      - ${INVENTREE_HOST_DATA_DIR}/media:/home/inventree/data/media
+      - ${INVENTREE_HOST_DATA_DIR}/static:/home/inventree/data/static
+      - /srv/samba-share/inventree-backup:/home/inventree/data/backup
+    restart: unless-stopped
 
-    # Background worker process
-    inventree-worker:
-        image: inventree/inventree:${INVENTREE_TAG:-stable}
-        container_name: inventree-worker
-        command: invoke worker
-        depends_on:
-            - inventree-server
-        env_file:
-            - .env
-        volumes:
-            - ${INVENTREE_HOST_DATA_DIR}/data:/home/inventree/data
-            - ${INVENTREE_HOST_DATA_DIR}/media:/home/inventree/data/media
-            - /srv/samba-share/inventree-backup:/home/inventree/data/backup
-        restart: unless-stopped
+  inventree-worker:
+    image: inventree/inventree:${INVENTREE_TAG:-stable}
+    container_name: inventree-worker
+    command: invoke worker
+    depends_on:
+      - inventree-server
+    env_file:
+      - .env
+    volumes:
+      - ${INVENTREE_HOST_DATA_DIR}/data:/home/inventree/data
+      - ${INVENTREE_HOST_DATA_DIR}/media:/home/inventree/data/media
+      - /srv/samba-share/inventree-backup:/home/inventree/data/backup
+    restart: unless-stopped
 
-    # Caddy reverse proxy
-    inventree-proxy:
-        container_name: inventree-proxy
-        image: caddy:alpine
-        restart: always
-        depends_on:
-            - inventree-server
-        ports:
-            - ${INVENTREE_WEB_PORT:-80}:80
-            - 443:443
-        env_file:
-            - .env
-        volumes:
-            - ./Caddyfile:/etc/caddy/Caddyfile:ro
-            - ${INVENTREE_HOST_DATA_DIR}/static:/var/www/static
-            - ${INVENTREE_HOST_DATA_DIR}/media:/var/www/media
-
+  inventree-proxy:
+    container_name: inventree-proxy
+    image: caddy:alpine
+    restart: always
+    depends_on:
+      - inventree-server
+    ports:
+      - ${INVENTREE_WEB_PORT:-80}:80
+      - 443:443
+    env_file:
+      - .env
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ${INVENTREE_HOST_DATA_DIR}/static:/var/www/static
+      - ${INVENTREE_HOST_DATA_DIR}/media:/var/www/media
 ```
 
 Understanding inventree-server Service Volumes: The Inventree containers will operate on data that is on a NVM (or SSD) at ~/inventree-data/{data,media,static,backup}. Host Path: The left side (e.g., ${INVENTREE_HOST_DATA_DIR}/data) is the directory on your Ubuntu host (e.g., /home/rsutherland/inventree-data/data). Container Path: The right side (e.g., /var/lib/inventree/data) is where the container accesses the data inside its filesystem. Inside the Container: When InvenTree runs invoke backup, it writes backup files (e.g., DB dumps, media archives) to /var/lib/inventree/backup. Docker’s volume mapping ensures these files appear on the host at /srv/samba-share/inventree-backup, accessible via Samba (\\inventree2\Samba-Inventree\inventree-backup).
+
+mDNS Setup
+
+```bash
+sudo apt update
+sudo apt install avahi-daemon
+sudo systemctl enable avahi-daemon
+sudo systemctl start avahi-daemon
+sudo nano /etc/avahi/services/inventree.service
+```
+
+```xml
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+    <name>InvenTree</name>
+    <service>
+        <type>_http._tcp</type>
+        <port>80</port>
+        <host-name>inventree2.local</host-name>
+    </service>
+</service-group>
+```
+
+```bash
+sudo systemctl restart avahi-daemon
+curl http://inventree2.local:80
+```
 
 Now run "docker compose" which will take some time.
 
@@ -394,8 +415,17 @@ rsutherland@inventree2:~$ sudo rm -rf ~/inventree-docker/inventree-data
 
 Notes to remind me what I am working on
 
+- In a standard InvenTree Docker installation, a separate container (often called inventree-proxy) runs a web server like Caddy. This proxy container is responsible for: Serving the static files directly from a mounted volume, and Reverse-proxying other requests to the InvenTree Django server. The inventree-proxy container needs to be able to access the static files. If static_root is commented out, Django doesn't know where to put the files, and the inventree-proxy can't find them, leading to the broken web interface. I seem to have caused this with a missing line in the .env file for setting up the docker containers... now I need to fix it. Uncomment the "static_root" line in ~/inventree-data/data/config.yaml then run collectstatic. Question is do I comment out static_root after doing this, probably so.
+
+```bash
+cd ~/git/InvenTree/contrib/container
+docker compose run --rm inventree-server invoke collectstatic
+docker compose down
+docker compose up -d
+```
+
 - (done) Redo storage to mount the HDD on /srv/samba-share and serve it with Samba. Ensure it’s owned by UID/GID 1000:1000 (e.g., the first user created at system install). Samba can Force ownership to the UID and GID for any Windows computer that uses the share.
 
-- (wip) The host name, "inventree.local," has an issue of locking up at somewhat random times. It seems to be temperature dependent. It is currently running Windows with some stress tests to see if the problem duplicates. The machine is an HP Pavilion from 2017 or 2018 with an 8-core AMD (1700, Zen 1) processor. I could not figure out how to update the BIOS with Linux, so I put Windows 10 back on it to do that. It has a TPM chip, but Windows 11 does not support the AMD 1700 processor, which seems odd. It's a second-hand computer, so there are no worries about it. Looking at the HP forums, it seems they got themselves into trouble with this product line. They appear to have pushed an AMI F.57 update that caused all sorts of issues. The version I installed, AMI F.60, was released years later. The lesson seems to be that if you are going to do automated installs, this stuff needs to be well-tested. It might be better to let customers do manual BIOS updates; we just need a way to do that in Linux. Anyway, the BIOS is updated, I run some stress tests in Windows 10 and did not see a lock up. Now I am runing some test with Ubuntu 24.04 to see if it will lock up.
+- (wip) The host name, "inventree.local," has an issue of locking up at somewhat random times. It seems to be temperature dependent. It is currently running Windows with some stress tests to see if the problem duplicates. The machine is an HP Pavilion from 2017 or 2018 with an 8-core AMD (1700, Zen 1) processor. I could not figure out how to update the BIOS with Linux, so I put Windows 10 back on it to do that. It has a TPM chip, but Windows 11 does not support the AMD 1700 processor, which seems odd. It's a second-hand computer, so there are no worries about it. Looking at the HP forums, it seems they got themselves into trouble with this product line. They appear to have pushed an AMI F.57 update that caused all sorts of issues. The version I installed, AMI F.60, was released years later. The lesson seems to be that if you are going to do automated installs, this stuff needs to be well-tested. It might be better to let customers do manual BIOS updates; we just need a way to do that in Linux. Anyway, the BIOS is updated, I run some stress tests in Windows 10 and did not see a lock up. Now I am runing some test with Ubuntu 24.04 to see if it will lock up and it did around 24 hours. So now I have put Ubuntu 20.04 on it and will let it run while keeping an eye out for a lock up. The dmesg command shows a lot of issues with this version (mostly ACPI). I wonder if the newer version is twidling somthing that it should not, efectivly a Time To Live (TTL) timer. 
 
-- The host name, "inventree2.local," is an older machine but should allow progress until the issue with the other is sorted. 
+- The host name, "inventree2.local," is an older machine but should allow progress until the issue with the other is sorted. This Acer machine has no errors reported with dmesg running Ubuntu 24.04.
