@@ -415,11 +415,213 @@ rsutherland@inventree2:~$ sudo rm -rf ~/inventree-docker/inventree-data
 
 Notes to remind me what I am working on
 
-- In a standard InvenTree Docker installation, a separate container (often called inventree-proxy) runs a web server like Caddy. This proxy container is responsible for: Serving the static files directly from a mounted volume, and Reverse-proxying other requests to the InvenTree Django server. The inventree-proxy container needs to be able to access the static files. If static_root is commented out, Django doesn't know where to put the files, and the inventree-proxy can't find them, leading to the broken web interface. I seem to have caused this with a missing line in the .env file for setting up the docker containers... now I need to fix it. Uncomment the "static_root" line in ~/inventree-data/data/config.yaml then run collectstatic. Question is do I comment out static_root after doing this, probably so.
+- ALLOWED_HOSTS and CSRF_TRUSTED_ORIGINS setup for Ubuntu 24.04
+
+Browsers show ERR_CONNECTION_REFUSED. Try to Run Django Dev Server on port 8000 to see error mesages. Problem is the Gunicorn processes keeps restarting, so this overrides the default entrypoint (/bin/ash ./init.sh) to run a shell and sleep forever, preventing Gunicorn from starting automatically. Update the inventree-server section as follows in this debug session. Two terminals are used and comments are added so you can tell when they are switched.
+
+```bash
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ nano ~/git/InvenTree/contrib/container/docker-compose.yml
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ cat ~/git/InvenTree/contrib/container/docker-compose.yml
+services:
+  inventree-db:
+    image: postgres:13
+    container_name: inventree-db
+    expose:
+      - ${INVENTREE_DB_PORT:-5432}/tcp
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdb
+      - POSTGRES_USER=${INVENTREE_DB_USER}
+      - POSTGRES_PASSWORD=${INVENTREE_DB_PASSWORD}
+      - POSTGRES_DB=${INVENTREE_DB_NAME}
+    volumes:
+      - ${INVENTREE_HOST_DATA_DIR}/pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+  inventree-cache:
+    image: redis:7.0
+    container_name: inventree-cache
+    env_file:
+      - .env
+    expose:
+      - ${INVENTREE_CACHE_PORT:-6379}
+    restart: always
+  inventree-server:
+    image: inventree/inventree:${INVENTREE_TAG:-stable}
+    container_name: inventree-server
+    entrypoint: /bin/ash
+    command: -c "sleep infinity" # Keeps the container running without starting Gunicorn
+    expose:
+      - 8000
+    depends_on:
+      - inventree-db
+      - inventree-cache
+    env_file:
+      - .env
+    volumes:
+      - ${INVENTREE_HOST_DATA_DIR}/data:/home/inventree/data
+      - ${INVENTREE_HOST_DATA_DIR}/media:/home/inventree/data/media
+      - ${INVENTREE_HOST_DATA_DIR}/static:/home/inventree/data/static
+      - /srv/samba-share/inventree-backup:/home/inventree/data/backup
+# restart: unless-stopped # Temporarily disabled
+  inventree-worker:
+    image: inventree/inventree:${INVENTREE_TAG:-stable}
+    container_name: inventree-worker
+    command: invoke worker
+    depends_on:
+      - inventree-server
+    env_file:
+      - .env
+    volumes:
+      - ${INVENTREE_HOST_DATA_DIR}/data:/home/inventree/data
+      - ${INVENTREE_HOST_DATA_DIR}/media:/home/inventree/data/media
+      - /srv/samba-share/inventree-backup:/home/inventree/data/backup
+    restart: unless-stopped
+  inventree-proxy:
+    container_name: inventree-proxy
+    image: caddy:alpine
+    restart: always
+    depends_on:
+      - inventree-server
+    ports:
+      - ${INVENTREE_WEB_PORT:-80}:80
+      - 443:443
+    env_file:
+      - .env
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ${INVENTREE_HOST_DATA_DIR}/static:/var/www/static
+      - ${INVENTREE_HOST_DATA_DIR}/media:/var/www/media
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose down
+[+] Running 6/6
+ ? Container inventree-proxy Removed 0.2s
+ ? Container inventree-worker Removed 10.2s
+ ? Container inventree-server Removed 2.4s
+ ? Container inventree-cache Removed 0.2s
+ ? Container inventree-db Removed 0.1s
+ ? Network inventree_default Removed 0.2s
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose up -d inventree-server
+[+] Running 4/4
+ ? Network inventree_default Created 0.0s
+ ? Container inventree-db Started 0.3s
+ ? Container inventree-cache Started 0.3s
+ ? Container inventree-server Started 0.4s
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose exec inventree-server ps aux | grep gunicorn
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose exec inventree-server netstat -tuln | grep 8000
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose exec -w /home/inventree/src/backend/InvenTree inventree-server gunicorn --bind 0.0.0.0:8000 InvenTree.wsgi:application
+Python version 3.11.9 - /usr/local/bin/python
+/root/.local/lib/python3.11/site-packages/allauth/exceptions.py:9: UserWarning: allauth.exceptions is deprecated, use allauth.core.exceptions
+  warnings.warn("allauth.exceptions is deprecated, use allauth.core.exceptions")
+[2025-08-12 00:41:11 +0000] [19] [INFO] Starting gunicorn 23.0.0
+[2025-08-12 00:41:11 +0000] [19] [INFO] Listening at: http://0.0.0.0:8000 (19)
+[2025-08-12 00:41:11 +0000] [19] [INFO] Using worker: sync
+[2025-08-12 00:41:11 +0000] [61] [INFO] Booting worker with pid: 61
+[2025-08-12 00:41:11 +0000] [62] [INFO] Booting worker with pid: 62
+[2025-08-12 00:41:11 +0000] [63] [INFO] Booting worker with pid: 63
+[2025-08-12 00:41:11 +0000] [64] [INFO] Booting worker with pid: 64
+[2025-08-12 00:41:11 +0000] [65] [INFO] Booting worker with pid: 65
+[2025-08-12 00:41:11 +0000] [66] [INFO] Booting worker with pid: 66
+[2025-08-12 00:41:11 +0000] [67] [INFO] Booting worker with pid: 67
+[2025-08-12 00:41:12 +0000] [68] [INFO] Booting worker with pid: 68
+[2025-08-12 00:41:12 +0000] [69] [INFO] Booting worker with pid: 69
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ # switching from the Django Dev WSGI Server to the other terminal
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker run --rm --network inventree_default curlimages/curl curl -L http://inventree-server:8000
+  % Total % Received % Xferd Average Speed Time Time Time Current
+                                 Dload Upload Total Spent Left Speed
+  0 0 0 0 0 0 0 0 --:--:-- --:--:-- --:--:-- 0
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Bad Request (400)</title>
+</head>
+<body>
+  <h1>Bad Request (400)</h1><p></p>
+</body>
+</html>
+100 143 0 143 0 0 1546 0 --:--:-- --:--:-- --:--:-- 1554
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ # switching back to the Django Dev WSGI Server terminal, repeating the command to keep us grounded
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose exec -w /home/inventree/src/backend/InvenTree inventree-server gunicorn --bind 0.0.0.0:8000 InvenTree.wsgi:application
+Python version 3.11.9 - /usr/local/bin/python
+/root/.local/lib/python3.11/site-packages/allauth/exceptions.py:9: UserWarning: allauth.exceptions is deprecated, use allauth.core.exceptions
+  warnings.warn("allauth.exceptions is deprecated, use allauth.core.exceptions")
+[2025-08-12 00:41:11 +0000] [19] [INFO] Starting gunicorn 23.0.0
+[2025-08-12 00:41:11 +0000] [19] [INFO] Listening at: http://0.0.0.0:8000 (19)
+[2025-08-12 00:41:11 +0000] [19] [INFO] Using worker: sync
+[2025-08-12 00:41:11 +0000] [61] [INFO] Booting worker with pid: 61
+[2025-08-12 00:41:11 +0000] [62] [INFO] Booting worker with pid: 62
+[2025-08-12 00:41:11 +0000] [63] [INFO] Booting worker with pid: 63
+[2025-08-12 00:41:11 +0000] [64] [INFO] Booting worker with pid: 64
+[2025-08-12 00:41:11 +0000] [65] [INFO] Booting worker with pid: 65
+[2025-08-12 00:41:11 +0000] [66] [INFO] Booting worker with pid: 66
+[2025-08-12 00:41:11 +0000] [67] [INFO] Booting worker with pid: 67
+[2025-08-12 00:41:12 +0000] [68] [INFO] Booting worker with pid: 68
+[2025-08-12 00:41:12 +0000] [69] [INFO] Booting worker with pid: 69
+2025-08-12 00:41:58,581 ERROR Invalid HTTP_HOST header: 'inventree-server:8000'. You may need to add 'inventree-server' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/root/.local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.local/lib/python3.11/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/root/.local/lib/python3.11/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'inventree-server:8000'. You may need to add 'inventree-server' to ALLOWED_HOSTS.
+2025-08-12 00:41:58,661 WARNING Bad Request: /
+```
+
+The curl -L http://inventree-server:8000 returned a "Bad Request (400)" with a DisallowedHost error (Invalid HTTP_HOST header: 'inventree-server:8000') shows that the inventree-server is responding, the issue is that: Django’s ALLOWED_HOSTS needs to include inventree-server for internal Docker network requests. This explains the empty responses and ERR_CONNECTION_REFUSED in browsers, as Caddy’s proxy requests to inventree-server:8000 are being rejected. The Gunicorn processes are no longer restarting automatically thanks to the entrypoint: /bin/ash and command: -c "sleep infinity" in docker-compose.yml, and port 8000 is free when we need it.
+
+Gunicorn: Started successfully with gunicorn --bind 0.0.0.0:8000 InvenTree.wsgi:application in /home/inventree/src/backend/InvenTree, but rejected requests due to ALLOWED_HOSTS. ALLOWED_HOSTS: Missing inventree-server (Docker service name used internally).
+
+```bash
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose exec -w /home/inventree/src/backend/InvenTree inventree-server python manage.py shell
+Python version 3.11.9 - /usr/local/bin/python
+/root/.local/lib/python3.11/site-packages/allauth/exceptions.py:9: UserWarning: allauth.exceptions is deprecated, use allauth.core.exceptions
+  warnings.warn("allauth.exceptions is deprecated, use allauth.core.exceptions")
+Python 3.11.9 (main, Apr  4 2024, 00:51:37) [GCC 12.2.1 20220924] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+(InteractiveConsole)
+>>> from django.conf import settings
+>>> print(settings.ALLOWED_HOSTS)
+['*', '192.168.4.39']
+>>> print(settings.CSRF_TRUSTED_ORIGINS)
+['http://192.168.4.39']
+>>> exit()
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ # Add inventree-server pluse anything else you want to work
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ # ALLOWED_HOSTS defines a list of host/domain names that the web application is allowed to serve
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ # ACSRF_TRUSTED_ORIGINS defines a list of trusted origins from which "unsafe" requests (e.g., POST, PUT, DELETE) are allowed to originate
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ nano /home/rsutherland/inventree-data/data/config.yaml
+```
+
+update config.yaml
+
+```yaml
+allowed_hosts:
+  - 'inventree-server'
+  - '192.168.4.39'
+  - 'inventree2.local'
+trusted_origins:
+  - 'http://192.168.4.39'
+  - 'http://inventree2.local'
+  - 'http://localhost'
+  - 'http://*.local'
+```
+
+I want to be able to use the API to update inventory from local computers.
+
+- In a standard InvenTree Docker installation, a separate container (often called inventree-proxy) runs a web server like Caddy. This proxy container is responsible for: Serving the static files directly from a mounted volume, and Reverse-proxying other requests to the InvenTree Django server. The inventree-proxy container needs to be able to access the static files. If static_root is commented out, Django doesn't know where to put the files, and the inventree-proxy can't find them, leading to the broken web interface. I seem to have caused this with a missing line in the .env file for setting up the docker containers... now I need to fix it. Uncomment the "static_root" line in ~/inventree-data/data/config.yaml then run collectstatic. Question is do I comment out "static_root" after doing this, probably so.
 
 ```bash
 cd ~/git/InvenTree/contrib/container
-docker compose run --rm inventree-server invoke collectstatic
+docker compose down
+# Uncomment the "static_root" line in ~/inventree-data/data/config.yaml
+sudo nano /home/rsutherland/inventree-data/data/config.yaml
+docker compose up -d
+# docker compose run --rm inventree-server invoke collectstatic
+docker compose exec inventree-server python /home/inventree/src/backend/InvenTree/manage.py collectstatic --noinput
+# [optional] comment them back out for security then restart
 docker compose down
 docker compose up -d
 ```
