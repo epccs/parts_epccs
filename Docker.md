@@ -17,7 +17,7 @@ sudo usermod -aG docker $USER
 # log out for change to take effect
 ```
 
-For security you will not want to add the group, just keep using sudo.
+For extra security do not add the docker group, just keep using sudo.
 
 ## Install Docker on Ubuntu
 
@@ -62,17 +62,19 @@ I think apt (Ubuntu) will automaticly update these packages but that will be a l
 
 ## Database Storage and Backup
 
-The host I have to run this on has an NVM which has two mounts one for the root and the other for Linux EFI images. It also has a slow HDD. I was thinking of puting the PostgreSQL storage on the HDD but that will make Inventree slow, it would be better to use the HDD for backups, and just operate out of the NVM/SSD.
+The computer I have to run this on has an NVM which has two mounts one for the root and the other for Linux EFI images. It also has a HDD. I was thinking of puting the PostgreSQL storage on the HDD but that will make Inventree slow, it would be better to use the HDD for backups, and just operate out of the NVM/SSD.
 
 ```bash
 # place working database on fast NVM/SSD e.g., in the .env file set INVENTREE_EXT_VOLUME=/homer/sutherland/inventree-data
-rsutherland@inventree2:~$ mkdir -p ~/inventree-data/{pgdata,data,media,static}
-# set permissions for inventree docker container’s internal user (UID/GID 1000)
+rsutherland@inventree2:~$ mkdir -p ~/inventree-data/{pgdata,data,media,static,caddy}
+# set permissions for inventree docker container’s internal user (UID/GID 1000:1000)
 rsutherland@inventree2:~$ sudo chown -R 1000:1000 ~/inventree-data
-# make a mount ponit for the HDD (dev/sda on my setup), it needs chown -R 1000:1000 as well after HDD automount is setup.
+sudo chmod -R 755 ~/inventree-data
+# For me Caddy needed a custom container to use the system admin (UID/GID 1000:1000), more on that latter.
+# Make a mount ponit for the HDD (dev/sda on my setup), it needs chown -R 1000:1000 as well after HDD automount is setup.
 rsutherland@inventree2:~$ sudo mkdir /srv/samba-share
 
-# instructions for seting up the partition is not provided here (I used gparted.)
+# instructions for seting up the partition on /dev/sda is not provided here (I used gparted.), but the automount is.
 rsutherland@inventree2:~$ cat /etc/fstab
 ```
 
@@ -97,7 +99,7 @@ Use an editor to add the HDD mount to to the end of fstab
 rsutherland@inventree2:~$ sudo nano /etc/fstab
 ```
 
-```
+```text
 /dev/sda1 /srv/samba-share auto defaults,nofail 0 0
 ```
 
@@ -118,7 +120,7 @@ rsutherland@inventree2:~$ mkdir -p ~/samba
 rsutherland@inventree2:~$ sudo nano /etc/samba/smb.conf
 ```
 
-Note that samba is serving the HDD mount. This forces all files created via Samba (e.g., from Windows) to be owned by 1000:1000 on the server, matching the InvenTree container user. No client-side UID/GID config needed—Windows users just map the drive with credentials.
+Samba is serving the HDD mount. Its forces all files created to be owned by 1000:1000 on the server, matching the system admin account that the InvenTree container uses. No client-side UID/GID config is needed in Windows or Linux, just map the drive with the credential(s) for valid users.
 
 ```conf
 # add this to the very end of the /etc/samba/smb.conf file
@@ -194,7 +196,7 @@ rsutherland@inventree2:~$ cd ~
 rsutherland@inventree2:~$ git clone --branch stable https://github.com/inventree/InvenTree.git ~/git/InvenTree
 ```
 
-Change the .env file (note that it is a hidden file by convinsion on Linux) to match the setup. Ensure .env includes required database variables (INVENTREE_DB_USER, INVENTREE_DB_PASSWORD, INVENTREE_DB_NAME). 
+Change the .env file (note that it is a hidden file by convinsion on Linux) to match the setup. Ensure .env includes required database variables (INVENTREE_DB_USER, INVENTREE_DB_PASSWORD, INVENTREE_DB_NAME).
 
 ```bash
 cd ~/git/InvenTree/contrib/container/
@@ -249,7 +251,7 @@ Important:
 
 - INVENTREE_EMAIL_HOST_USER and INVENTREE_EMAIL_SENDER: It's best practice to use the same email address for both of these variables.
 
-Next the docker-compose.yml needs setup for Ubuntu 24.04 (use an expert, I used Grok.) 
+Next the docker-compose.yml needs setup for Ubuntu 24.04 (use an expert, I used Grok.)
 
 Edit docker-compose.yml. The :z in the InvenTree example (- ${INVENTREE_EXT_VOLUME}:/home/inventree/data:z) is a Docker volume mount option related to SELinux (Security-Enhanced Linux), which is common on Red Hat-based systems (e.g., CentOS, Fedora) but typically not enabled on Ubuntu 24.04 by default. Service inventree-cache doesn’t need volumes unless persistent Redis data is desired.
 
@@ -286,8 +288,8 @@ services:
   inventree-server:
     image: inventree/inventree:${INVENTREE_TAG:-stable}
     container_name: inventree-server
-    expose:
-      - 8000
+    ports:
+      - 8000:8000
     depends_on:
       - inventree-db
       - inventree-cache
@@ -316,7 +318,7 @@ services:
 
   inventree-proxy:
     container_name: inventree-proxy
-    image: caddy:alpine
+    image: custom-caddy:2.8.4
     restart: always
     depends_on:
       - inventree-server
@@ -329,6 +331,7 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ${INVENTREE_HOST_DATA_DIR}/static:/var/www/static
       - ${INVENTREE_HOST_DATA_DIR}/media:/var/www/media
+      - ${INVENTREE_HOST_DATA_DIR}/caddy:/var/log/caddy
 ```
 
 Understanding inventree-server Service Volumes: The Inventree containers will operate on data that is on a NVM (or SSD) at ~/inventree-data/{data,media,static,backup}. Host Path: The left side (e.g., ${INVENTREE_HOST_DATA_DIR}/data) is the directory on your Ubuntu host (e.g., /home/rsutherland/inventree-data/data). Container Path: The right side (e.g., /var/lib/inventree/data) is where the container accesses the data inside its filesystem. Inside the Container: When InvenTree runs invoke backup, it writes backup files (e.g., DB dumps, media archives) to /var/lib/inventree/backup. Docker’s volume mapping ensures these files appear on the host at /srv/samba-share/inventree-backup, accessible via Samba (\\inventree2\Samba-Inventree\inventree-backup).
@@ -366,44 +369,55 @@ Now run "docker compose" which will take some time.
 ```bash
 rsutherland@inventree2:~$ cd ~/git/InvenTree/contrib/container/
 # validate the config
-rsutherland@inventree2:~$ docker compose config
-# Pull Latest Docker Images
-rsutherland@inventree2:~$ docker compose pull
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose config
+# build custom-caddy with: FROM caddy:2.8.4-alpine, RUN adduser -D -u 1000 caddy, USER caddy
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker build -t custom-caddy:2.8.4 -f ~/git/InvenTree/contrib/container/Dockerfile.caddy
+# Pull Latest Docker Images less the custom-caddy
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose pull inventree-server inventree-cache inventree-db
 # Start the InvenTree stack in detached mode:
-rsutherland@inventree2:~$ docker compose up -d
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose up -d
 # Ensure required Python packages are installed.
 # Create a new (empty) database.
 # Perform necessary schema updates to create database tables.
 # Update translation and static files.
-rsutherland@inventree2:~$ docker compose run --rm inventree-server invoke update
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose run --rm inventree-server invoke update
+# the inventree-server invoke update command changed the ownership of /home/rsutherland/inventree-data to root:root
+# which causes problems for Caddy
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ sudo chown -R 1000:1000 /home/rsutherland/inventree-data
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ sudo chmod -R 755 /home/rsutherland/inventree-data
+# verify it is all the system admin user and not root
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ ls -l /home/rsutherland/inventree-data
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ ls -lR /home/rsutherland/inventree-data/{static,media,caddy}
+# Enable API access in config.yaml with allowed_hosts: - '192.168.4.39', - 'inventree2.local', - 'inventree-server' csrf_trusted_origins: - 'http://192.168.4.39', - 'http://inventree2.local'
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ nano /home/rsutherland/inventree-data/data/config.yaml
 # bring up the containers (-d is detached mode)
-rsutherland@inventree2:~$ docker compose up -d
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose up -d
 # test pgsql
-rsutherland@inventree2:~$ docker compose exec inventree-db psql -U inventree -d inventree -c "\l"
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose exec inventree-db psql -U inventree -d inventree -c "\l"
 # Verify services are running
-docker compose ps
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose ps
 # Look for database or permission errors
-rsutherland@inventree2:~$ docker compose logs inventree-server inventree-db
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose logs inventree-server inventree-db
 # Test volume access
-rsutherland@inventree2:~$ docker compose exec inventree-server ls -l /var/lib/inventree/{data,media,static,backup}
-rsutherland@inventree2:~$ docker compose exec inventree-worker ls -l /var/lib/inventree/backup
-rsutherland@inventree2:~$ docker compose exec inventree-db psql -U $INVENTREE_DB_USER -d $INVENTREE_DB_NAME -c "\l"
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose exec inventree-server ls -l /var/lib/inventree/{data,media,static,backup}
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose exec inventree-worker ls -l /var/lib/inventree/backup
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose exec inventree-db psql -U $INVENTREE_DB_USER -d $INVENTREE_DB_NAME -c "\l"
 # Test with a backup run (later schedule it with cron). Restore with "docker compose exec inventree-server invoke restore".
-rsutherland@inventree2:~$ docker compose exec inventree-server invoke backup
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose exec inventree-server invoke backup
 # there is no backup log? e.g., docker compose logs inventree-server | grep backup
 # Since curl isn’t in caddy:alpine, use a temporary container:
-rsutherland@inventree2:~$ docker run --rm --network inventree_default curlimages/curl curl http://inventree-server:8000
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker run --rm --network inventree_default curlimages/curl curl http://inventree-server:8000
 # Test e-mail
-rsutherland@inventree2:~$ docker compose exec inventree-server invoke send-test-email
-rsutherland@inventree2:~$ docker compose logs inventree-server | grep email
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose exec inventree-server invoke send-test-email
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose logs inventree-server | grep email
 # To stop Inventree (this will presist until "docker compose up" is run again)
-rsutherland@inventree2:~$ docker compose down
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose down
 ```
 
 This has been progressing in stages, so when I need to step back.
 
 ```bash
-rsutherland@inventree2:~$ cd ~/InvenTree_prod
+rsutherland@inventree2:~$ cd ~/git/InvenTree/contrib/container
 # Removes associated volumes, including PostgreSQL data, to ensure a clean start
 rsutherland@inventree2:~$ docker compose down --volumes --rmi all --remove-orphans
 rsutherland@inventree2:~$ docker system prune
@@ -411,13 +425,9 @@ rsutherland@inventree2:~$ docker system prune
 rsutherland@inventree2:~$ sudo rm -rf ~/inventree-docker/inventree-data
 ```
 
-## To Do List
+## ALLOWED_HOSTS and CSRF_TRUSTED_ORIGINS setup for Ubuntu 24.04
 
-Notes to remind me what I am working on
-
-- ALLOWED_HOSTS and CSRF_TRUSTED_ORIGINS setup for Ubuntu 24.04
-
-Browsers show ERR_CONNECTION_REFUSED. Try to Run Django Dev Server on port 8000 to see error mesages. Problem is the Gunicorn processes keeps restarting, so this overrides the default entrypoint (/bin/ash ./init.sh) to run a shell and sleep forever, preventing Gunicorn from starting automatically. Update the inventree-server section as follows in this debug session. Two terminals are used and comments are added so you can tell when they are switched.
+Browsers show ERR_CONNECTION_REFUSED. Try to Run Django Dev Server on port 8000 to see error mesages. Problem is the Gunicorn processes keeps restarting, so this overrides the default entrypoint (/bin/ash ./init.sh) to run a shell and sleep forever, preventing Gunicorn from starting automatically. Update the inventree-server section of docker-compose.yml as follows for use in this debug session. Two terminals are used and comments are added so you can tell when they are switched.
 
 ```bash
 rsutherland@inventree2:~/git/InvenTree/contrib/container$ nano ~/git/InvenTree/contrib/container/docker-compose.yml
@@ -537,7 +547,7 @@ rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker run --rm --netw
 </body>
 </html>
 100 143 0 143 0 0 1546 0 --:--:-- --:--:-- --:--:-- 1554
-rsutherland@inventree2:~/git/InvenTree/contrib/container$ # switching back to the Django Dev WSGI Server terminal, repeating the command to keep us grounded
+rsutherland@inventree2:~/git/InvenTree/contrib/container$ # switching back to the Django Dev WSGI Server terminal, repeating text from the command to keep us grounded
 rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose exec -w /home/inventree/src/backend/InvenTree inventree-server gunicorn --bind 0.0.0.0:8000 InvenTree.wsgi:application
 Python version 3.11.9 - /usr/local/bin/python
 /root/.local/lib/python3.11/site-packages/allauth/exceptions.py:9: UserWarning: allauth.exceptions is deprecated, use allauth.core.exceptions
@@ -571,7 +581,7 @@ django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'inventree-serv
 2025-08-12 00:41:58,661 WARNING Bad Request: /
 ```
 
-The curl -L http://inventree-server:8000 returned a "Bad Request (400)" with a DisallowedHost error (Invalid HTTP_HOST header: 'inventree-server:8000') shows that the inventree-server is responding, the issue is that: Django’s ALLOWED_HOSTS needs to include inventree-server for internal Docker network requests. This explains the empty responses and ERR_CONNECTION_REFUSED in browsers, as Caddy’s proxy requests to inventree-server:8000 are being rejected. The Gunicorn processes are no longer restarting automatically thanks to the entrypoint: /bin/ash and command: -c "sleep infinity" in docker-compose.yml, and port 8000 is free when we need it.
+The `curl -L http://inventree-server:8000` returned a "Bad Request (400)" with a DisallowedHost error (Invalid HTTP_HOST header: 'inventree-server:8000') shows that the inventree-server is responding, the issue is that: Django’s ALLOWED_HOSTS needs to include inventree-server for internal Docker network requests. This explains the empty responses and ERR_CONNECTION_REFUSED in browsers, as Caddy’s proxy requests to inventree-server:8000 are being rejected. The Gunicorn processes are no longer restarting automatically thanks to the entrypoint: /bin/ash and command: -c "sleep infinity" in docker-compose.yml, and port 8000 is free when we need it.
 
 Gunicorn: Started successfully with gunicorn --bind 0.0.0.0:8000 InvenTree.wsgi:application in /home/inventree/src/backend/InvenTree, but rejected requests due to ALLOWED_HOSTS. ALLOWED_HOSTS: Missing inventree-server (Docker service name used internally).
 
@@ -626,8 +636,12 @@ docker compose down
 docker compose up -d
 ```
 
+## To Do List
+
+Notes to remind me what I am working on
+
 - (done) Redo storage to mount the HDD on /srv/samba-share and serve it with Samba. Ensure it’s owned by UID/GID 1000:1000 (e.g., the first user created at system install). Samba can Force ownership to the UID and GID for any Windows computer that uses the share.
 
-- (wip) The host name, "inventree.local," has an issue of locking up at somewhat random times. It seems to be temperature dependent. It is currently running Windows with some stress tests to see if the problem duplicates. The machine is an HP Pavilion from 2017 or 2018 with an 8-core AMD (1700, Zen 1) processor. I could not figure out how to update the BIOS with Linux, so I put Windows 10 back on it to do that. It has a TPM chip, but Windows 11 does not support the AMD 1700 processor, which seems odd. It's a second-hand computer, so there are no worries about it. Looking at the HP forums, it seems they got themselves into trouble with this product line. They appear to have pushed an AMI F.57 update that caused all sorts of issues. The version I installed, AMI F.60, was released years later. The lesson seems to be that if you are going to do automated installs, this stuff needs to be well-tested. It might be better to let customers do manual BIOS updates; we just need a way to do that in Linux. Anyway, the BIOS is updated, I run some stress tests in Windows 10 and did not see a lock up. Now I am runing some test with Ubuntu 24.04 to see if it will lock up and it did around 24 hours. So now I have put Ubuntu 20.04 on it and will let it run while keeping an eye out for a lock up. The dmesg command shows a lot of issues with this version (mostly ACPI). I wonder if the newer version is twidling somthing that it should not, efectivly a Time To Live (TTL) timer. 
+- (wip) The host name, "inventree.local," has an issue of locking up at somewhat random times. It seems to be temperature dependent. It is currently running Windows with some stress tests to see if the problem duplicates. The machine is an HP Pavilion from 2017 or 2018 with an 8-core AMD (1700, Zen 1) processor. I could not figure out how to update the BIOS with Linux, so I put Windows 10 back on it to do that. It has a TPM chip, but Windows 11 does not support the AMD 1700 processor, which seems odd. It's a second-hand computer, so there are no worries about it. Looking at the HP forums, it seems they got themselves into trouble with this product line. They appear to have pushed an AMI F.57 update that caused all sorts of issues. The version I installed, AMI F.60, was released years later. The lesson seems to be that if you are going to do automated installs, this stuff needs to be well-tested. It might be better to let customers do manual BIOS updates; we just need a way to do that in Linux. Anyway, the BIOS is updated, I run some stress tests in Windows 10 and did not see a lock up. Now I am runing some test with Ubuntu 24.04 to see if it will lock up and it did around 24 hours. So now I have put Ubuntu 20.04 on it and will let it run while keeping an eye out for a lock up. The dmesg command shows a lot of issues with this version (mostly ACPI). I wonder if the newer version is twidling somthing that it should not, efectivly a Time To Live (TTL) timer.
 
 - The host name, "inventree2.local," is an older machine but should allow progress until the issue with the other is sorted. This Acer machine has no errors reported with dmesg running Ubuntu 24.04.
