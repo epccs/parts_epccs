@@ -1,6 +1,6 @@
 # Docker on Linux
 
-Docker has been the recomended way to Install Inventree. These are some things that I needed to know to use Docker on Linux.
+Do not use this, use BACKEND_SETUP_1.0.x.md
 
 ## Add Docker group to admin account
 
@@ -370,7 +370,23 @@ Now run "docker compose" which will take some time.
 rsutherland@inventree2:~$ cd ~/git/InvenTree/contrib/container/
 # validate the config
 rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose config
-# build custom-caddy with: FROM caddy:2.8.4-alpine, RUN adduser -D -u 1000 caddy, USER caddy
+```
+
+A custom Caddy Image is listed in the docker-compose.yml since the proxy fails without it, we need to do a local build so it is available.
+
+```bash
+nano ~/git/InvenTree/contrib/container/Dockerfile.caddy
+```
+
+```text
+FROM caddy:2.8.4-alpine
+RUN adduser -D -u 1000 caddy
+USER caddy
+```
+
+Now build the custom Caddy and continue
+
+```bash
 rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker build -t custom-caddy:2.8.4 -f ~/git/InvenTree/contrib/container/Dockerfile.caddy
 # Pull Latest Docker Images less the custom-caddy
 rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose pull inventree-server inventree-cache inventree-db
@@ -385,7 +401,7 @@ rsutherland@inventree2:~/git/InvenTree/contrib/container$ docker compose run --r
 # which causes problems for Caddy
 rsutherland@inventree2:~/git/InvenTree/contrib/container$ sudo chown -R 1000:1000 /home/rsutherland/inventree-data
 rsutherland@inventree2:~/git/InvenTree/contrib/container$ sudo chmod -R 755 /home/rsutherland/inventree-data
-# verify it is all the system admin user and not root
+# verify all files and folders have the system admin user ownership (1000:1000) and not root
 rsutherland@inventree2:~/git/InvenTree/contrib/container$ ls -l /home/rsutherland/inventree-data
 rsutherland@inventree2:~/git/InvenTree/contrib/container$ ls -lR /home/rsutherland/inventree-data/{static,media,caddy}
 # Enable API access in config.yaml with allowed_hosts: - '192.168.4.39', - 'inventree2.local', - 'inventree-server' csrf_trusted_origins: - 'http://192.168.4.39', - 'http://inventree2.local'
