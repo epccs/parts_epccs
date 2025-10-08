@@ -1,12 +1,12 @@
-# Inventree 1.0.x on Ubuntu 25.04
+# Inventree 1.0.x Developer mode on Ubuntu 24.04
 
-This guide will help you Install Inventree 1.0.x on Ubuntu 25.04 (<https://inventree.local>).
+This guide will help you Install Inventree 1.0.x in Developer mode on Ubuntu 24.04 (<http://inventree2.local>). In Dev mode media content is served directly from a Django webserver so that changes can be looked at in real time, but this is not considered safe for production.
 
-- ToDo: https is not working next step is to fix that.
+- ToDo: https is not working.
 
 ## Prerequisite Docker
 
-To install Docker on Ubuntu 25.04 desktop, first update the apt package index to use the official Docker repository (in ca-certificates) to allow apt to use a repository over HTTPS
+To install Docker on Ubuntu 24.04 desktop, first update the apt package index to use the official Docker repository (in ca-certificates) to allow apt to use a repository over HTTPS
 
 ```bash
 # Update the apt package index to use the official Docker repository (in ca-certificates) 
@@ -33,7 +33,7 @@ if somthing is wrong this is how to nuke docker
 ```bash
 apt list --installed docker-ce docker-ce-cli containerd.io
 docker version
-# the latest atm is 28.3.3
+# the latest atm is 28.4.0
 sudo docker container ls
 # That should tell you what is going to stop, and this will stop the current Docker.
 service docker.socket stop
@@ -51,11 +51,10 @@ The computer I have to run this on has an NVM which has two mounts one for the r
 
 ```bash
 # place working database on fast NVM/SSD e.g., in the .env file set INVENTREE_EXT_VOLUME=/homer/sutherland/inventree-data
-mkdir -p ~/inventree-data/{pgdata,data,media,static,caddy}
-# set permissions for inventree docker containerâ€™s internal user (UID/GID 1000:1000)
+mkdir -p ~/inventree-data
+# set permissions for inventree docker container's internal user (UID/GID 1000:1000)
 sudo chown -R 1000:1000 ~/inventree-data
 sudo chmod -R 755 ~/inventree-data
-# For me Caddy needed a custom container to use the system admin (UID/GID 1000:1000), more on that latter.
 # Make a mount ponit for the HDD (dev/sda on my setup), it needs chown -R 1000:1000 as well after HDD automount is setup.
 sudo mkdir /srv/samba-share
 
@@ -115,7 +114,7 @@ Samba is serving the HDD mount. It forces all files created to be owned by 1000:
 # modify the workgroup to reduce confusion for the Credential Manager 
 # otherwise the full username ends up in a namespace as `MicrosoftAccount\rsutherland` that is causing me problems
 [global]
-workgroup = INVENTREE
+workgroup = DEV-INVENTREE
 # add this to the very end of the /etc/samba/smb.conf file
 [Samba-Inventree]
 comment = Inventree Data Share
@@ -138,7 +137,7 @@ testparm
 # Windows can mount \\inventree2\Samba-Inventree with credentials (and so can Linux)
 ```
 
-The Samba share can be mounted on the local system, and will work simular to how it does from Windows. To delay mounting the CIFS share, you can use the noauto and x-systemd.automount options in your /etc/fstab entry. This will prevent the system from mounting the share at boot and instead use systemd to automatically mount it when it is first accessed. Example /etc/fstab entry assuming gid and uid are 1000:
+The Samba share can be mounted on the local system, and will work simular to how it does from Windows. To delay mounting the CIFS share, you can use the noauto and x-systemd.automount options in your /etc/fstab entry. This will prevent the system from mounting the share at boot and instead use systemd to automatically mount it when it is first accessed. Example /etc/fstab entry:
 
 ```bash
 # use an editor to mount the cifs device (note the direction of // used on Linux)
@@ -146,7 +145,7 @@ sudo nano /etc/fstab
 ```
 
 ```conf
-//inventree/Samba-Inventree /home/rsutherland/samba cifs credentials=/etc/samba/samba_credentials.conf,noauto,x-systemd.automount,uid=1000,gid=1000,file_mode=0664,dir_mode=0775 0 0
+//dev-inventree/Samba-Inventree /home/rsutherland/samba cifs credentials=/etc/samba/samba_credentials.conf,noauto,x-systemd.automount,uid=1000,gid=1000,file_mode=0664,dir_mode=0775 0 0
 ```
 
 Create a file to store your credentials. A good location is in a secure system location. E.g., /etc/samba/samba_credentials.conf for a system-wide mount.
@@ -176,133 +175,38 @@ mkdir -p ~/samba/inventree-backup
 # the samba mount will force the uid and gid to be what the container is happy with
 ```
 
-## 1. Install Inventree's Docker Backend Files
+## 1. Install Inventree's Docker Backend Files for development
 
 ### a. Clone from Github
+
+- <https://docs.inventree.org/en/stable/develop/contributing/>
 
 ```bash
 cd ~
 mkdir ~/git
-git clone --branch 1.0.x https://github.com/inventree/InvenTree.git ~/git/InvenTree
-```
-
-Docker packages will lag Github a little, just make sure the tag you are using is available
-
-- <https://hub.docker.com/r/inventree/inventree/tags>
-- <https://docs.inventree.org/en/stable/releases/release_notes/#stable-branch>
-
-### b. Update the .env file
-
-```bash
-cd ~/git/InvenTree/contrib/container/
-nano .env
-```
-
-```conf
-# ...
-# InvenTree server URL - update this to match your server URL.
-INVENTREE_SITE_URL="http://inventree.local"
-#INVENTREE_SITE_URL="http://192.168.4.45"  # You can specify a local IP address here
-#INVENTREE_SITE_URL="https://inventree.my-domain.com"  # Or a public domain name (which you control)
-
-# Specify the location of the external data volume
-# By default, placed in local directory 'inventree-data'
-# INVENTREE_EXT_VOLUME=./inventree-data
-INVENTREE_HOST_DATA_DIR=/home/rsutherland/inventree-data
-# ...
-# Database configuration options
-# DO NOT CHANGE THESE SETTINGS (unless you really know what you are doing)
-INVENTREE_DB_ENGINE=postgresql
-INVENTREE_DB_NAME=inventree
-INVENTREE_DB_HOST=inventree-db
-INVENTREE_DB_PORT=5432
-
-# Database credentials - These !!!SHOULD BE!!! changed from the default values!
-# Note: These are *NOT* the InvenTree server login credentials,
-#       they are the credentials for the PostgreSQL database
-INVENTREE_DB_USER=pguser_<<<change_me
-INVENTREE_DB_PASSWORD=your_secret
-# ...
-```
-
-InvenTree requires email settings for notifications (e.g., user invites, alerts). Configure these in the `.env` file. I am going to use a gmail account.
-
-```conf
-INVENTREE_EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-INVENTREE_EMAIL_HOST=smtp.gmail.com
-INVENTREE_EMAIL_PORT=587
-INVENTREE_EMAIL_USERNAME=your_google_email@gmail.com
-INVENTREE_EMAIL_PASSWORD=your_app_password
-INVENTREE_EMAIL_USE_TLS=False
-INVENTREE_EMAIL_USE_SSL=True
-INVENTREE_EMAIL_SENDER=your_google_email@gmail.com
-```
-
-Important:
-
-- INVENTREE_EMAIL_HOST_PASSWORD: You cannot use your regular Google account password here. You must generate an App Password for InvenTree. This is a security measure required by Google to use third-party applications with your account. You can generate an App Password in your Google Account settings under "Security" and then "2-Step Verification". If you have Google Workspace (<https://workspace.google.com/lp/business/>) the admin account can not be used to generate an App Password.
-
-- INVENTREE_EMAIL_HOST_USER and INVENTREE_EMAIL_SENDER: It's best practice to use the same email address for both of these variables.
-
-- Understanding inventree-server Service Volumes: The Inventree containers will operate on data that is on a NVM (or SSD) at ~/inventree-data/{data,media,static,backup}. Host Path: The left side (e.g., ${INVENTREE_HOST_DATA_DIR}/data) is the directory on your Ubuntu host (e.g., /home/rsutherland/inventree-data/data). Container Path: The right side (e.g., /var/lib/inventree/data) is where the container accesses the data inside its filesystem. Inside the Container: When InvenTree runs invoke backup, it writes backup files (e.g., DB dumps, media archives) to /var/lib/inventree/backup. Docker’s volume mapping ensures these files appear on the host at /srv/samba-share/inventree-backup, accessible via Samba (\\inventree2\Samba-Inventree\inventree-backup).
-
-### c. next update docker-compose.yml
-
-Try the 1.0.x version without changes.
-
-Note the z in the InvenTree example (- ${INVENTREE_EXT_VOLUME}:/home/inventree/data:z) is a Docker volume mount option related to SELinux (Security-Enhanced Linux), which is common on Red Hat-based systems (e.g., CentOS, Fedora) but typically not enabled on Ubuntu 24.04 by default. Service inventree-cache doesnâ€™t need volumes unless persistent Redis data is desired.
-
-```bash
-cd ~/git/InvenTree/contrib/container/
-nano docker-compose.yml
-```
-
-### c. mDNS Setup
-
-```bash
-sudo apt update
-sudo apt install avahi-daemon
-sudo systemctl enable avahi-daemon
-sudo systemctl start avahi-daemon
-sudo nano /etc/avahi/services/inventree.service
-```
-
-```xml
-<?xml version="1.0" standalone='no'?>
-<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
-<service-group>
-    <name>InvenTree</name>
-    <service>
-        <type>_http._tcp</type>
-        <port>80</port>
-        <host-name>inventree.local</host-name>
-    </service>
-</service-group>
-```
-
-```bash
-sudo systemctl restart avahi-daemon
-curl https://inventree.local
-```
-
-### d. Compose container is used to setup the Databse
-
-```bash
-cd ~/git/InvenTree/contrib/container/
-# with .env set up init the database
-sudo docker compose run --rm inventree-server invoke update
+cd ~/git
+git clone --branch stable https://github.com/inventree/InvenTree.git ~/git/InvenTree
+cd ~/git/InvenTree
+# Do not change docker.dev.env, for me that caused issues.
+docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke install
+docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke dev.setup-test --dev
 ```
 
 ### e. Start Containers
 
 ```bash
-sudo docker compose up -d
+cd ~/git/InvenTree/
+docker compose --project-directory . -f contrib/container/dev-docker-compose.yml up -d
+# WIP: I get error INVE-E1 (https://docs.inventree.org/en/stable/settings/error_codes/#inve-e1)
 ```
 
 ### f. Stop Containers
 
 ```bash
-sudo docker compose down
+cd ~/git/InvenTree/
+sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml down
+# check logs
+sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml logs
 ```
 
 ### f. Nuke Containers
@@ -310,12 +214,12 @@ sudo docker compose down
 Development progresses in stages, from time to time a fresh install is needed.
 
 ```bash
-cd ~/git/InvenTree/contrib/container
+cd ~/git/InvenTree/
 # Removes associated volumes, including PostgreSQL data, to ensure a clean start
-sudo docker compose down --volumes --rmi all --remove-orphans
+sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml down --volumes --rmi all --remove-orphans
 sudo docker system prune
-# Clear the persistent folders [caddy|data|media|pgdata|static|***backup***] to avoid conflicts:
-sudo rm -rf ~/inventree-data
+# Dev should run out of the github folder so no need to clear the persistent folders, such as caddy,data,media,pgdata,static to avoid conflicts:
+# sudo rm -rf ~/inventree-data/{caddy,data,media,pgdata,static}
 # probably should update InvenTree repository so the local repo has the latest files
 cd ~/git/InvenTree
 git pull

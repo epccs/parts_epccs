@@ -8,7 +8,9 @@ This repository is the JSON data for an Inventory Management System. The goal is
 
 This repository currently contains instructions for setting up the system containers.
 
-[./Docker.md](Docker.md)
+[./BACKEND_SETUP_1.0.x.md](BACKEND_SETUP_1.0.x.md)
+
+[./BACKEND_DEVSETUP_1.0.x.md](BACKEND_DEVSETUP_1.0.x.md)
 
 ## JSON data
 
