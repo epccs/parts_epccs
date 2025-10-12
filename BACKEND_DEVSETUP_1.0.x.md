@@ -182,25 +182,45 @@ mkdir -p ~/samba/inventree-backup
 - <https://docs.inventree.org/en/stable/develop/contributing/>
 
 ```bash
+# 1. Clone the repository
 cd ~
-mkdir ~/git
+mkdir -p ~/git
 cd ~/git
 git clone --branch stable https://github.com/inventree/InvenTree.git ~/git/InvenTree
 cd ~/git/InvenTree
-# Do not change docker.dev.env, for me that caused issues.
+
+# 2. Install Python dependencies
 docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke install
+
+# 3. Run database migrations (ensures schema is up-to-date)
+docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke migrate
+
+# 4. Set up test data and default admin user (admin / inventree)
 docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke dev.setup-test --dev
+
+# 5. Install frontend dependencies
+docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke int.frontend-install
+
+# 6. Compile frontend translations
+docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke int.frontend-trans
+
+# 7. Build frontend assets
+docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke int.frontend-build
+
+# 8. Collect static files
+docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke static
 ```
 
-### e. Start Containers
+### b. Start Containers in detached mode
 
 ```bash
 cd ~/git/InvenTree/
 docker compose --project-directory . -f contrib/container/dev-docker-compose.yml up -d
-# WIP: I get error INVE-E1 (https://docs.inventree.org/en/stable/settings/error_codes/#inve-e1)
+# default admin user is: admin / inventree
+curl -v -L -H "Host: localhost" http://localhost:8000
 ```
 
-### f. Stop Containers
+### c. Stop Containers
 
 ```bash
 cd ~/git/InvenTree/
@@ -209,7 +229,7 @@ sudo docker compose --project-directory . -f contrib/container/dev-docker-compos
 sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml logs
 ```
 
-### f. Nuke Containers
+### d. Nuke Containers
 
 Development progresses in stages, from time to time a fresh install is needed.
 
@@ -224,3 +244,19 @@ sudo docker system prune
 cd ~/git/InvenTree
 git pull
 ```
+
+### e. Optional Enhancements
+
+File Ownership: If editing source files locally, add post-build:
+
+```bash
+sudo chown -R $USER:$USER ~/git/InvenTree/src/
+```
+
+Live Development Server: For frontend dev with hot-reloading (access at http://dev-inventree.local:5173 ):
+
+```bash
+docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm -p 5173:5173 inventree-dev-server invoke dev.frontend-server
+```
+
+When new commits are pulled, repeat migrate, int.frontend-trans, int.frontend-build, and static after git pull origin stable.
