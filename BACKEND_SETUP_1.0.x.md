@@ -51,7 +51,8 @@ The computer I have to run this on has an NVM which has two mounts one for the r
 
 ```bash
 # place working database on fast NVM/SSD e.g., in the .env file set INVENTREE_EXT_VOLUME=/homer/sutherland/inventree-data
-mkdir -p ~/inventree-data/{pgdata,data,media,static,caddy}
+# mkdir -p ~/inventree-data/{pgdata,data,media,static,caddy}
+mkdir -p ~/inventree-data
 # set permissions for inventree docker containerâ€™s internal user (UID/GID 1000:1000)
 sudo chown -R 1000:1000 ~/inventree-data
 sudo chmod -R 755 ~/inventree-data
@@ -183,7 +184,7 @@ mkdir -p ~/samba/inventree-backup
 ```bash
 cd ~
 mkdir ~/git
-git clone --branch 1.0.x https://github.com/inventree/InvenTree.git ~/git/InvenTree
+git clone --branch stable https://github.com/inventree/InvenTree.git ~/git/InvenTree
 ```
 
 Docker packages will lag Github a little, just make sure the tag you are using is available
@@ -202,32 +203,14 @@ nano .env
 # ...
 # InvenTree server URL - update this to match your server URL.
 INVENTREE_SITE_URL="http://inventree.local"
-#INVENTREE_SITE_URL="http://192.168.4.45"  # You can specify a local IP address here
-#INVENTREE_SITE_URL="https://inventree.my-domain.com"  # Or a public domain name (which you control)
-
-# Specify the location of the external data volume
-# By default, placed in local directory 'inventree-data'
-# INVENTREE_EXT_VOLUME=./inventree-data
-INVENTREE_HOST_DATA_DIR=/home/rsutherland/inventree-data
 # ...
-# Database configuration options
-# DO NOT CHANGE THESE SETTINGS (unless you really know what you are doing)
-INVENTREE_DB_ENGINE=postgresql
-INVENTREE_DB_NAME=inventree
-INVENTREE_DB_HOST=inventree-db
-INVENTREE_DB_PORT=5432
+# InvenTree superuser account details
+# Un-comment (and complete) these lines to auto-create an admin account
+INVENTREE_ADMIN_USER=admin_<<<change_me
+INVENTREE_ADMIN_PASSWORD=inventree_<<<change_me
+INVENTREE_ADMIN_EMAIL=your_google_email@gmail.com
 
-# Database credentials - These !!!SHOULD BE!!! changed from the default values!
-# Note: These are *NOT* the InvenTree server login credentials,
-#       they are the credentials for the PostgreSQL database
-INVENTREE_DB_USER=pguser_<<<change_me
-INVENTREE_DB_PASSWORD=your_secret
-# ...
-```
-
-InvenTree requires email settings for notifications (e.g., user invites, alerts). Configure these in the `.env` file. I am going to use a gmail account.
-
-```conf
+# email setup
 INVENTREE_EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
 INVENTREE_EMAIL_HOST=smtp.gmail.com
 INVENTREE_EMAIL_PORT=587
@@ -236,7 +219,15 @@ INVENTREE_EMAIL_PASSWORD=your_app_password
 INVENTREE_EMAIL_USE_TLS=False
 INVENTREE_EMAIL_USE_SSL=True
 INVENTREE_EMAIL_SENDER=your_google_email@gmail.com
+# ...
+# Database credentials - These !!!SHOULD BE!!! changed from the default values!
+# ...
+INVENTREE_DB_USER=pguser_<<<change_me
+INVENTREE_DB_PASSWORD=your_secret
+# ...
 ```
+
+InvenTree requires email settings for notifications (e.g., user invites, alerts). Configure these in the `.env` file. I am going to use a gmail account.
 
 Important:
 
@@ -246,18 +237,7 @@ Important:
 
 - Understanding inventree-server Service Volumes: The Inventree containers will operate on data that is on a NVM (or SSD) at ~/inventree-data/{data,media,static,backup}. Host Path: The left side (e.g., ${INVENTREE_HOST_DATA_DIR}/data) is the directory on your Ubuntu host (e.g., /home/rsutherland/inventree-data/data). Container Path: The right side (e.g., /var/lib/inventree/data) is where the container accesses the data inside its filesystem. Inside the Container: When InvenTree runs invoke backup, it writes backup files (e.g., DB dumps, media archives) to /var/lib/inventree/backup. Docker’s volume mapping ensures these files appear on the host at /srv/samba-share/inventree-backup, accessible via Samba (\\inventree2\Samba-Inventree\inventree-backup).
 
-### c. next update docker-compose.yml
-
-Try the 1.0.x version without changes.
-
-Note the z in the InvenTree example (- ${INVENTREE_EXT_VOLUME}:/home/inventree/data:z) is a Docker volume mount option related to SELinux (Security-Enhanced Linux), which is common on Red Hat-based systems (e.g., CentOS, Fedora) but typically not enabled on Ubuntu 24.04 by default. Service inventree-cache doesnâ€™t need volumes unless persistent Redis data is desired.
-
-```bash
-cd ~/git/InvenTree/contrib/container/
-nano docker-compose.yml
-```
-
-### c. mDNS Setup
+### c. mDNS Setup (not needed, remove after more testing)
 
 ```bash
 sudo apt update
@@ -282,7 +262,6 @@ sudo nano /etc/avahi/services/inventree.service
 
 ```bash
 sudo systemctl restart avahi-daemon
-curl https://inventree.local
 ```
 
 ### d. Compose container is used to setup the Databse
@@ -297,6 +276,7 @@ sudo docker compose run --rm inventree-server invoke update
 
 ```bash
 sudo docker compose up -d
+curl -v -L http://inventree.local
 ```
 
 ### f. Stop Containers
@@ -305,7 +285,7 @@ sudo docker compose up -d
 sudo docker compose down
 ```
 
-### f. Nuke Containers
+### g. Nuke Containers
 
 Development progresses in stages, from time to time a fresh install is needed.
 
