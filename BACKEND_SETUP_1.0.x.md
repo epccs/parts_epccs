@@ -206,8 +206,8 @@ INVENTREE_SITE_URL="http://inventree.local"
 # ...
 # InvenTree superuser account details
 # Un-comment (and complete) these lines to auto-create an admin account
-INVENTREE_ADMIN_USER=admin_<<<change_me
-INVENTREE_ADMIN_PASSWORD=inventree_<<<change_me
+INVENTREE_ADMIN_USER=admin  #<<<change_me
+INVENTREE_ADMIN_PASSWORD=lol123ok!  #<<<change_me @GitGuardian this is on your Banned Lists so do not bitch about it as an example
 INVENTREE_ADMIN_EMAIL=your_google_email@gmail.com
 
 # email setup
@@ -215,15 +215,15 @@ INVENTREE_EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
 INVENTREE_EMAIL_HOST=smtp.gmail.com
 INVENTREE_EMAIL_PORT=587
 INVENTREE_EMAIL_USERNAME=your_google_email@gmail.com
-INVENTREE_EMAIL_PASSWORD=your_app_password
+INVENTREE_EMAIL_PASSWORD=not-a-real-password  # @GitGuardian this is an example
 INVENTREE_EMAIL_USE_TLS=False
 INVENTREE_EMAIL_USE_SSL=True
 INVENTREE_EMAIL_SENDER=your_google_email@gmail.com
 # ...
-# Database credentials - These !!!SHOULD BE!!! changed from the default values!
+# Database credentials !!!SHOULD BE!!! changed from the default values!
 # ...
-INVENTREE_DB_USER=pguser_<<<change_me
-INVENTREE_DB_PASSWORD=your_secret
+INVENTREE_DB_USER=pguser #<<<change_me
+INVENTREE_DB_PASSWORD=not-a-real-password  # @GitGuardian this is an example
 # ...
 ```
 
