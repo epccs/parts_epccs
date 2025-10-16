@@ -1,20 +1,20 @@
-# Documentation of parts_epccs
+# Documentation of Learning InvenTree
 
 ## Project Overview
 
-This repository is the JSON data for an Inventory Management System. The goal is to use the data in a live Inventree system which is designed for intuitive parts management and stock control.
+This repository documents various aspects of Learning InvenTree an Inventory Management System. The goal is to be able to store Parts, BOM, and other aspects of the system as JSON files in this repository. Programs will also be generated to syncronize the Parts and BOM data in InvenTree with this repository.
 
 ## Container Instalation
 
-This repository currently contains instructions for setting up the system containers.
+InvenTree setup instructions.
 
 [./BACKEND_SETUP_1.0.x.md](BACKEND_SETUP_1.0.x.md)
 
 [./BACKEND_DEVSETUP_1.0.x.md](BACKEND_DEVSETUP_1.0.x.md)
 
-## JSON data
+## data
 
-JSON files are used to load the Inventory Management System after it is configured. Some are present but only a few at this stage.
+The data folder holds JSON files that mirror the Inventory Management System.
 
 [Parts_JSON.md](Parts_JSON.md)
 
