@@ -15,14 +15,43 @@ HEADERS = {
     "Accept": "application/json"
 }
 
+def check_category_exists(name, parent_pk=None):
+    """Check if a category with given name and parent already exists."""
+    params = {'name': name}
+    if parent_pk is not None:
+        params['parent'] = parent_pk
+    
+    response = requests.get(BASE_URL_CATEGORIES, headers=HEADERS, params=params)
+    if response.status_code != 200:
+        raise Exception(f"Failed to check existing category: {response.status_code} - {response.text}")
+    
+    results = response.json()
+    return results['results'] if isinstance(results, dict) else results
+
+def check_part_exists(name, category_pk):
+    """Check if a part with given name and category already exists."""
+    params = {'name': name, 'category': category_pk}
+    
+    response = requests.get(BASE_URL_PARTS, headers=HEADERS, params=params)
+    if response.status_code != 200:
+        raise Exception(f"Failed to check existing part: {response.status_code} - {response.text}")
+    
+    results = response.json()
+    return results['results'] if isinstance(results, dict) else results
+
 def import_category(folder_path, parent_pk=None):
     """Recursively import a category from folder, create it, import parts, then subcategories."""
     cat_file = os.path.join(folder_path, 'category.json')
     if not os.path.exists(cat_file):
-        raise Exception(f"No category.json in {folder_path}")
+        raise FileNotFoundError(f"No category.json in {folder_path}")
     
-    with open(cat_file, 'r', encoding='utf-8') as f:
-        cat_data = json.load(f)
+    try:
+        with open(cat_file, 'r', encoding='utf-8') as f:
+            cat_data = json.load(f)
+    except json.JSONDecodeError as e:
+        raise Exception(f"Invalid JSON in {cat_file}: {str(e)}")
+    except Exception as e:
+        raise Exception(f"Error reading {cat_file}: {str(e)}")
     
     # Prepare POST data, pop read-only fields
     post_data = cat_data.copy()
@@ -30,12 +59,24 @@ def import_category(folder_path, parent_pk=None):
         post_data.pop(field, None)
     post_data['parent'] = parent_pk
     
-    resp = requests.post(BASE_URL_CATEGORIES, headers=HEADERS, json=post_data)
-    if resp.status_code != 201:
-        raise Exception(f"Failed to create category from {cat_file}: {resp.status_code} - {resp.text}")
+    # Check if category already exists
+    existing_cats = check_category_exists(post_data['name'], parent_pk)
+    if existing_cats:
+        print(f"Category '{post_data['name']}' already exists, skipping creation")
+        return existing_cats[0]['pk']
     
-    new_cat = resp.json()
-    new_pk = new_cat['pk']
+    try:
+        resp = requests.post(BASE_URL_CATEGORIES, headers=HEADERS, json=post_data)
+        if resp.status_code != 201:
+            raise Exception(f"Failed to create category from {cat_file}: {resp.status_code} - {resp.text}")
+        new_cat = resp.json()
+        new_pk = new_cat['pk']
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Network error creating category from {cat_file}: {str(e)}")
+    except json.JSONDecodeError as e:
+        raise Exception(f"Invalid JSON response creating category from {cat_file}: {str(e)}")
+    except Exception as e:
+        raise Exception(f"Error creating category from {cat_file}: {str(e)}")
     print(f"Created category '{new_cat['name']}' with PK {new_pk} (parent: {parent_pk})")
     
     # Import parts in this folder
@@ -52,9 +93,19 @@ def import_category(folder_path, parent_pk=None):
             post_part.pop(field, None)
         post_part['category'] = new_pk
         
-        resp_part = requests.post(BASE_URL_PARTS, headers=HEADERS, json=post_part)
-        if resp_part.status_code != 201:
-            print(f"Failed to create part from {filename}: {resp_part.status_code} - {resp_part.text}")
+        # Check if part already exists
+        existing_parts = check_part_exists(post_part['name'], new_pk)
+        if existing_parts:
+            print(f"Part '{post_part['name']}' already exists in category {new_pk}, skipping creation")
+            continue
+        
+        try:
+            resp_part = requests.post(BASE_URL_PARTS, headers=HEADERS, json=post_part)
+            if resp_part.status_code != 201:
+                print(f"Failed to create part from {filename}: {resp_part.status_code} - {resp_part.text}")
+                continue
+        except Exception as e:
+            print(f"Error creating part from {filename}: {str(e)}")
             continue
         
         new_part = resp_part.json()
@@ -69,6 +120,9 @@ def import_category(folder_path, parent_pk=None):
 def main():
     if not TOKEN:
         raise Exception("INVENTREE_TOKEN environment variable not set. Set it with: export INVENTREE_TOKEN='your-token'")
+    
+    if not os.path.exists('data'):
+        raise FileNotFoundError("'data' directory not found. Please ensure you're running the script from the correct location.")
     
     root_dir = 'data'  # Top-level category folders are directly under 'data'
     try:
