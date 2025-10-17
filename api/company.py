@@ -25,20 +25,29 @@ def fetch_companies(url):
             raise Exception(f"API request failed: {response.status_code} - {response.text}")
         
         data = response.json()
-        companies.extend(data["results"])
-        
-        # Get next page URL (null if no more pages)
-        url = data.get("next")
+        if isinstance(data, dict) and "results" in data:
+            # Handle paginated API response
+            companies.extend(data["results"])
+            url = data.get("next")
+        else:
+            # Handle direct list response
+            companies.extend(data)
+            url = None  # No pagination in this case
         
     return companies
 
 def save_company_to_file(company):
     """Save a single company's data to a JSON file named after the company."""
     company_name = company["name"]
-    filename = f"companies/{sanitize_filename(company_name)}.json"
+    dirname = "data/companies"
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+        
+    filename = f"{dirname}/{sanitize_filename(company_name)}.json"
     
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(company, f, indent=4)
+        f.write('\n')
     print(f"Saved {filename}")
 
 def main():
