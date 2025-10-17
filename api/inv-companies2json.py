@@ -3,7 +3,9 @@ import json
 import os
 import re
 
-# API endpoint and authentication
+# API endpoint and authentication (for Company Management)
+# https://docs.inventree.org/en/latest/api/schema/#api-schema-documentation
+# save each company to a separate JSON file named after the company
 BASE_URL = "http://localhost:8000/api/company/"
 TOKEN = os.getenv("INVENTREE_TOKEN")
 HEADERS = {
