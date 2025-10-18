@@ -4,7 +4,8 @@ import os
 
 # API endpoint and authentication (for Parts and Part Categories)
 # https://docs.inventree.org/en/latest/api/schema/#api-schema-documentation
-# Save each category and subcategories as a file structure as well as a category.json file
+# Use each category and any subcategories to create a file system structure under a 'data/parts' folder
+# Save the category (and subcategories) as a category.json file in the parent folder.
 # populate the parts in the proper category file structure as a separate JSON file named after the part
 BASE_URL_PARTS = "http://localhost:8000/api/part/"
 BASE_URL_CATEGORIES = "http://localhost:8000/api/part/category/"
@@ -52,11 +53,17 @@ def import_category(folder_path, parent_pk=None):
         raise Exception(f"Invalid JSON in {cat_file}: {str(e)}")
     except Exception as e:
         raise Exception(f"Error reading {cat_file}: {str(e)}")
-    
-    # Prepare POST data, pop read-only fields
-    post_data = cat_data.copy()
-    for field in ['pk', 'url', 'pathstring', 'part_count', 'item_count', 'category_part_count']:
-        post_data.pop(field, None)
+
+    # Handle both single object and list formats
+    if isinstance(cat_data, list):
+        cat_data = cat_data[0]  # Take the first category if it's a list
+
+    # Prepare POST data
+    post_data = {}
+    # Only copy fields we want to send
+    for field in ['name', 'description', 'default_location', 'default_keywords']:
+        if field in cat_data:
+            post_data[field] = cat_data[field]
     post_data['parent'] = parent_pk
     
     # Check if category already exists
@@ -84,13 +91,30 @@ def import_category(folder_path, parent_pk=None):
         if filename == 'category.json' or not filename.endswith('.json'):
             continue
         part_path = os.path.join(folder_path, filename)
-        with open(part_path, 'r', encoding='utf-8') as f:
-            part_data = json.load(f)
-        
-        # Prepare POST data, pop read-only fields
-        post_part = part_data.copy()
-        for field in ['pk', 'url', 'creation_date', 'total_in_stock', 'allocation_count', 'available_stock', 'in_production', 'stock_item_count', 'used_in_count', 'supplier_count']:
-            post_part.pop(field, None)
+        try:
+            with open(part_path, 'r', encoding='utf-8') as f:
+                part_data = json.load(f)
+        except json.JSONDecodeError as e:
+            print(f"Invalid JSON in {part_path}: {str(e)}")
+            continue
+        except Exception as e:
+            print(f"Error reading {part_path}: {str(e)}")
+            continue
+
+        # Handle both single object and list formats
+        if isinstance(part_data, list):
+            part_data = part_data[0]  # Take the first part if it's a list
+
+        # Prepare POST data with only the fields we want to send
+        post_part = {}
+        allowed_fields = ['name', 'description', 'IPN', 'revision', 'keywords',
+                         'barcode', 'minimum_stock', 'units', 'assembly', 'component',
+                         'trackable', 'purchaseable', 'salable', 'virtual']
+
+        for field in allowed_fields:
+            if field in part_data:
+                post_part[field] = part_data[field]
+
         post_part['category'] = new_pk
         
         # Check if part already exists
@@ -123,8 +147,8 @@ def main():
     
     if not os.path.exists('data'):
         raise FileNotFoundError("'data' directory not found. Please ensure you're running the script from the correct location.")
-    
-    root_dir = 'data'  # Top-level category folders are directly under 'data'
+
+    root_dir = 'data/parts'  # Top-level category folders are directly under 'data/parts'
     try:
         for top_dir in os.listdir(root_dir):
             top_path = os.path.join(root_dir, top_dir)

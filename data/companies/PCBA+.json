@@ -1,0 +1,22 @@
+{
+    "pk": 45,
+    "name": "PCBA+",
+    "description": "PCB assembly house",
+    "website": "",
+    "phone": "",
+    "address": null,
+    "email": "",
+    "currency": "EUR",
+    "contact": "",
+    "link": "",
+    "image": null,
+    "active": true,
+    "is_customer": false,
+    "is_manufacturer": false,
+    "is_supplier": true,
+    "parts_supplied": 1,
+    "parts_manufactured": 0,
+    "address_count": 0,
+    "primary_address": null,
+    "tax_id": ""
+}
