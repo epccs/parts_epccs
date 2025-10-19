@@ -1,161 +1,151 @@
+# Use API for Parts and Part Categories with the goal of pulling data from InvenTree to populate a hierarchical structure of categories and parts.
+# https://docs.inventree.org/en/latest/api/schema/#api-schema-documentation
+# Use each category and any subcategories to create a file system structure under a 'data/parts' folder
+# Each folder (representing a category) should contain a category.json file that lists all immediate 
+# subcategories of that folder’s category (not all categories globally).
+# Populate the parts in the proper category file structure as a separate JSON file named after the part
+# Import Compatibility: The structure should be compatible with an import script that can recreate the categories and parts in another InvenTree instance.
 import requests
 import json
 import os
+import re
 
-# API endpoint and authentication (for Parts and Part Categories)
-# https://docs.inventree.org/en/latest/api/schema/#api-schema-documentation
-# Use each category and any subcategories to create a file system structure under a 'data/parts' folder
-# Save the category (and subcategories) as a category.json file in the parent folder.
-# populate the parts in the proper category file structure as a separate JSON file named after the part
+# API endpoints and authentication
 BASE_URL_PARTS = "http://localhost:8000/api/part/"
 BASE_URL_CATEGORIES = "http://localhost:8000/api/part/category/"
 TOKEN = os.getenv("INVENTREE_TOKEN")
 HEADERS = {
     "Authorization": f"Token {TOKEN}",
-    "Content-Type": "application/json",
     "Accept": "application/json"
 }
 
-def check_category_exists(name, parent_pk=None):
-    """Check if a category with given name and parent already exists."""
-    params = {'name': name}
-    if parent_pk is not None:
-        params['parent'] = parent_pk
-    
-    response = requests.get(BASE_URL_CATEGORIES, headers=HEADERS, params=params)
-    if response.status_code != 200:
-        raise Exception(f"Failed to check existing category: {response.status_code} - {response.text}")
-    
-    results = response.json()
-    return results['results'] if isinstance(results, dict) else results
+def sanitize_filename(name):
+    """Sanitize name to create a valid filename or folder name."""
+    print(f"DEBUG: Sanitizing name: {name}")
+    sanitized = re.sub(r'[<>:"/\\|?*]', '_', name.strip())
+    print(f"DEBUG: Sanitized to: {sanitized}")
+    return sanitized
 
-def check_part_exists(name, category_pk):
-    """Check if a part with given name and category already exists."""
-    params = {'name': name, 'category': category_pk}
-    
-    response = requests.get(BASE_URL_PARTS, headers=HEADERS, params=params)
-    if response.status_code != 200:
-        raise Exception(f"Failed to check existing part: {response.status_code} - {response.text}")
-    
-    results = response.json()
-    return results['results'] if isinstance(results, dict) else results
-
-def import_category(folder_path, parent_pk=None):
-    """Recursively import a category from folder, create it, import parts, then subcategories."""
-    cat_file = os.path.join(folder_path, 'category.json')
-    if not os.path.exists(cat_file):
-        raise FileNotFoundError(f"No category.json in {folder_path}")
-    
+def fetch_data(url):
+    """Fetch data (parts or categories), handling pagination."""
+    print(f"DEBUG: Fetching data from URL: {url}")
+    items = []
     try:
-        with open(cat_file, 'r', encoding='utf-8') as f:
-            cat_data = json.load(f)
-    except json.JSONDecodeError as e:
-        raise Exception(f"Invalid JSON in {cat_file}: {str(e)}")
-    except Exception as e:
-        raise Exception(f"Error reading {cat_file}: {str(e)}")
-
-    # Handle both single object and list formats
-    if isinstance(cat_data, list):
-        cat_data = cat_data[0]  # Take the first category if it's a list
-
-    # Prepare POST data
-    post_data = {}
-    # Only copy fields we want to send
-    for field in ['name', 'description', 'default_location', 'default_keywords']:
-        if field in cat_data:
-            post_data[field] = cat_data[field]
-    post_data['parent'] = parent_pk
-    
-    # Check if category already exists
-    existing_cats = check_category_exists(post_data['name'], parent_pk)
-    if existing_cats:
-        print(f"Category '{post_data['name']}' already exists, skipping creation")
-        return existing_cats[0]['pk']
-    
-    try:
-        resp = requests.post(BASE_URL_CATEGORIES, headers=HEADERS, json=post_data)
-        if resp.status_code != 201:
-            raise Exception(f"Failed to create category from {cat_file}: {resp.status_code} - {resp.text}")
-        new_cat = resp.json()
-        new_pk = new_cat['pk']
+        while url:
+            response = requests.get(url, headers=HEADERS)
+            print(f"DEBUG: API response status: {response.status_code}")
+            if response.status_code != 200:
+                print(f"DEBUG: API request failed: {response.text}")
+                raise Exception(f"API request failed: {response.status_code} - {response.text}")
+            
+            data = response.json()
+            if isinstance(data, dict) and "results" in data:
+                print(f"DEBUG: Paginated response, found {len(data['results'])} items")
+                items.extend(data["results"])
+                url = data.get("next")
+                print(f"DEBUG: Next page URL: {url}")
+            else:
+                print(f"DEBUG: Direct list response, found {len(data)} items")
+                items.extend(data)
+                url = None
+        print(f"DEBUG: Total items fetched: {len(items)}")
+        return items
     except requests.exceptions.RequestException as e:
-        raise Exception(f"Network error creating category from {cat_file}: {str(e)}")
-    except json.JSONDecodeError as e:
-        raise Exception(f"Invalid JSON response creating category from {cat_file}: {str(e)}")
+        print(f"DEBUG: Network error fetching data: {str(e)}")
+        raise Exception(f"Network error: {str(e)}")
+
+def save_to_file(data, filepath):
+    """Save data to a JSON file."""
+    print(f"DEBUG: Saving data to {filepath}")
+    try:
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4)
+            f.write('\n')
+        print(f"DEBUG: Successfully saved {filepath}")
     except Exception as e:
-        raise Exception(f"Error creating category from {cat_file}: {str(e)}")
-    print(f"Created category '{new_cat['name']}' with PK {new_pk} (parent: {parent_pk})")
-    
-    # Import parts in this folder
-    for filename in os.listdir(folder_path):
-        if filename == 'category.json' or not filename.endswith('.json'):
-            continue
-        part_path = os.path.join(folder_path, filename)
-        try:
-            with open(part_path, 'r', encoding='utf-8') as f:
-                part_data = json.load(f)
-        except json.JSONDecodeError as e:
-            print(f"Invalid JSON in {part_path}: {str(e)}")
-            continue
-        except Exception as e:
-            print(f"Error reading {part_path}: {str(e)}")
-            continue
-
-        # Handle both single object and list formats
-        if isinstance(part_data, list):
-            part_data = part_data[0]  # Take the first part if it's a list
-
-        # Prepare POST data with only the fields we want to send
-        post_part = {}
-        allowed_fields = ['name', 'description', 'IPN', 'revision', 'keywords',
-                         'barcode', 'minimum_stock', 'units', 'assembly', 'component',
-                         'trackable', 'purchaseable', 'salable', 'virtual']
-
-        for field in allowed_fields:
-            if field in part_data:
-                post_part[field] = part_data[field]
-
-        post_part['category'] = new_pk
-        
-        # Check if part already exists
-        existing_parts = check_part_exists(post_part['name'], new_pk)
-        if existing_parts:
-            print(f"Part '{post_part['name']}' already exists in category {new_pk}, skipping creation")
-            continue
-        
-        try:
-            resp_part = requests.post(BASE_URL_PARTS, headers=HEADERS, json=post_part)
-            if resp_part.status_code != 201:
-                print(f"Failed to create part from {filename}: {resp_part.status_code} - {resp_part.text}")
-                continue
-        except Exception as e:
-            print(f"Error creating part from {filename}: {str(e)}")
-            continue
-        
-        new_part = resp_part.json()
-        print(f"Created part '{new_part['name']}' with PK {new_part['pk']} in category {new_pk}")
-    
-    # Recurse into subfolders for subcategories
-    for subdir in os.listdir(folder_path):
-        sub_path = os.path.join(folder_path, subdir)
-        if os.path.isdir(sub_path):
-            import_category(sub_path, new_pk)
+        print(f"DEBUG: Error saving {filepath}: {str(e)}")
+        raise Exception(f"Error saving {filepath}: {str(e)}")
 
 def main():
+    print("DEBUG: Starting main function")
     if not TOKEN:
+        print("DEBUG: INVENTREE_TOKEN not set")
         raise Exception("INVENTREE_TOKEN environment variable not set. Set it with: export INVENTREE_TOKEN='your-token'")
     
-    if not os.path.exists('data'):
-        raise FileNotFoundError("'data' directory not found. Please ensure you're running the script from the correct location.")
-
-    root_dir = 'data/parts'  # Top-level category folders are directly under 'data/parts'
+    root_dir = 'data/parts'
+    print(f"DEBUG: Ensuring root directory exists: {root_dir}")
+    os.makedirs(root_dir, exist_ok=True)
+    
     try:
-        for top_dir in os.listdir(root_dir):
-            top_path = os.path.join(root_dir, top_dir)
-            if os.path.isdir(top_path) and top_dir != 'companies':  # Skip companies dir
-                import_category(top_path, None)
+        # Fetch all categories
+        print(f"DEBUG: Fetching categories from {BASE_URL_CATEGORIES}")
+        categories = fetch_data(BASE_URL_CATEGORIES)
+        print(f"DEBUG: Retrieved {len(categories)} categories")
+        
+        # Build PK-to-pathstring map and parent-to-subcategories map
+        pk_to_pathstring = {}
+        parent_to_subcategories = {'None': []}  # 'None' for top-level categories
+        for category in categories:
+            pk = category.get('pk')
+            pathstring = category.get('pathstring')
+            parent_pk = str(category.get('parent')) if category.get('parent') is not None else 'None'
+            if not pathstring or not pk:
+                print(f"DEBUG: Skipping category {category.get('name', 'unknown')} (missing pk or pathstring)")
+                continue
+            pk_to_pathstring[pk] = pathstring
+            print(f"DEBUG: Mapping category PK {pk} to pathstring {pathstring}")
+            if parent_pk not in parent_to_subcategories:
+                parent_to_subcategories[parent_pk] = []
+            parent_to_subcategories[parent_pk].append(category)
+        
+        # Save top-level categories to data/parts/category.json
+        top_level_cats = parent_to_subcategories.get('None', [])
+        if top_level_cats:
+            categories_file = os.path.join(root_dir, 'category.json')
+            print(f"DEBUG: Saving {len(top_level_cats)} top-level categories to {categories_file}")
+            save_to_file(top_level_cats, categories_file)
+        
+        # Save subcategories to their parent folders' category.json
+        for parent_pk, subcats in parent_to_subcategories.items():
+            if parent_pk == 'None' or not subcats:
+                continue
+            parent_pathstring = pk_to_pathstring.get(int(parent_pk))
+            if not parent_pathstring:
+                print(f"DEBUG: Skipping subcategories for parent PK {parent_pk} (no pathstring)")
+                continue
+            path_parts = parent_pathstring.split('/')
+            dir_path = os.path.join(root_dir, *[sanitize_filename(p) for p in path_parts])
+            subcats_file = os.path.join(dir_path, 'category.json')
+            print(f"DEBUG: Saving {len(subcats)} subcategories to {subcats_file}")
+            save_to_file(subcats, subcats_file)
+        
+        # Fetch all parts
+        print(f"DEBUG: Fetching parts from {BASE_URL_PARTS}")
+        parts = fetch_data(BASE_URL_PARTS)
+        print(f"DEBUG: Retrieved {len(parts)} parts")
+        
+        # Save parts in their category folders
+        for part in parts:
+            cat_pk = part.get('category')
+            part_name = part.get('name')
+            if not cat_pk or not part_name:
+                print(f"DEBUG: Skipping part {part_name or 'unknown'} (missing category or name)")
+                continue
+            pathstring = pk_to_pathstring.get(cat_pk)
+            if not pathstring:
+                print(f"DEBUG: Skipping part {part_name} (no pathstring for category PK {cat_pk})")
+                continue
+            path_parts = pathstring.split('/')
+            dir_path = os.path.join(root_dir, *[sanitize_filename(p) for p in path_parts])
+            part_filename = f"{sanitize_filename(part_name)}.json"
+            part_file = os.path.join(dir_path, part_filename)
+            print(f"DEBUG: Saving part {part_name} to {part_file}")
+            save_to_file(part, part_file)
+            
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"DEBUG: Error in main: {str(e)}")
+        raise
 
 if __name__ == "__main__":
     main()

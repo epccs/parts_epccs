@@ -1,0 +1,18 @@
+[
+    {
+        "pk": 21,
+        "name": "Pin Headers",
+        "description": "Pin headers and sockets",
+        "default_location": null,
+        "default_keywords": "",
+        "level": 2,
+        "parent": 13,
+        "part_count": 55,
+        "subcategories": 0,
+        "pathstring": "Electronics/Connectors/Pin Headers",
+        "starred": false,
+        "structural": false,
+        "icon": "",
+        "parent_default_location": null
+    }
+]

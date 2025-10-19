@@ -56,3 +56,7 @@ Error: no DISPLAY environment variable specified
 ✓ Configured git protocol
 ✓ Logged in as your_gh_user
 ```
+
+## Some help from AI
+
+- [Grok share - Parts Categories JSON File Storage](https://grok.com/share/c2hhcmQtMw%3D%3D_4d021c2b-6692-4f78-95e6-f02df4ac3047)
