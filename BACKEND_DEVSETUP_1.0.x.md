@@ -1,8 +1,6 @@
 # Inventree 1.0.x Developer mode on Ubuntu 24.04
 
-This guide will help you Install Inventree 1.0.x in Developer mode on Ubuntu 24.04 (<http://inventree2.local>). In Dev mode media content is served directly from a Django webserver so that changes can be looked at in real time, but this is not considered safe for production.
-
-- ToDo: https is not working.
+This guide will help you Install Inventree 1.0.x in Developer mode on Ubuntu 24.04 (<http://dev-inventree.local>). In Dev mode media content is served directly from a Django webserver so that changes can be looked at in real time, but this is not considered safe for production. I run this on a small private network behinde a NAT box that only I have access to.
 
 ## Prerequisite Docker
 
@@ -253,7 +251,7 @@ File Ownership: If editing source files locally, add post-build:
 sudo chown -R $USER:$USER ~/git/InvenTree/src/
 ```
 
-Live Development Server: For frontend dev with hot-reloading (access at http://dev-inventree.local:5173 ):
+Live Development Server: For frontend dev with hot-reloading (access at <http://dev-inventree.local:5173> ):
 
 ```bash
 docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm -p 5173:5173 inventree-dev-server invoke dev.frontend-server

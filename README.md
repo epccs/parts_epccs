@@ -58,6 +58,16 @@ Error: no DISPLAY environment variable specified
 ✓ Logged in as your_gh_user
 ```
 
+## Clone this repository
+
+```bash
+cd ~
+mkdir -p ~/git
+cd ~/git
+git clone https://github.com/epccs/parts_epccs.git ~/git/parts_epccs
+cd ~/git/parts_epccs
+```
+
 ## Some help from AI
 
 - [Grok share - Parts Categories JSON File Storage](https://grok.com/share/c2hhcmQtMw%3D%3D_4d021c2b-6692-4f78-95e6-f02df4ac3047)

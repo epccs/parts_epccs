@@ -2,7 +2,7 @@
 
 This guide will help you Install Inventree 1.0.x on Ubuntu 25.04 (<https://inventree.local>).
 
-- ToDo: https is not working next step is to fix that.
+- ToDo: https is not working.
 
 ## Prerequisite Docker
 
