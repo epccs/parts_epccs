@@ -40,6 +40,7 @@ gh --version
 
 # Authenticate GitHub CLI (I used browser on remote)
 gh auth login
+gh auth status
 ```
 
 ```text
