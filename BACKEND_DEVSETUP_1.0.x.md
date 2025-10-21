@@ -90,6 +90,8 @@ sudo nano /etc/fstab
 sudo systemctl daemon-reload
 sudo mount /srv/samba-share
 sudo chown -R 1000:1000 /srv/samba-share
+# lost+found should stay as root
+sudo chown -R root:root /srv/samba-share/lost+found
 # Create the backup subdirectory and set premissions for containers to use
 sudo mkdir -p /srv/samba-share/inventree-backup
 sudo chown -R 1000:1000 /srv/samba-share/inventree-backup
