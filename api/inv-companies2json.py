@@ -1,3 +1,7 @@
+# Use API for Companies with the goal of pulling data from InvenTree to populate a folder (data/companies).
+# https://docs.inventree.org/en/latest/api/schema/#api-schema-documentation
+# Use each company from inventree to create a json file under the `data/companies` folder
+# Import Compatibility: The structure should be compatible with an import script that can recreate the categories and parts in another InvenTree instance.
 import requests
 import json
 import os
@@ -5,8 +9,7 @@ import re
 
 # API endpoint and authentication (for Company Management)
 # https://docs.inventree.org/en/latest/api/schema/#api-schema-documentation
-# save each company to a separate JSON file named after the company
-BASE_URL = "http://localhost:8000/api/company/"
+BASE_URL = os.getenv("INVENTREE_URL") + "api/company/"
 TOKEN = os.getenv("INVENTREE_TOKEN")
 HEADERS = {
     "Authorization": f"Token {TOKEN}",
@@ -55,7 +58,9 @@ def save_company_to_file(company):
 def main():
     if not TOKEN:
         raise Exception("INVENTREE_TOKEN environment variable not set. Set it with: export INVENTREE_TOKEN='your-token'")
-    
+    if not BASE_URL:
+        raise Exception("INVENTREE_URL environment variable not set. Set it with: export INVENTREE_URL='http://localhost:8000/'")
+
     try:
         # Fetch all companies
         companies = fetch_companies(BASE_URL)
