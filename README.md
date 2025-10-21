@@ -68,6 +68,21 @@ git clone https://github.com/epccs/parts_epccs.git ~/git/parts_epccs
 cd ~/git/parts_epccs
 ```
 
+## Environment Variables
+
+```bash
+nano ~/.profile
+```
+
+The python scritps in the /api folder need some environment variables set. The token is set in InvenTree in the `Account Setting` >> `User Settings` then select `Access Tokens`. If the user has the proper permission they can generate Tokens (ask an AI how to set the correct permission.)
+
+```text
+# set Inventree environment
+export INVENTREE_TOKEN='your-token'
+export INVENTREE_URL='http://inventree.local/'
+```
+
 ## Some help from AI
 
-- [Grok share - Parts Categories JSON File Storage](https://grok.com/share/c2hhcmQtMw%3D%3D_4d021c2b-6692-4f78-95e6-f02df4ac3047)
+- [Grok share - Parts & Categories, Companies](https://grok.com/share/c2hhcmQtMw%3D%3D_fe17b098-7d5d-429a-ab6e-e9d42f2ab422)
+- [Grok share - Resolve git merge conflict](https://grok.com/share/c2hhcmQtMw%3D%3D_3f2fb7da-5d90-45d7-b483-9f28a2f9108e)
