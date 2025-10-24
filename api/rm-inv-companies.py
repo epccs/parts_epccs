@@ -15,7 +15,10 @@ import glob
 import sys
 
 # API endpoint and authentication
-BASE_URL = os.getenv("INVENTREE_URL") + "api/company/" if os.getenv("INVENTREE_URL") else None
+if os.getenv("INVENTREE_URL"):
+    BASE_URL = os.getenv("INVENTREE_URL") + "api/company/"
+else:
+    BASE_URL = None
 TOKEN = os.getenv("INVENTREE_TOKEN")
 HEADERS = {
     "Authorization": f"Token {TOKEN}",

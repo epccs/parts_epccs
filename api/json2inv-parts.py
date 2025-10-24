@@ -8,8 +8,14 @@ import json
 import os
 
 # API endpoints and authentication
-BASE_URL_PARTS = "http://localhost:8000/api/part/"
-BASE_URL_CATEGORIES = "http://localhost:8000/api/part/category/"
+if os.getenv("INVENTREE_URL"):
+    BASE_URL = os.getenv("INVENTREE_URL")
+    BASE_URL_PARTS = BASE_URL + "api/part/"
+    BASE_URL_CATEGORIES = BASE_URL + "api/part/category/"
+else:
+    BASE_URL = None
+    BASE_URL_PARTS = None
+    BASE_URL_CATEGORIES = None
 TOKEN = os.getenv("INVENTREE_TOKEN")
 HEADERS = {
     "Authorization": f"Token {TOKEN}",
@@ -188,7 +194,10 @@ def main():
     if not TOKEN:
         print("DEBUG: INVENTREE_TOKEN not set")
         raise Exception("INVENTREE_TOKEN environment variable not set. Set it with: export INVENTREE_TOKEN='your-token'")
-    
+    if not BASE_URL:
+        print("DEBUG: INVENTREE_URL not set")
+        raise Exception("INVENTREE_URL environment variable not set. Set it with: export INVENTREE_URL='http://localhost:8000/'")
+
     root_dir = 'data/parts'
     if not os.path.exists(root_dir):
         print(f"DEBUG: Root directory '{root_dir}' does not exist")

@@ -1,8 +1,9 @@
 # file name: inv-companies2json.py
 # Use InvenTree API for Companies with the goal of pulling data from InvenTree to populate a folder (data/companies).
 # https://docs.inventree.org/en/latest/api/schema/#api-schema-documentation
-# Use each company from inventree to create a json file under the `data/companies` folder
+# Use each company from InvenTree to create a json file under the `data/companies` folder
 # Import Compatibility: The structure should be compatible with the `json2inv-companies.py` import script that can recreate the Companies in another InvenTree instance.
+
 import requests
 import json
 import os
@@ -12,7 +13,7 @@ import re
 # https://docs.inventree.org/en/latest/api/schema/#api-schema-documentation
 if os.getenv("INVENTREE_URL"):
     BASE_URL = os.getenv("INVENTREE_URL") + "api/company/"
-else: 
+else:
     BASE_URL = None
 TOKEN = os.getenv("INVENTREE_TOKEN")
 HEADERS = {
@@ -22,9 +23,16 @@ HEADERS = {
 
 def sanitize_filename(name):
     """Sanitize company name to create a valid filename."""
-    print(f"DEBUG: Sanitizing name: {name}")
+    print(f"DEBUG: Sanitizing name for filename: {name}")
     sanitized = re.sub(r'[<>:"/\\|?*]', '_', name.strip())
     print(f"DEBUG: Sanitized to: {sanitized}")
+    return sanitized
+
+def sanitize_company_name(name):
+    """Sanitize company name for JSON by replacing spaces with underscores and removing dots."""
+    print(f"DEBUG: Sanitizing company name for JSON: {name}")
+    sanitized = name.replace(' ', '_').replace('.', '')
+    print(f"DEBUG: Sanitized company name to: {sanitized}")
     return sanitized
 
 def fetch_companies(url):
@@ -63,6 +71,12 @@ def save_company_to_file(company):
         print(f"DEBUG: Skipping company with missing name: {company}")
         return
     
+    # Modify company data: sanitize name and clear image
+    company_modified = company.copy()
+    company_modified['name'] = sanitize_company_name(company_name)
+    company_modified['image'] = ""
+    print(f"DEBUG: Modified company data: name={company_modified['name']}, image={company_modified['image']}")
+    
     dirname = "data/companies"
     print(f"DEBUG: Ensuring directory exists: {dirname}")
     if not os.path.exists(dirname):
@@ -70,11 +84,11 @@ def save_company_to_file(company):
         print(f"DEBUG: Created directory: {dirname}")
     
     filename = f"{dirname}/{sanitize_filename(company_name)}.json"
-    print(f"DEBUG: Saving company {company_name} to {filename}")
+    print(f"DEBUG: Saving company {company_modified['name']} to {filename}")
     
     try:
         with open(filename, "w", encoding="utf-8") as f:
-            json.dump(company, f, indent=4)
+            json.dump(company_modified, f, indent=4)
             f.write('\n')
         print(f"DEBUG: Successfully saved {filename}")
     except Exception as e:
