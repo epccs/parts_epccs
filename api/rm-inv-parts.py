@@ -3,14 +3,19 @@
 # https://docs.inventree.org/en/latest/api/schema/#api-schema-documentation
 # Accepts Linux globbing patterns (e.g., '*.json', 'Paint/Yellow_Paint.json') to specify parts to delete.
 # Patterns are relative to data/parts (e.g., 'Electronics/Passives/Capacitors/C_*_0402.json').
+# Optional CLI flag --remove-json to delete part JSON files after successful deletion.
 # Compatibility: Uses the part JSON files produced by inv-parts2json.py.
 # Deletes parts by name and category, skipping non-existent parts.
+# Example usage: 
+#   python3 ./api/rm-inv-parts.py "Paint/Yellow_Paint.json" --remove-json
+#   python3 ./api/rm-inv-parts.py "Electronics/Passives/Capacitors/C_*_0402.json"
 
 import requests
 import json
 import os
 import glob
 import sys
+import argparse
 
 # API endpoints and authentication
 BASE_URL = os.getenv("INVENTREE_URL") + "api/part/" if os.getenv("INVENTREE_URL") else None
@@ -59,7 +64,7 @@ def delete_part(part_name, part_pk):
         print(f"DEBUG: Network error deleting part '{part_name}': {str(e)}")
         raise Exception(f"Network error deleting part '{part_name}': {str(e)}")
 
-def process_part_file(part_file):
+def process_part_file(part_file, remove_json=False):
     """Process a single part JSON file to delete the corresponding part."""
     print(f"DEBUG: Processing part file: {part_file}")
     try:
@@ -91,8 +96,23 @@ def process_part_file(part_file):
     
     # Delete the part
     delete_part(part_name, part_pk)
+    
+    # Optionally remove JSON file
+    if remove_json:
+        print(f"DEBUG: Removing part file {part_file}")
+        try:
+            os.remove(part_file)
+            print(f"DEBUG: Successfully removed {part_file}")
+        except Exception as e:
+            print(f"DEBUG: Error removing {part_file}: {str(e)}")
 
 def main():
+    # Parse CLI arguments
+    parser = argparse.ArgumentParser(description="Delete InvenTree parts based on data/parts JSON files.")
+    parser.add_argument('patterns', nargs='*', help="Glob patterns for parts (e.g., '*.json', 'Paint/Yellow_Paint.json')")
+    parser.add_argument('--remove-json', action='store_true', help="Remove part JSON files after deletion")
+    args = parser.parse_args()
+    
     print("DEBUG: Starting main function")
     if not TOKEN:
         print("DEBUG: INVENTREE_TOKEN not set")
@@ -115,12 +135,11 @@ def main():
     
     # Get glob patterns from command-line arguments
     print(f"DEBUG: Raw command-line arguments: {sys.argv[1:]}")
-    if len(sys.argv) < 2:
-        print("DEBUG: No glob patterns provided")
-        raise Exception("Usage: python3 rm-inv-parts.py <glob_pattern> [glob_pattern...]")
-    
-    glob_patterns = sys.argv[1:]
+    glob_patterns = args.patterns
     print(f"DEBUG: Glob patterns provided: {glob_patterns}")
+    if not glob_patterns:
+        print("DEBUG: No glob patterns provided")
+        raise Exception("Usage: python3 rm-inv-parts.py [glob_pattern...] [--remove-json]")
     
     try:
         part_files = []
@@ -150,7 +169,7 @@ def main():
             if not part_file.endswith('.json') or os.path.basename(part_file) == 'category.json':
                 print(f"DEBUG: Skipping non-part file: {part_file}")
                 continue
-            process_part_file(part_file)
+            process_part_file(part_file, args.remove_json)
             
     except Exception as e:
         print(f"DEBUG: Error in main loop: {str(e)}")

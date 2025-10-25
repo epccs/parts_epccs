@@ -84,5 +84,5 @@ export INVENTREE_URL='http://inventree.local/'
 
 ## Some help from AI
 
-- [Grok share - Parts & Categories, Companies](https://grok.com/share/c2hhcmQtMw%3D%3D_290ad041-b0c0-4373-9bbd-7524c2d7235b)
+- [Grok share - Parts & Categories, Companies](https://grok.com/share/c2hhcmQtMw%3D%3D_f24505d6-29e2-4908-b5c1-6ae286640f82)
 - [Grok share - Resolve git merge conflict](https://grok.com/share/c2hhcmQtMw%3D%3D_3f2fb7da-5d90-45d7-b483-9f28a2f9108e)

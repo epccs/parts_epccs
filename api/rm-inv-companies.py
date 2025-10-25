@@ -1,18 +1,20 @@
 # file name: rm-inv-companies.py
 # Use InvenTree API to delete companies from an InvenTree instance based on JSON files in data/companies.
 # https://docs.inventree.org/en/latest/api/schema/#api-schema-documentation
-# Accepts Linux globbing patterns (e.g., *.json, Customer [A-C].json, Customer [!D].json, Customer ?.json) to specify companies to delete.
-# run as: python3 ./api/rm-inv-companies.py "Customer [A-C].json"
-#         python3 ./api/rm-inv-companies.py 'Customer D.json'
-#         python3 ./api/rm-inv-companies.py Customer\ E.json
-#         python3 ./api/rm-inv-companies.py *.json
+# Accepts Linux globbing patterns (e.g., '*.json', 'Customer_?.json') to specify companies to delete.
+# Optional CLI flag --remove-json to delete company JSON files after successful deletion.
 # Compatibility: Uses the company JSON files produced by inv-companies2json.py.
+# Example usage: 
+#   python3 ./api/rm-inv-companies.py "Customer_?.json"
+#   python3 ./api/rm-inv-companies.py "Bourns_Inc.json"
+#   python3 ./api/rm-inv-companies.py "*.json" --remove-json
 
 import requests
 import json
 import os
 import glob
 import sys
+import argparse
 
 # API endpoint and authentication
 if os.getenv("INVENTREE_URL"):
@@ -64,7 +66,7 @@ def delete_company(company_name, company_pk):
         print(f"DEBUG: Network error deleting company '{company_name}': {str(e)}")
         raise Exception(f"Network error deleting company '{company_name}': {str(e)}")
 
-def process_company_file(company_file):
+def process_company_file(company_file, remove_json=False):
     """Process a single company JSON file to delete the corresponding company."""
     print(f"DEBUG: Processing company file: {company_file}")
     try:
@@ -95,8 +97,23 @@ def process_company_file(company_file):
     
     # Delete the company
     delete_company(company_name, company_pk)
+    
+    # Optionally remove JSON file
+    if remove_json:
+        print(f"DEBUG: Removing company file {company_file}")
+        try:
+            os.remove(company_file)
+            print(f"DEBUG: Successfully removed {company_file}")
+        except Exception as e:
+            print(f"DEBUG: Error removing {company_file}: {str(e)}")
 
 def main():
+    # Parse CLI arguments
+    parser = argparse.ArgumentParser(description="Delete InvenTree companies based on data/companies JSON files.")
+    parser.add_argument('patterns', nargs='*', help="Glob patterns for companies (e.g., '*.json', 'Customer_?.json')")
+    parser.add_argument('--remove-json', action='store_true', help="Remove company JSON files after deletion")
+    args = parser.parse_args()
+    
     print("DEBUG: Starting main function")
     if not TOKEN:
         print("DEBUG: INVENTREE_TOKEN not set")
@@ -119,12 +136,11 @@ def main():
     
     # Get glob patterns from command-line arguments
     print(f"DEBUG: Raw command-line arguments: {sys.argv[1:]}")
-    if len(sys.argv) < 2:
-        print("DEBUG: No glob patterns provided")
-        raise Exception("Usage: python3 rm-inv-companies.py <glob_pattern> [glob_pattern...]")
-    
-    glob_patterns = sys.argv[1:]
+    glob_patterns = args.patterns
     print(f"DEBUG: Glob patterns provided: {glob_patterns}")
+    if not glob_patterns:
+        print("DEBUG: No glob patterns provided")
+        raise Exception("Usage: python3 rm-inv-companies.py [glob_pattern...] [--remove-json]")
     
     try:
         company_files = []
@@ -154,7 +170,7 @@ def main():
             if not company_file.endswith('.json'):
                 print(f"DEBUG: Skipping non-JSON file: {company_file}")
                 continue
-            process_company_file(company_file)
+            process_company_file(company_file, args.remove_json)
             
     except Exception as e:
         print(f"DEBUG: Error in main loop: {str(e)}")
