@@ -1,16 +1,22 @@
+# file name: inv-parts2json.py
 # Use API for Parts and Part Categories with the goal of pulling data from InvenTree to populate a hierarchical structure of categories and parts.
 # https://docs.inventree.org/en/latest/api/schema/#api-schema-documentation
 # Use each category and any subcategories to create a file system structure under a 'data/parts' folder
-# Each folder (representing a category) should contain a category.json file that lists all immediate 
+# Each folder (representing a category) should contain a category.json file that lists all immediate
 # subcategories of that folder’s category (not all categories globally).
-# Populate the parts in the proper category file structure as a separate JSON file named after the part
-# Import Compatibility: The structure should be compatible with an import script that can recreate the categories and parts in another InvenTree instance.
+# Sanitize the category (and subcategories) for both the filename and JSON by replacing spaces with underscores
+# and removing dots (e.g., Acme Inc. becomes Acme_Inc), also replace invalid chars.
+# Sanitize the part for both the filename and JSON by replacing spaces with underscores and dots with commas
+# (e.g., C 0.1uF 0402 becomes C_0,1uF_0402), also replace invalid chars.
+# Set image and thumbnail fields to "" for parts to avoid issues with image paths.
+# Populate the parts in the proper category file structure as a separate JSON file named after the sanitized part name.
+# Import Compatibility: The structure is compatible with json2inv-parts.py to recreate the categories and parts in another InvenTree instance.
+
 import requests
 import json
 import os
 import re
 
-# API endpoints and authentication
 # API endpoints and authentication
 if os.getenv("INVENTREE_URL"):
     BASE_URL = os.getenv("INVENTREE_URL")
@@ -26,11 +32,20 @@ HEADERS = {
     "Accept": "application/json"
 }
 
-def sanitize_filename(name):
-    """Sanitize name to create a valid filename or folder name."""
-    print(f"DEBUG: Sanitizing name: {name}")
-    sanitized = re.sub(r'[<>:"/\\|?*]', '_', name.strip())
-    print(f"DEBUG: Sanitized to: {sanitized}")
+def sanitize_category_name(name):
+    """Sanitize category name for JSON and folder name by replacing spaces with underscores and removing dots."""
+    print(f"DEBUG: Sanitizing category name: {name}")
+    sanitized = name.replace(' ', '_').replace('.', '')
+    sanitized = re.sub(r'[<>:"/\\|?*]', '_', sanitized.strip())  # Replace invalid chars
+    print(f"DEBUG: Sanitized category name to: {sanitized}")
+    return sanitized
+
+def sanitize_part_name(name):
+    """Sanitize part name for JSON and filename by replacing spaces with underscores and dots with commas."""
+    print(f"DEBUG: Sanitizing part name: {name}")
+    sanitized = name.replace(' ', '_').replace('.', ',')
+    sanitized = re.sub(r'[<>:"/\\|?*]', '_', sanitized.strip())  # Replace invalid chars
+    print(f"DEBUG: Sanitized part name to: {sanitized}")
     return sanitized
 
 def fetch_data(url):
@@ -82,7 +97,7 @@ def main():
     if not BASE_URL:
         print("DEBUG: INVENTREE_URL not set")
         raise Exception("INVENTREE_URL environment variable not set. Set it with: export INVENTREE_URL='http://localhost:8000/'")
-
+    
     root_dir = 'data/parts'
     print(f"DEBUG: Ensuring root directory exists: {root_dir}")
     os.makedirs(root_dir, exist_ok=True)
@@ -98,16 +113,27 @@ def main():
         parent_to_subcategories = {'None': []}  # 'None' for top-level categories
         for category in categories:
             pk = category.get('pk')
+            name = category.get('name')
             pathstring = category.get('pathstring')
             parent_pk = str(category.get('parent')) if category.get('parent') is not None else 'None'
-            if not pathstring or not pk:
-                print(f"DEBUG: Skipping category {category.get('name', 'unknown')} (missing pk or pathstring)")
+            if not pathstring or not pk or not name:
+                print(f"DEBUG: Skipping category {name or 'unknown'} (missing pk, name, or pathstring)")
                 continue
-            pk_to_pathstring[pk] = pathstring
-            print(f"DEBUG: Mapping category PK {pk} to pathstring {pathstring}")
+            
+            # Sanitize category name and update pathstring
+            sanitized_name = sanitize_category_name(name)
+            category_modified = category.copy()
+            category_modified['name'] = sanitized_name
+            category_modified['image'] = ""
+            path_parts = pathstring.split('/')
+            path_parts[-1] = sanitized_name  # Update last part with sanitized name
+            sanitized_pathstring = '/'.join(path_parts)
+            pk_to_pathstring[pk] = sanitized_pathstring
+            print(f"DEBUG: Mapping category PK {pk} to sanitized pathstring {sanitized_pathstring}")
+            
             if parent_pk not in parent_to_subcategories:
                 parent_to_subcategories[parent_pk] = []
-            parent_to_subcategories[parent_pk].append(category)
+            parent_to_subcategories[parent_pk].append(category_modified)
         
         # Save top-level categories to data/parts/category.json
         top_level_cats = parent_to_subcategories.get('None', [])
@@ -125,7 +151,7 @@ def main():
                 print(f"DEBUG: Skipping subcategories for parent PK {parent_pk} (no pathstring)")
                 continue
             path_parts = parent_pathstring.split('/')
-            dir_path = os.path.join(root_dir, *[sanitize_filename(p) for p in path_parts])
+            dir_path = os.path.join(root_dir, *[sanitize_category_name(p) for p in path_parts])
             subcats_file = os.path.join(dir_path, 'category.json')
             print(f"DEBUG: Saving {len(subcats)} subcategories to {subcats_file}")
             save_to_file(subcats, subcats_file)
@@ -146,12 +172,19 @@ def main():
             if not pathstring:
                 print(f"DEBUG: Skipping part {part_name} (no pathstring for category PK {cat_pk})")
                 continue
+            # Sanitize part name
+            sanitized_part_name = sanitize_part_name(part_name)
+            part_modified = part.copy()
+            part_modified['name'] = sanitized_part_name
+            part_modified['image'] = ""
+            part_modified['thumbnail'] = ""
+            
             path_parts = pathstring.split('/')
-            dir_path = os.path.join(root_dir, *[sanitize_filename(p) for p in path_parts])
-            part_filename = f"{sanitize_filename(part_name)}.json"
+            dir_path = os.path.join(root_dir, *[sanitize_category_name(p) for p in path_parts])
+            part_filename = f"{sanitized_part_name}.json"
             part_file = os.path.join(dir_path, part_filename)
-            print(f"DEBUG: Saving part {part_name} to {part_file}")
-            save_to_file(part, part_file)
+            print(f"DEBUG: Saving part {sanitized_part_name} to {part_file}")
+            save_to_file(part_modified, part_file)
             
     except Exception as e:
         print(f"DEBUG: Error in main: {str(e)}")

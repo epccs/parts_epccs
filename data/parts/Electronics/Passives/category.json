@@ -13,7 +13,8 @@
         "starred": false,
         "structural": false,
         "icon": "",
-        "parent_default_location": null
+        "parent_default_location": null,
+        "image": ""
     },
     {
         "pk": 7,
@@ -29,7 +30,8 @@
         "starred": false,
         "structural": false,
         "icon": "",
-        "parent_default_location": null
+        "parent_default_location": null,
+        "image": ""
     },
     {
         "pk": 5,
@@ -45,6 +47,7 @@
         "starred": false,
         "structural": false,
         "icon": "",
-        "parent_default_location": null
+        "parent_default_location": null,
+        "image": ""
     }
 ]

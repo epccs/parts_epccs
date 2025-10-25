@@ -1,7 +1,7 @@
 [
     {
         "pk": 21,
-        "name": "Pin Headers",
+        "name": "Pin_Headers",
         "description": "Pin headers and sockets",
         "default_location": null,
         "default_keywords": "",
@@ -13,6 +13,7 @@
         "starred": false,
         "structural": false,
         "icon": "",
-        "parent_default_location": null
+        "parent_default_location": null,
+        "image": ""
     }
 ]
