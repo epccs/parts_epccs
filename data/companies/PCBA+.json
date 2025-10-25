@@ -9,7 +9,7 @@
     "currency": "EUR",
     "contact": "",
     "link": "",
-    "image": null,
+    "image": "",
     "active": true,
     "is_customer": false,
     "is_manufacturer": false,

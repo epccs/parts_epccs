@@ -1,6 +1,6 @@
 {
     "pk": 30,
-    "name": "Customer A",
+    "name": "Customer_A",
     "description": "A company we sell things to",
     "website": "",
     "phone": "",
@@ -9,7 +9,7 @@
     "currency": "USD",
     "contact": "",
     "link": "",
-    "image": "/media/company_images/company_30_img.png",
+    "image": "",
     "active": true,
     "is_customer": true,
     "is_manufacturer": false,

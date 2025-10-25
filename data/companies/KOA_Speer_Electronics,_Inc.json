@@ -1,6 +1,6 @@
 {
     "pk": 15,
-    "name": "KOA Speer Electronics, Inc.",
+    "name": "KOA_Speer_Electronics,_Inc",
     "description": "",
     "website": "",
     "phone": "",
@@ -9,7 +9,7 @@
     "currency": "USD",
     "contact": "",
     "link": "",
-    "image": "/media/company_images/company_15_img.jpg",
+    "image": "",
     "active": true,
     "is_customer": false,
     "is_manufacturer": true,

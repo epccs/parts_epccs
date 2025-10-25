@@ -1,6 +1,6 @@
 {
     "pk": 17,
-    "name": "Rohm Semiconductor",
+    "name": "Rohm_Semiconductor",
     "description": "",
     "website": "",
     "phone": "",
@@ -9,7 +9,7 @@
     "currency": "USD",
     "contact": "",
     "link": "",
-    "image": "/media/company_images/company_17_img.png",
+    "image": "",
     "active": true,
     "is_customer": false,
     "is_manufacturer": true,

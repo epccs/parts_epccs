@@ -2,7 +2,11 @@
 # Use InvenTree API for Companies with the goal of pulling data from InvenTree to populate a folder (data/companies).
 # https://docs.inventree.org/en/latest/api/schema/#api-schema-documentation
 # Use each company from InvenTree to create a json file under the `data/companies` folder
-# Import Compatibility: The structure should be compatible with the `json2inv-companies.py` import script that can recreate the Companies in another InvenTree instance.
+# sanitize the company name for the filename by replacing spaces with underscores and removing dots (e.g., Acme Inc. 
+# becomes Acme_Inc), also replace invalid chars. Keep the sanitized name inside the JSON as well to push into another 
+# InvenTree instance.
+# Import Compatibility: The structure should be compatible with the `json2inv-companies.py` import script that can recreate 
+#                       the Companies in another InvenTree instance.
 
 import requests
 import json
@@ -21,17 +25,11 @@ HEADERS = {
     "Accept": "application/json"
 }
 
-def sanitize_filename(name):
-    """Sanitize company name to create a valid filename."""
-    print(f"DEBUG: Sanitizing name for filename: {name}")
-    sanitized = re.sub(r'[<>:"/\\|?*]', '_', name.strip())
-    print(f"DEBUG: Sanitized to: {sanitized}")
-    return sanitized
-
 def sanitize_company_name(name):
-    """Sanitize company name for JSON by replacing spaces with underscores and removing dots."""
-    print(f"DEBUG: Sanitizing company name for JSON: {name}")
+    """Sanitize company name for JSON and filename by replacing spaces with underscores and removing dots."""
+    print(f"DEBUG: Sanitizing company name: {name}")
     sanitized = name.replace(' ', '_').replace('.', '')
+    sanitized = re.sub(r'[<>:"/\\|?*]', '_', sanitized.strip())  # Additional sanitization for invalid chars
     print(f"DEBUG: Sanitized company name to: {sanitized}")
     return sanitized
 
@@ -65,7 +63,7 @@ def fetch_companies(url):
         raise Exception(f"Network error: {str(e)}")
 
 def save_company_to_file(company):
-    """Save a single company's data to a JSON file named after the company."""
+    """Save a single company's data to a JSON file named after the sanitized company name."""
     company_name = company.get("name")
     if not company_name:
         print(f"DEBUG: Skipping company with missing name: {company}")
@@ -83,7 +81,7 @@ def save_company_to_file(company):
         os.makedirs(dirname)
         print(f"DEBUG: Created directory: {dirname}")
     
-    filename = f"{dirname}/{sanitize_filename(company_name)}.json"
+    filename = f"{dirname}/{company_modified['name']}.json"
     print(f"DEBUG: Saving company {company_modified['name']} to {filename}")
     
     try:

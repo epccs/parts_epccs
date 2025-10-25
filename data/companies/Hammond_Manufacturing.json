@@ -1,6 +1,6 @@
 {
     "pk": 31,
-    "name": "Hammond Manufacturing",
+    "name": "Hammond_Manufacturing",
     "description": "Manufacturers of electronic enclosures, project boxes",
     "website": "https://www.hammfg.com/",
     "phone": "",
@@ -9,7 +9,7 @@
     "currency": "USD",
     "contact": "",
     "link": "",
-    "image": "/media/company_images/company_31_img.gif",
+    "image": "",
     "active": true,
     "is_customer": false,
     "is_manufacturer": true,
