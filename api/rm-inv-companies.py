@@ -8,6 +8,7 @@
 #   python3 ./api/rm-inv-companies.py "Customer_?.json"
 #   python3 ./api/rm-inv-companies.py "Bourns_Inc.json"
 #   python3 ./api/rm-inv-companies.py "*.json" --remove-json
+# todo: python3 ./api/rm-inv-companies.py # delete all companies in InvenTree instance
 
 import requests
 import json

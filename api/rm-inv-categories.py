@@ -1,10 +1,15 @@
 # file name: rm-inv-categories.py
 # Use InvenTree API to delete categories from an InvenTree instance based on the hierarchical structure in data/parts.
 # https://docs.inventree.org/en/latest/api/schema/#api-schema-documentation
-# Accepts Linux globbing patterns (e.g., '*', 'Electronics/Passives/*') to specify categories to delete (folders).
-# Only deletes categories if they are empty (no parts under them).
+# Accepts Linux globbing patterns (e.g., '*', 'Electronics/Passives/*') to specify category folders to delete.
+# Only deletes categories if they are empty (no parts in them or their subcategories).
+# todo: deletes categories if there are no subcategories either.
 # Optional CLI flag --remove-json to delete the category.json files after successful deletion.
 # Compatibility: Uses the structure produced by inv-parts2json.py.
+# Example usage:
+#   python3 ./api/rm-inv-categories.py "Category_0/Category_1/Category_2/Category_3/Category_4/Category_5" --remove-json # removes ./data/parts/Category_0/Category_1/Category_2/Category_3/Category_4/Category_5/category.json
+#   python3 ./api/rm-inv-categories.py "Electronics/Passives/Capacitors"
+#   python3 ./api/rm-inv-parts.py "Electronics/Passives/Capacitors/C_*.json" && python3 ./api/rm-inv-categories.py "Electronics/Passives/Capacitors" --remove-json
 
 import requests
 import json
@@ -81,10 +86,41 @@ def delete_category(category_name, category_pk):
         print(f"DEBUG: Network error deleting category '{category_name}': {str(e)}")
         raise Exception(f"Network error deleting category '{category_name}': {str(e)}")
 
-def process_category_folder(category_folder, parent_pk=None, remove_json=False):
+def get_parent_pk(category_folder, categories_data):
+    """Determine the parent PK for a category folder based on its parent directory."""
+    print(f"DEBUG: Determining parent PK for folder: {category_folder}")
+    parent_dir = os.path.dirname(category_folder)
+    if parent_dir == 'data/parts' or parent_dir == os.path.normpath('data/parts'):
+        print(f"DEBUG: Folder {category_folder} is top-level, parent PK is None")
+        return None
+    
+    parent_name = os.path.basename(parent_dir)
+    cat_file = os.path.join(parent_dir, 'category.json')
+    if not os.path.exists(cat_file):
+        print(f"DEBUG: No category.json in parent folder {parent_dir}, assuming no parent PK")
+        return None
+    
+    try:
+        with open(cat_file, 'r', encoding='utf-8') as f:
+            parent_cats = json.load(f)
+        for cat in parent_cats:
+            if cat.get('name') == parent_name:
+                parent_pk = cat.get('pk')
+                print(f"DEBUG: Found parent category '{parent_name}' with PK {parent_pk}")
+                return parent_pk
+        print(f"DEBUG: Parent category '{parent_name}' not found in {cat_file}")
+        return None
+    except Exception as e:
+        print(f"DEBUG: Error reading parent category file {cat_file}: {str(e)}")
+        return None
+
+def process_category_folder(category_folder, remove_json=False):
     """Process a category folder to delete the corresponding category if empty."""
-    print(f"DEBUG: Processing category folder: {category_folder} with parent PK {parent_pk}")
+    print(f"DEBUG: Processing category folder: {category_folder}")
     category_name = os.path.basename(category_folder)
+    
+    # Determine parent PK
+    parent_pk = get_parent_pk(category_folder, None)
     
     # Check if category exists
     category_pk = check_category_exists(category_name, parent_pk)
@@ -105,7 +141,11 @@ def process_category_folder(category_folder, parent_pk=None, remove_json=False):
         cat_file = os.path.join(category_folder, 'category.json')
         if os.path.exists(cat_file):
             print(f"DEBUG: Removing category.json from {category_folder}")
-            os.remove(cat_file)
+            try:
+                os.remove(cat_file)
+                print(f"DEBUG: Successfully removed {cat_file}")
+            except Exception as e:
+                print(f"DEBUG: Error removing {cat_file}: {str(e)}")
         else:
             print(f"DEBUG: No category.json found in {category_folder}")
 
@@ -164,7 +204,7 @@ def main():
         print(f"DEBUG: Processing categories in bottom-up order: {category_folders}")
         
         for category_folder in category_folders:
-            process_category_folder(category_folder, None, args.remove_json)
+            process_category_folder(category_folder, args.remove_json)
             
     except Exception as e:
         print(f"DEBUG: Error in main loop: {str(e)}")

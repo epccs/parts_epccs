@@ -1,12 +1,22 @@
 # file name: json2inv-companies.py
 # Use InvenTree API for Companies with the goal of pulling data from a folder `data/companies` and populating an InvenTree instance.
 # https://docs.inventree.org/en/latest/api/schema/#api-schema-documentation
-# Each company was exported from inventree into a json file under the `data/companies` folder
+# Each company was exported from InvenTree into a JSON file under the `data/companies` folder.
+# Supports individual file imports via command-line arguments with globbing (e.g., 'Customer_?.json').
+# If no arguments are provided, imports all JSON files in data/companies (equivalent to '*.json').
 # Compatibility: This program is compatible with the export of inv-companies2json.py.
+# Example usage:
+#   python3 ./api/json2inv-companies.py "Customer_?.json"
+#   python3 ./api/json2inv-companies.py "Bourns_Inc.json"
+#   python3 ./api/json2inv-companies.py  # Imports all companies
+#   python3 ./api/json2inv-companies.py "*.json"
 
 import requests
 import json
 import os
+import glob
+import sys
+import argparse
 
 # API endpoint and authentication
 BASE_URL = os.getenv("INVENTREE_URL") + "api/company/" if os.getenv("INVENTREE_URL") else None
@@ -99,6 +109,11 @@ def import_company(company_file):
         raise Exception(f"Invalid JSON response creating company from {company_file}: {str(e)}")
 
 def main():
+    # Parse CLI arguments
+    parser = argparse.ArgumentParser(description="Import InvenTree companies from data/companies JSON files.")
+    parser.add_argument('patterns', nargs='*', default=['*.json'], help="Glob patterns for companies (e.g., 'Customer_?.json', 'Bourns_Inc.json'); defaults to '*.json'")
+    args = parser.parse_args()
+    
     print("DEBUG: Starting main function")
     if not TOKEN:
         print("DEBUG: INVENTREE_TOKEN not set")
@@ -120,17 +135,36 @@ def main():
         raise PermissionError(f"Insufficient permissions to read {dirname}")
     
     try:
-        print(f"DEBUG: Scanning directory: {dirname}")
-        company_files = [f for f in os.listdir(dirname) if f.endswith('.json')]
+        print(f"DEBUG: Glob patterns provided: {args.patterns}")
+        company_files = []
+        for pattern in args.patterns:
+            pattern_path = os.path.join(dirname, pattern)
+            print(f"DEBUG: Expanding glob pattern: {pattern_path}")
+            matched_files = glob.glob(pattern_path, recursive=False)
+            print(f"DEBUG: Matched {len(matched_files)} files for pattern '{pattern}': {matched_files}")
+            company_files.extend(matched_files)
+        
+        # Handle case where pattern is a literal file
+        if not company_files:
+            print(f"DEBUG: No files matched, attempting to interpret patterns as filenames")
+            for pattern in args.patterns:
+                pattern_path = os.path.join(dirname, pattern)
+                if os.path.isfile(pattern_path) and pattern_path.endswith('.json'):
+                    print(f"DEBUG: Adding literal file: {pattern_path}")
+                    company_files.append(pattern_path)
+        
+        company_files = sorted(set(company_files))  # Remove duplicates and sort
         print(f"DEBUG: Found {len(company_files)} company files: {company_files}")
         if not company_files:
-            print(f"DEBUG: No JSON files found in {dirname}, exiting")
+            print(f"DEBUG: No JSON files matched or found, exiting")
             return
         
         for company_file in company_files:
-            company_path = os.path.join(dirname, company_file)
-            print(f"DEBUG: Processing company file: {company_path}")
-            import_company(company_path)
+            if not company_file.endswith('.json'):
+                print(f"DEBUG: Skipping non-JSON file: {company_file}")
+                continue
+            print(f"DEBUG: Processing company file: {company_file}")
+            import_company(company_file)
             
     except PermissionError as e:
         print(f"DEBUG: Permission error accessing {dirname}: {str(e)}")
