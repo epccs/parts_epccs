@@ -5,9 +5,9 @@
 # Each part was exported from InvenTree into a JSON file under the `data/parts` folder.
 # Supports individual file imports via command-line arguments with globbing (e.g., 'Electronics/Passives/Capacitors/C_*.json').
 # If no arguments are provided, imports all JSON files in data/parts recursively (equivalent to '**/*.json').
-# Checks and creates categories as needed for the imported parts, preferring JSON category if valid.
+# Checks and creates categories as needed, preferring JSON category if valid.
 # Optional --force-ipn flag to generate default IPN from part name if null or missing.
-# Optional --force flag to overwrite existing parts by deleting them first.
+# Optional --force flag to overwrite existing parts by deleting them after checking dependencies.
 # Compatibility: This program is compatible with the export of inv-parts2json.py.
 # Example usage:
 #   python3 ./api/json2inv-parts.py "Electronics/Passives/Capacitors/C_*.json" --force-ipn --force
@@ -27,10 +27,18 @@ if os.getenv("INVENTREE_URL"):
     BASE_URL = os.getenv("INVENTREE_URL")
     BASE_URL_PARTS = BASE_URL + "api/part/"
     BASE_URL_CATEGORIES = BASE_URL + "api/part/category/"
+    BASE_URL_BOM = BASE_URL + "api/bom/"
+    BASE_URL_TEST = BASE_URL + "api/part/test-template/"
+    BASE_URL_STOCK = BASE_URL + "api/stock/"
+    BASE_URL_BUILD = BASE_URL + "api/build/"
 else:
     BASE_URL = None
     BASE_URL_PARTS = None
     BASE_URL_CATEGORIES = None
+    BASE_URL_BOM = None
+    BASE_URL_TEST = None
+    BASE_URL_STOCK = None
+    BASE_URL_BUILD = None
 TOKEN = os.getenv("INVENTREE_TOKEN")
 HEADERS = {
     "Authorization": f"Token {TOKEN}",
@@ -63,10 +71,12 @@ def check_category_exists(name, parent_pk=None):
         print(f"DEBUG: Network error checking category: {str(e)}")
         raise Exception(f"Network error checking category: {str(e)}")
 
-def check_part_exists(name, category_pk):
-    """Check if a part with given name and category already exists."""
-    print(f"DEBUG: Checking if part '{name}' exists in category {category_pk}")
+def check_part_exists(name, ipn, category_pk):
+    """Check if a part with given name, IPN, and category already exists."""
+    print(f"DEBUG: Checking if part '{name}' with IPN '{ipn}' exists in category {category_pk}")
     params = {'name': name, 'category': category_pk}
+    if ipn:
+        params['IPN'] = ipn
     
     try:
         response = requests.get(BASE_URL_PARTS, headers=HEADERS, params=params)
@@ -91,11 +101,37 @@ def check_part_exists(name, category_pk):
         print(f"DEBUG: Network error checking part: {str(e)}")
         raise Exception(f"Network error checking part: {str(e)}")
 
-def delete_part(part_name, part_pk):
-    """Delete a part by its PK."""
-    print(f"DEBUG: Attempting to delete part '{part_name}' with PK {part_pk}")
-    delete_url = f"{BASE_URL_PARTS}{part_pk}/"
+def check_dependencies(part_pk):
+    """Check and return dependencies for a part."""
+    dependencies = {'stock': [], 'bom': [], 'test': [], 'build': []}
     
+    for endpoint, key in [(BASE_URL_STOCK, 'stock'), (BASE_URL_BOM, 'bom'), (BASE_URL_TEST, 'test'), (BASE_URL_BUILD, 'build')]:
+        try:
+            response = requests.get(f"{endpoint}?part={part_pk}", headers=HEADERS)
+            print(f"DEBUG: Dependency check for {key} response status: {response.status_code}")
+            if response.status_code == 200:
+                results = response.json()
+                count = results['count'] if isinstance(results, dict) and 'count' in results else len(results)
+                if count > 0:
+                    dependencies[key] = results['results'] if isinstance(results, dict) else results
+                    print(f"DEBUG: Found {count} {key} dependencies for part {part_pk}")
+        except requests.exceptions.RequestException as e:
+            print(f"DEBUG: Network error checking {key} dependencies: {str(e)}")
+    
+    return dependencies
+
+def delete_part(part_name, part_pk):
+    """Delete a part by its PK after checking dependencies."""
+    print(f"DEBUG: Attempting to delete part '{part_name}' with PK {part_pk}")
+    
+    # Check dependencies
+    dependencies = check_dependencies(part_pk)
+    for key, items in dependencies.items():
+        if items:
+            print(f"DEBUG: Cannot delete part '{part_name}' due to {len(items)} {key} dependencies: {items}")
+            raise Exception(f"Cannot delete part '{part_name}' due to {len(items)} {key} dependencies")
+    
+    delete_url = f"{BASE_URL_PARTS}{part_pk}/"
     try:
         response = requests.delete(delete_url, headers=HEADERS)
         print(f"DEBUG: Part deletion response status: {response.status_code}")
@@ -181,9 +217,11 @@ def import_part(part_path, force_ipn=False, force=False):
     post_part['active'] = True
     
     # Handle null or missing IPN
-    if force_ipn and (post_part.get('IPN') is None or not post_part.get('IPN')):
-        post_part['IPN'] = post_part['name'][:50]  # Use part name as IPN, truncated to 50 chars
-        print(f"DEBUG: Generated default IPN: {post_part['IPN']} for part {post_part['name']}")
+    ipn = post_part.get('IPN')
+    if force_ipn and (ipn is None or not ipn):
+        ipn = post_part['name'][:50]  # Use part name as IPN, truncated to 50 chars
+        post_part['IPN'] = ipn
+        print(f"DEBUG: Generated default IPN: {ipn} for part {post_part['name']}")
     
     # Determine category: prefer JSON category if valid, else use folder path
     category_pk = part_data.get('category')
@@ -209,7 +247,7 @@ def import_part(part_path, force_ipn=False, force=False):
     print(f"DEBUG: Prepared part POST data: {post_part}")
     
     # Check if part already exists
-    existing_parts = check_part_exists(post_part['name'], category_pk)
+    existing_parts = check_part_exists(post_part['name'], ipn, category_pk)
     if existing_parts and force:
         for part in existing_parts:
             print(f"DEBUG: Forcing deletion of existing part '{part['name']}' with PK {part['pk']}")
@@ -237,7 +275,7 @@ def main():
     parser = argparse.ArgumentParser(description="Import InvenTree parts from data/parts JSON files.")
     parser.add_argument('patterns', nargs='*', default=['**/*.json'], help="Glob patterns for parts (e.g., 'Electronics/Passives/Capacitors/C_*.json', 'Paint/Yellow_Paint.json'); defaults to '**/*.json'")
     parser.add_argument('--force-ipn', action='store_true', help="Generate default IPN from part name if null or missing")
-    parser.add_argument('--force', action='store_true', help="Overwrite existing parts by deleting them first")
+    parser.add_argument('--force', action='store_true', help="Overwrite existing parts by deleting them after checking dependencies")
     args = parser.parse_args()
     
     print("DEBUG: Starting main function")
