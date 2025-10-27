@@ -8,7 +8,7 @@
 # Checks and creates categories as needed, preferring JSON category if valid.
 # Optional --force-ipn flag to generate default IPN from part name if null or missing.
 # Optional --force flag to overwrite existing parts by deleting them after checking dependencies.
-# Optional --clean-dependencies flag to delete dependencies (stock, BOMs, test templates, build orders, sales orders, attachments) with multiple confirmation prompts.
+# Optional --clean-dependencies flag to delete dependencies (stock, BOMs, test templates, build orders, sales orders, attachments, parameters, related parts) with multiple confirmation prompts.
 # Compatibility: This program is compatible with the export of inv-parts2json.py.
 # Example usage:
 #   python3 ./api/json2inv-parts.py "Electronics/Passives/Capacitors/C_*.json" --force-ipn --force --clean-dependencies
@@ -34,6 +34,8 @@ if os.getenv("INVENTREE_URL"):
     BASE_URL_BUILD = BASE_URL + "api/build/"
     BASE_URL_SALES = BASE_URL + "api/sales/order/"
     BASE_URL_ATTACHMENTS = BASE_URL + "api/part/attachment/"
+    BASE_URL_PARAMETERS = BASE_URL + "api/part/parameter/"
+    BASE_URL_RELATED = BASE_URL + "api/part/related/"
 else:
     BASE_URL = None
     BASE_URL_PARTS = None
@@ -44,6 +46,8 @@ else:
     BASE_URL_BUILD = None
     BASE_URL_SALES = None
     BASE_URL_ATTACHMENTS = None
+    BASE_URL_PARAMETERS = None
+    BASE_URL_RELATED = None
 TOKEN = os.getenv("INVENTREE_TOKEN")
 HEADERS = {
     "Authorization": f"Token {TOKEN}",
@@ -108,7 +112,7 @@ def check_part_exists(name, ipn, category_pk):
 
 def check_dependencies(part_pk):
     """Check and return dependencies for a part."""
-    dependencies = {'stock': [], 'bom': [], 'test': [], 'build': [], 'sales': [], 'attachments': []}
+    dependencies = {'stock': [], 'bom': [], 'test': [], 'build': [], 'sales': [], 'attachments': [], 'parameters': [], 'related': []}
     
     for endpoint, key in [
         (BASE_URL_STOCK, 'stock'),
@@ -116,7 +120,9 @@ def check_dependencies(part_pk):
         (BASE_URL_TEST, 'test'),
         (BASE_URL_BUILD, 'build'),
         (BASE_URL_SALES, 'sales'),
-        (BASE_URL_ATTACHMENTS, 'attachments')
+        (BASE_URL_ATTACHMENTS, 'attachments'),
+        (BASE_URL_PARAMETERS, 'parameters'),
+        (BASE_URL_RELATED, 'related')
     ]:
         try:
             response = requests.get(f"{endpoint}?part={part_pk}", headers=HEADERS)
@@ -170,7 +176,9 @@ def delete_dependencies(part_name, part_pk, clean_dependencies):
                       f"{BASE_URL_TEST}{item_pk}/" if key == 'test' else \
                       f"{BASE_URL_BUILD}{item_pk}/" if key == 'build' else \
                       f"{BASE_URL_SALES}{item_pk}/" if key == 'sales' else \
-                      f"{BASE_URL_ATTACHMENTS}{item_pk}/"
+                      f"{BASE_URL_ATTACHMENTS}{item_pk}/" if key == 'attachments' else \
+                      f"{BASE_URL_PARAMETERS}{item_pk}/" if key == 'parameters' else \
+                      f"{BASE_URL_RELATED}{item_pk}/"
             try:
                 response = requests.delete(endpoint, headers=HEADERS)
                 print(f"DEBUG: Deletion of {key} item PK {item_pk} response status: {response.status_code}")
@@ -191,6 +199,18 @@ def delete_part(part_name, part_pk, clean_dependencies):
     # Check and delete dependencies if requested
     if not delete_dependencies(part_name, part_pk, clean_dependencies):
         raise Exception(f"Cannot delete part '{part_name}' due to dependencies")
+    
+    # Set part to inactive to bypass 'active' restriction
+    try:
+        print(f"DEBUG: Setting part '{part_name}' (PK {part_pk}) to inactive")
+        response = requests.patch(f"{BASE_URL_PARTS}{part_pk}/", headers=HEADERS, json={'active': False})
+        print(f"DEBUG: Part patch response status: {response.status_code}")
+        if response.status_code not in [200, 201]:
+            print(f"DEBUG: Failed to set part inactive: {response.text}")
+            raise Exception(f"Failed to set part '{part_name}' inactive: {response.status_code} - {response.text}")
+    except requests.exceptions.RequestException as e:
+        print(f"DEBUG: Network error setting part inactive: {str(e)}")
+        raise Exception(f"Network error setting part '{part_name}' inactive: {str(e)}")
     
     delete_url = f"{BASE_URL_PARTS}{part_pk}/"
     try:
@@ -337,7 +357,7 @@ def main():
     parser.add_argument('patterns', nargs='*', default=['**/*.json'], help="Glob patterns for parts (e.g., 'Electronics/Passives/Capacitors/C_*.json', 'Paint/Yellow_Paint.json'); defaults to '**/*.json'")
     parser.add_argument('--force-ipn', action='store_true', help="Generate default IPN from part name if null or missing")
     parser.add_argument('--force', action='store_true', help="Overwrite existing parts by deleting them after checking dependencies")
-    parser.add_argument('--clean-dependencies', action='store_true', help="Delete dependencies (stock, BOMs, test templates, build orders, sales orders, attachments) with confirmation prompts")
+    parser.add_argument('--clean-dependencies', action='store_true', help="Delete dependencies (stock, BOMs, test templates, build orders, sales orders, attachments, parameters, related parts) with confirmation prompts")
     args = parser.parse_args()
     
     print("DEBUG: Starting main function")
