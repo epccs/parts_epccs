@@ -4,6 +4,7 @@
 # Accepts Linux globbing patterns (e.g., '*.json', 'Paint/Yellow_Paint.json') to specify parts to delete.
 # Patterns are relative to data/parts (e.g., 'Electronics/Passives/Capacitors/C_*_0402.json').
 # Optional CLI flag --remove-json to delete part JSON files after successful deletion.
+# todo: Optional --clean-dependencies flag to delete dependencies (stock, BOMs, test templates, build orders, sales orders, attachments) with multiple confirmation prompts.
 # Compatibility: Uses the part JSON files produced by inv-parts2json.py.
 # Deletes parts by name and category, skipping non-existent parts.
 # Example usage: 

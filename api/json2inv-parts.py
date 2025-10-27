@@ -8,9 +8,10 @@
 # Checks and creates categories as needed, preferring JSON category if valid.
 # Optional --force-ipn flag to generate default IPN from part name if null or missing.
 # Optional --force flag to overwrite existing parts by deleting them after checking dependencies.
+# Optional --clean-dependencies flag to delete dependencies (stock, BOMs, test templates, build orders, sales orders, attachments) with multiple confirmation prompts.
 # Compatibility: This program is compatible with the export of inv-parts2json.py.
 # Example usage:
-#   python3 ./api/json2inv-parts.py "Electronics/Passives/Capacitors/C_*.json" --force-ipn --force
+#   python3 ./api/json2inv-parts.py "Electronics/Passives/Capacitors/C_*.json" --force-ipn --force --clean-dependencies
 #   python3 ./api/json2inv-parts.py "Paint/Yellow_Paint.json" --force-ipn
 #   python3 ./api/json2inv-parts.py  # Imports all parts
 #   python3 ./api/json2inv-parts.py "**/*.json" --force-ipn --force
@@ -31,6 +32,8 @@ if os.getenv("INVENTREE_URL"):
     BASE_URL_TEST = BASE_URL + "api/part/test-template/"
     BASE_URL_STOCK = BASE_URL + "api/stock/"
     BASE_URL_BUILD = BASE_URL + "api/build/"
+    BASE_URL_SALES = BASE_URL + "api/sales/order/"
+    BASE_URL_ATTACHMENTS = BASE_URL + "api/part/attachment/"
 else:
     BASE_URL = None
     BASE_URL_PARTS = None
@@ -39,6 +42,8 @@ else:
     BASE_URL_TEST = None
     BASE_URL_STOCK = None
     BASE_URL_BUILD = None
+    BASE_URL_SALES = None
+    BASE_URL_ATTACHMENTS = None
 TOKEN = os.getenv("INVENTREE_TOKEN")
 HEADERS = {
     "Authorization": f"Token {TOKEN}",
@@ -103,9 +108,16 @@ def check_part_exists(name, ipn, category_pk):
 
 def check_dependencies(part_pk):
     """Check and return dependencies for a part."""
-    dependencies = {'stock': [], 'bom': [], 'test': [], 'build': []}
+    dependencies = {'stock': [], 'bom': [], 'test': [], 'build': [], 'sales': [], 'attachments': []}
     
-    for endpoint, key in [(BASE_URL_STOCK, 'stock'), (BASE_URL_BOM, 'bom'), (BASE_URL_TEST, 'test'), (BASE_URL_BUILD, 'build')]:
+    for endpoint, key in [
+        (BASE_URL_STOCK, 'stock'),
+        (BASE_URL_BOM, 'bom'),
+        (BASE_URL_TEST, 'test'),
+        (BASE_URL_BUILD, 'build'),
+        (BASE_URL_SALES, 'sales'),
+        (BASE_URL_ATTACHMENTS, 'attachments')
+    ]:
         try:
             response = requests.get(f"{endpoint}?part={part_pk}", headers=HEADERS)
             print(f"DEBUG: Dependency check for {key} response status: {response.status_code}")
@@ -120,16 +132,65 @@ def check_dependencies(part_pk):
     
     return dependencies
 
-def delete_part(part_name, part_pk):
-    """Delete a part by its PK after checking dependencies."""
-    print(f"DEBUG: Attempting to delete part '{part_name}' with PK {part_pk}")
+def delete_dependencies(part_name, part_pk, clean_dependencies):
+    """Delete dependencies for a part if clean_dependencies is True."""
+    if not clean_dependencies:
+        return False
     
-    # Check dependencies
     dependencies = check_dependencies(part_pk)
+    total_deps = sum(len(items) for items in dependencies.values())
+    if total_deps == 0:
+        print(f"DEBUG: No dependencies found for part '{part_name}' (PK {part_pk})")
+        return True
+    
+    print(f"WARNING: Found {total_deps} dependencies for part '{part_name}' (PK {part_pk}): {dependencies}")
+    print("This operation will permanently delete the following dependencies:")
     for key, items in dependencies.items():
         if items:
-            print(f"DEBUG: Cannot delete part '{part_name}' due to {len(items)} {key} dependencies: {items}")
-            raise Exception(f"Cannot delete part '{part_name}' due to {len(items)} {key} dependencies")
+            print(f"  - {len(items)} {key} items: {[item.get('pk') for item in items]}")
+    
+    # First confirmation
+    confirm1 = input(f"Type 'YES' to confirm deletion of {total_deps} dependencies for '{part_name}' (PK {part_pk}): ")
+    if confirm1 != 'YES':
+        print(f"DEBUG: Deletion cancelled for part '{part_name}' (first confirmation failed)")
+        return False
+    
+    # Second confirmation
+    confirm2 = input(f"Type 'CONFIRM' to permanently delete dependencies for '{part_name}' (PK {part_pk}): ")
+    if confirm2 != 'CONFIRM':
+        print(f"DEBUG: Deletion cancelled for part '{part_name}' (second confirmation failed)")
+        return False
+    
+    # Delete dependencies
+    for key, items in dependencies.items():
+        for item in items:
+            item_pk = item.get('pk')
+            endpoint = f"{BASE_URL_STOCK}{item_pk}/" if key == 'stock' else \
+                      f"{BASE_URL_BOM}{item_pk}/" if key == 'bom' else \
+                      f"{BASE_URL_TEST}{item_pk}/" if key == 'test' else \
+                      f"{BASE_URL_BUILD}{item_pk}/" if key == 'build' else \
+                      f"{BASE_URL_SALES}{item_pk}/" if key == 'sales' else \
+                      f"{BASE_URL_ATTACHMENTS}{item_pk}/"
+            try:
+                response = requests.delete(endpoint, headers=HEADERS)
+                print(f"DEBUG: Deletion of {key} item PK {item_pk} response status: {response.status_code}")
+                if response.status_code != 204:
+                    print(f"DEBUG: Failed to delete {key} item PK {item_pk}: {response.text}")
+                    raise Exception(f"Failed to delete {key} item PK {item_pk}")
+                print(f"DEBUG: Successfully deleted {key} item PK {item_pk} for part '{part_name}'")
+            except requests.exceptions.RequestException as e:
+                print(f"DEBUG: Network error deleting {key} item PK {item_pk}: {str(e)}")
+                raise Exception(f"Network error deleting {key} item PK {item_pk}")
+    
+    return True
+
+def delete_part(part_name, part_pk, clean_dependencies):
+    """Delete a part by its PK after checking and optionally deleting dependencies."""
+    print(f"DEBUG: Attempting to delete part '{part_name}' with PK {part_pk}")
+    
+    # Check and delete dependencies if requested
+    if not delete_dependencies(part_name, part_pk, clean_dependencies):
+        raise Exception(f"Cannot delete part '{part_name}' due to dependencies")
     
     delete_url = f"{BASE_URL_PARTS}{part_pk}/"
     try:
@@ -180,7 +241,7 @@ def create_category_hierarchy(folder_path, parent_pk=None):
     
     return current_pk
 
-def import_part(part_path, force_ipn=False, force=False):
+def import_part(part_path, force_ipn=False, force=False, clean_dependencies=False):
     """Import a single part from a JSON file."""
     print(f"DEBUG: Reading part file: {part_path}")
     try:
@@ -251,7 +312,7 @@ def import_part(part_path, force_ipn=False, force=False):
     if existing_parts and force:
         for part in existing_parts:
             print(f"DEBUG: Forcing deletion of existing part '{part['name']}' with PK {part['pk']}")
-            delete_part(part['name'], part['pk'])
+            delete_part(part['name'], part['pk'], clean_dependencies)
     elif existing_parts:
         print(f"DEBUG: Part '{post_part['name']}' already exists in category {category_pk}")
         return
@@ -276,6 +337,7 @@ def main():
     parser.add_argument('patterns', nargs='*', default=['**/*.json'], help="Glob patterns for parts (e.g., 'Electronics/Passives/Capacitors/C_*.json', 'Paint/Yellow_Paint.json'); defaults to '**/*.json'")
     parser.add_argument('--force-ipn', action='store_true', help="Generate default IPN from part name if null or missing")
     parser.add_argument('--force', action='store_true', help="Overwrite existing parts by deleting them after checking dependencies")
+    parser.add_argument('--clean-dependencies', action='store_true', help="Delete dependencies (stock, BOMs, test templates, build orders, sales orders, attachments) with confirmation prompts")
     args = parser.parse_args()
     
     print("DEBUG: Starting main function")
@@ -326,7 +388,7 @@ def main():
             if not part_file.endswith('.json') or os.path.basename(part_file) == 'category.json':
                 print(f"DEBUG: Skipping non-part file: {part_file}")
                 continue
-            import_part(part_file, args.force_ipn, args.force)
+            import_part(part_file, args.force_ipn, args.force, args.clean_dependencies)
             
     except PermissionError as e:
         print(f"DEBUG: Permission error accessing {root_dir}: {str(e)}")
