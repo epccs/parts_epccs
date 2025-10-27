@@ -5,16 +5,15 @@
 # Each part was exported from InvenTree into a JSON file under the `data/parts` folder.
 # Supports individual file imports via command-line arguments with globbing (e.g., 'Electronics/Passives/Capacitors/C_*.json').
 # If no arguments are provided, imports all JSON files in data/parts recursively (equivalent to '**/*.json').
-# Checks and creates categories as needed for the imported parts.
-# Optional --force-ipn flag to generate a default IPN when null or missing (uses part name).
+# Checks and creates categories as needed for the imported parts, preferring JSON category if valid.
+# Optional --force-ipn flag to generate default IPN from part name if null or missing.
+# Optional --force flag to overwrite existing parts by deleting them first.
 # Compatibility: This program is compatible with the export of inv-parts2json.py.
 # Example usage:
-#   python3 ./api/json2inv-parts.py "Electronics/Passives/Capacitors/C_*.json" --force-ipn
+#   python3 ./api/json2inv-parts.py "Electronics/Passives/Capacitors/C_*.json" --force-ipn --force
 #   python3 ./api/json2inv-parts.py "Paint/Yellow_Paint.json" --force-ipn
 #   python3 ./api/json2inv-parts.py  # Imports all parts
-#   python3 ./api/json2inv-parts.py "**/*.json" --force-ipn
-
-# WIP: this has known issues with parts not importing correctly. 
+#   python3 ./api/json2inv-parts.py "**/*.json" --force-ipn --force
 
 import requests
 import json
@@ -78,14 +77,35 @@ def check_part_exists(name, category_pk):
         
         results = response.json()
         if isinstance(results, dict) and 'results' in results:
-            print(f"DEBUG: Found {len(results['results'])} matching parts")
-            return results['results']
+            results = results['results']
+            print(f"DEBUG: Found {len(results)} matching parts")
+            if results:
+                print(f"DEBUG: Existing part details: {[{k: v for k, v in part.items() if k in ['pk', 'name', 'IPN', 'active']} for part in results]}")
+            return results
         else:
             print(f"DEBUG: Direct list response with {len(results)} parts")
+            if results:
+                print(f"DEBUG: Existing part details: {[{k: v for k, v in part.items() if k in ['pk', 'name', 'IPN', 'active']} for part in results]}")
             return results
     except requests.exceptions.RequestException as e:
         print(f"DEBUG: Network error checking part: {str(e)}")
         raise Exception(f"Network error checking part: {str(e)}")
+
+def delete_part(part_name, part_pk):
+    """Delete a part by its PK."""
+    print(f"DEBUG: Attempting to delete part '{part_name}' with PK {part_pk}")
+    delete_url = f"{BASE_URL_PARTS}{part_pk}/"
+    
+    try:
+        response = requests.delete(delete_url, headers=HEADERS)
+        print(f"DEBUG: Part deletion response status: {response.status_code}")
+        if response.status_code != 204:
+            print(f"DEBUG: Failed to delete part '{part_name}': {response.text}")
+            raise Exception(f"Failed to delete part '{part_name}': {response.status_code} - {response.text}")
+        print(f"DEBUG: Successfully deleted part '{part_name}' with PK {part_pk}")
+    except requests.exceptions.RequestException as e:
+        print(f"DEBUG: Network error deleting part '{part_name}': {str(e)}")
+        raise Exception(f"Network error deleting part '{part_name}': {str(e)}")
 
 def create_category_hierarchy(folder_path, parent_pk=None):
     """Create the category hierarchy for a given folder path, returning the leaf category PK."""
@@ -114,7 +134,7 @@ def create_category_hierarchy(folder_path, parent_pk=None):
                     raise Exception(f"Failed to create category {cat_name}: {resp.status_code} - {resp.text}")
                 new_cat = resp.json()
                 current_pk = new_cat['pk']
-                print(f"DEBUG: Created category '{new_cat['name']}' with PK {current_pk} (parent: {current_pk})")
+                print(f"DEBUG: Created category '{new_cat['name']}' with PK {current_pk}")
             except requests.exceptions.RequestException as e:
                 print(f"DEBUG: Network error creating category: {str(e)}")
                 raise Exception(f"Network error creating category {cat_name}: {str(e)}")
@@ -124,7 +144,7 @@ def create_category_hierarchy(folder_path, parent_pk=None):
     
     return current_pk
 
-def import_part(part_path, force_ipn=False):
+def import_part(part_path, force_ipn=False, force=False):
     """Import a single part from a JSON file."""
     print(f"DEBUG: Reading part file: {part_path}")
     try:
@@ -147,7 +167,7 @@ def import_part(part_path, force_ipn=False):
     allowed_fields = [
         'name', 'description', 'IPN', 'revision', 'keywords',
         'barcode', 'minimum_stock', 'units', 'assembly', 'component',
-        'trackable', 'purchaseable', 'salable', 'virtual'
+        'trackable', 'purchaseable', 'salable', 'virtual', 'active'
     ]
     for field in allowed_fields:
         if field in part_data:
@@ -157,20 +177,44 @@ def import_part(part_path, force_ipn=False):
         print(f"DEBUG: Skipping part with missing name in {part_path}")
         return
     
+    # Ensure active is true
+    post_part['active'] = True
+    
     # Handle null or missing IPN
     if force_ipn and (post_part.get('IPN') is None or not post_part.get('IPN')):
         post_part['IPN'] = post_part['name'][:50]  # Use part name as IPN, truncated to 50 chars
         print(f"DEBUG: Generated default IPN: {post_part['IPN']} for part {post_part['name']}")
     
-    # Create category hierarchy
-    folder_path = os.path.dirname(part_path)
-    category_pk = create_category_hierarchy(folder_path)
+    # Determine category: prefer JSON category if valid, else use folder path
+    category_pk = part_data.get('category')
+    if category_pk:
+        try:
+            print(f"DEBUG: Checking JSON category PK {category_pk}")
+            response = requests.get(f"{BASE_URL_CATEGORIES}{category_pk}/", headers=HEADERS)
+            print(f"DEBUG: Category check response status: {response.status_code}")
+            if response.status_code == 200:
+                print(f"DEBUG: Using JSON category PK {category_pk}")
+            else:
+                print(f"DEBUG: JSON category PK {category_pk} not found, using folder path")
+                category_pk = None
+        except requests.exceptions.RequestException:
+            print(f"DEBUG: Error checking JSON category PK {category_pk}, using folder path")
+            category_pk = None
+    
+    if not category_pk:
+        folder_path = os.path.dirname(part_path)
+        category_pk = create_category_hierarchy(folder_path)
+    
     post_part['category'] = category_pk
     print(f"DEBUG: Prepared part POST data: {post_part}")
     
     # Check if part already exists
     existing_parts = check_part_exists(post_part['name'], category_pk)
-    if existing_parts:
+    if existing_parts and force:
+        for part in existing_parts:
+            print(f"DEBUG: Forcing deletion of existing part '{part['name']}' with PK {part['pk']}")
+            delete_part(part['name'], part['pk'])
+    elif existing_parts:
         print(f"DEBUG: Part '{post_part['name']}' already exists in category {category_pk}")
         return
     
@@ -193,6 +237,7 @@ def main():
     parser = argparse.ArgumentParser(description="Import InvenTree parts from data/parts JSON files.")
     parser.add_argument('patterns', nargs='*', default=['**/*.json'], help="Glob patterns for parts (e.g., 'Electronics/Passives/Capacitors/C_*.json', 'Paint/Yellow_Paint.json'); defaults to '**/*.json'")
     parser.add_argument('--force-ipn', action='store_true', help="Generate default IPN from part name if null or missing")
+    parser.add_argument('--force', action='store_true', help="Overwrite existing parts by deleting them first")
     args = parser.parse_args()
     
     print("DEBUG: Starting main function")
@@ -243,7 +288,7 @@ def main():
             if not part_file.endswith('.json') or os.path.basename(part_file) == 'category.json':
                 print(f"DEBUG: Skipping non-part file: {part_file}")
                 continue
-            import_part(part_file, args.force_ipn)
+            import_part(part_file, args.force_ipn, args.force)
             
     except PermissionError as e:
         print(f"DEBUG: Permission error accessing {root_dir}: {str(e)}")
