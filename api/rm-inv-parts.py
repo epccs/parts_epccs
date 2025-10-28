@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 # file name: rm-inv-parts.py
-# version: 2025-10-27-v3
+# version: 2025-10-27-v4
 # --------------------------------------------------------------
 # Delete parts (and optionally their dependencies) based on JSON files.
-# * Uses the same dependency cleanup as json2inv-parts.py
-# * --clean-dependencies → two confirmations (YES + CONFIRM)
-# * Sets part to inactive before deletion (required by InvenTree)
+# * Uses GLOBAL search by name + IPN (ignores JSON category)
+# * --clean-dependencies → two confirmations
+# * Sets part to inactive before deletion
 # --------------------------------------------------------------
 # Example usage:
 #   python3 ./api/rm-inv-parts.py "Paint/Yellow_Paint.json" --remove-json --clean-dependencies
 #   python3 ./api/rm-inv-parts.py "Electronics/Passives/Capacitors/C_*_0402.json" --clean-dependencies
-
 
 import requests
 import json
@@ -47,27 +46,29 @@ HEADERS = {
 }
 
 # ----------------------------------------------------------------------
-# Helper: part lookup (returns list of matching dicts)
+# GLOBAL search by name + IPN (ignores category)
 # ----------------------------------------------------------------------
-def check_part_exists(name, category_pk):
-    """Search for part by name + category (used to read JSON category)."""
-    print(f"DEBUG: Looking for part '{name}' in cat {category_pk}")
-    params = {"name": name, "category": category_pk}
+def find_parts_by_name_ipn(name, ipn):
+    """Search globally for part by name + IPN."""
+    print(f"DEBUG: Global search for part '{name}' (IPN={ipn})")
+    params = {"name": name}
+    if ipn:
+        params["IPN"] = ipn
     try:
         r = requests.get(BASE_URL_PARTS, headers=HEADERS, params=params)
-        print(f"DEBUG: Check status {r.status_code}")
+        print(f"DEBUG: Global search status {r.status_code}")
         if r.status_code != 200:
-            raise Exception(f"Check failed: {r.text}")
+            raise Exception(f"Global search failed: {r.text}")
         data = r.json()
         results = data.get("results", data) if isinstance(data, dict) else data
         if results:
-            print(f"DEBUG: Found {len(results)} matches: {[p.get('pk') for p in results]}")
+            print(f"DEBUG: Found {len(results)} parts: {[p.get('pk') for p in results]}")
         return results
     except requests.RequestException as e:
-        raise Exception(f"Network error: {e}")
+        raise Exception(f"Network error in global search: {e}")
 
 # ----------------------------------------------------------------------
-# Dependency handling (same as json2inv-parts.py)
+# Dependency handling
 # ----------------------------------------------------------------------
 def check_dependencies(part_pk):
     deps = {
@@ -144,7 +145,6 @@ def delete_part(part_name, part_pk, clean_deps):
     if not delete_dependencies(part_name, part_pk, clean_deps):
         raise Exception("Dependencies block deletion")
 
-    # Set inactive first
     try:
         r = requests.patch(f"{BASE_URL_PARTS}{part_pk}/", headers=HEADERS,
                            json={"active": False})
@@ -179,14 +179,15 @@ def process_part_file(part_file, remove_json=False, clean_deps=False):
         data = data[0]
 
     name = data.get("name")
-    cat  = data.get("category")
-    if not name or cat is None:
-        print("DEBUG: Missing name or category – skip")
+    ipn  = data.get("IPN") or data.get("name")[:50]  # fallback
+    if not name:
+        print("DEBUG: Missing name – skip")
         return
 
-    existing = check_part_exists(name, cat)
+    # GLOBAL search by name + IPN
+    existing = find_parts_by_name_ipn(name, ipn)
     if not existing:
-        print(f"DEBUG: Part '{name}' not found – skip")
+        print(f"DEBUG: Part '{name}' (IPN={ipn}) not found – skip")
         return
 
     for p in existing:
@@ -204,7 +205,7 @@ def process_part_file(part_file, remove_json=False, clean_deps=False):
 # ----------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(
-        description="Delete InvenTree parts based on data/parts JSON files."
+        description="Delete InvenTree parts based on data/parts JSON files (global name+IPN search)."
     )
     parser.add_argument(
         "patterns", nargs="*",
@@ -225,7 +226,6 @@ def main():
     if not os.path.isdir(root):
         raise FileNotFoundError(f"{root} missing")
 
-    # ---- collect files ----
     files = []
     for pat in args.patterns:
         full = os.path.join(root, pat)
