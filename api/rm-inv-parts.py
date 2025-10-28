@@ -1,15 +1,16 @@
+#!/usr/bin/env python3
 # file name: rm-inv-parts.py
-# Use InvenTree API to delete parts from an InvenTree instance based on JSON files in data/parts.
-# https://docs.inventree.org/en/latest/api/schema/#api-schema-documentation
-# Accepts Linux globbing patterns (e.g., '*.json', 'Paint/Yellow_Paint.json') to specify parts to delete.
-# Patterns are relative to data/parts (e.g., 'Electronics/Passives/Capacitors/C_*_0402.json').
-# Optional CLI flag --remove-json to delete part JSON files after successful deletion.
-# todo: Optional --clean-dependencies flag to delete dependencies (stock, BOMs, test templates, build orders, sales orders, attachments) with multiple confirmation prompts.
-# Compatibility: Uses the part JSON files produced by inv-parts2json.py.
-# Deletes parts by name and category, skipping non-existent parts.
-# Example usage: 
-#   python3 ./api/rm-inv-parts.py "Paint/Yellow_Paint.json" --remove-json
-#   python3 ./api/rm-inv-parts.py "Electronics/Passives/Capacitors/C_*_0402.json"
+# version: 2025-10-27-v3
+# --------------------------------------------------------------
+# Delete parts (and optionally their dependencies) based on JSON files.
+# * Uses the same dependency cleanup as json2inv-parts.py
+# * --clean-dependencies → two confirmations (YES + CONFIRM)
+# * Sets part to inactive before deletion (required by InvenTree)
+# --------------------------------------------------------------
+# Example usage:
+#   python3 ./api/rm-inv-parts.py "Paint/Yellow_Paint.json" --remove-json --clean-dependencies
+#   python3 ./api/rm-inv-parts.py "Electronics/Passives/Capacitors/C_*_0402.json" --clean-dependencies
+
 
 import requests
 import json
@@ -18,163 +19,230 @@ import glob
 import sys
 import argparse
 
-# API endpoints and authentication
-BASE_URL = os.getenv("INVENTREE_URL") + "api/part/" if os.getenv("INVENTREE_URL") else None
+# ----------------------------------------------------------------------
+# API endpoints
+# ----------------------------------------------------------------------
+if os.getenv("INVENTREE_URL"):
+    BASE_URL = os.getenv("INVENTREE_URL")
+    BASE_URL_PARTS       = BASE_URL + "api/part/"
+    BASE_URL_BOM         = BASE_URL + "api/bom/"
+    BASE_URL_TEST        = BASE_URL + "api/part/test-template/"
+    BASE_URL_STOCK       = BASE_URL + "api/stock/"
+    BASE_URL_BUILD       = BASE_URL + "api/build/"
+    BASE_URL_SALES       = BASE_URL + "api/sales/order/"
+    BASE_URL_ATTACHMENTS = BASE_URL + "api/part/attachment/"
+    BASE_URL_PARAMETERS  = BASE_URL + "api/part/parameter/"
+    BASE_URL_RELATED     = BASE_URL + "api/part/related/"
+else:
+    BASE_URL = None
+    BASE_URL_PARTS = BASE_URL_BOM = BASE_URL_TEST = None
+    BASE_URL_STOCK = BASE_URL_BUILD = BASE_URL_SALES = BASE_URL_ATTACHMENTS = None
+    BASE_URL_PARAMETERS = BASE_URL_RELATED = None
+
 TOKEN = os.getenv("INVENTREE_TOKEN")
 HEADERS = {
     "Authorization": f"Token {TOKEN}",
-    "Accept": "application/json"
+    "Content-Type": "application/json",
+    "Accept": "application/json",
 }
 
+# ----------------------------------------------------------------------
+# Helper: part lookup (returns list of matching dicts)
+# ----------------------------------------------------------------------
 def check_part_exists(name, category_pk):
-    """Check if a part with the given name and category exists and return its pk if found."""
-    print(f"DEBUG: Checking if part '{name}' exists in category {category_pk}")
-    params = {'name': name, 'category': category_pk}
-    
+    """Search for part by name + category (used to read JSON category)."""
+    print(f"DEBUG: Looking for part '{name}' in cat {category_pk}")
+    params = {"name": name, "category": category_pk}
     try:
-        response = requests.get(BASE_URL, headers=HEADERS, params=params)
-        print(f"DEBUG: Part check response status: {response.status_code}")
-        if response.status_code != 200:
-            print(f"DEBUG: Failed to check part: {response.text}")
-            raise Exception(f"Failed to check existing part: {response.status_code} - {response.text}")
-        
-        results = response.json()
-        if isinstance(results, dict) and 'results' in results:
-            print(f"DEBUG: Found {len(results['results'])} matching parts")
-            return results['results'][0]['pk'] if results['results'] else None
-        else:
-            print(f"DEBUG: Direct list response with {len(results)} parts")
-            return results[0]['pk'] if results else None
-    except requests.exceptions.RequestException as e:
-        print(f"DEBUG: Network error checking part: {str(e)}")
-        raise Exception(f"Network error checking part: {str(e)}")
+        r = requests.get(BASE_URL_PARTS, headers=HEADERS, params=params)
+        print(f"DEBUG: Check status {r.status_code}")
+        if r.status_code != 200:
+            raise Exception(f"Check failed: {r.text}")
+        data = r.json()
+        results = data.get("results", data) if isinstance(data, dict) else data
+        if results:
+            print(f"DEBUG: Found {len(results)} matches: {[p.get('pk') for p in results]}")
+        return results
+    except requests.RequestException as e:
+        raise Exception(f"Network error: {e}")
 
-def delete_part(part_name, part_pk):
-    """Delete a part by its pk."""
-    print(f"DEBUG: Attempting to delete part '{part_name}' with PK {part_pk}")
-    delete_url = f"{BASE_URL}{part_pk}/"
-    
-    try:
-        response = requests.delete(delete_url, headers=HEADERS)
-        print(f"DEBUG: Part deletion response status: {response.status_code}")
-        if response.status_code != 204:
-            print(f"DEBUG: Failed to delete part '{part_name}': {response.text}")
-            raise Exception(f"Failed to delete part '{part_name}': {response.status_code} - {response.text}")
-        print(f"DEBUG: Successfully deleted part '{part_name}' with PK {part_pk}")
-    except requests.exceptions.RequestException as e:
-        print(f"DEBUG: Network error deleting part '{part_name}': {str(e)}")
-        raise Exception(f"Network error deleting part '{part_name}': {str(e)}")
+# ----------------------------------------------------------------------
+# Dependency handling (same as json2inv-parts.py)
+# ----------------------------------------------------------------------
+def check_dependencies(part_pk):
+    deps = {
+        "stock": [], "bom": [], "test": [], "build": [], "sales": [],
+        "attachments": [], "parameters": [], "related": []
+    }
+    for endpoint, key in [
+        (BASE_URL_STOCK,       "stock"),
+        (BASE_URL_BOM,         "bom"),
+        (BASE_URL_TEST,        "test"),
+        (BASE_URL_BUILD,       "build"),
+        (BASE_URL_SALES,       "sales"),
+        (BASE_URL_ATTACHMENTS, "attachments"),
+        (BASE_URL_PARAMETERS,  "parameters"),
+        (BASE_URL_RELATED,     "related"),
+    ]:
+        try:
+            r = requests.get(f"{endpoint}?part={part_pk}", headers=HEADERS)
+            print(f"DEBUG: Dep {key} → {r.status_code}")
+            if r.status_code == 200:
+                js = r.json()
+                cnt = js.get("count", len(js)) if isinstance(js, dict) else len(js)
+                if cnt:
+                    deps[key] = js.get("results", js)
+        except requests.RequestException as e:
+            print(f"DEBUG: Dep {key} network error: {e}")
+    return deps
 
-def process_part_file(part_file, remove_json=False):
-    """Process a single part JSON file to delete the corresponding part."""
-    print(f"DEBUG: Processing part file: {part_file}")
+def delete_dependencies(part_name, part_pk, clean):
+    if not clean:
+        return False
+    deps = check_dependencies(part_pk)
+    total = sum(len(v) for v in deps.values())
+    if total == 0:
+        print(f"DEBUG: No deps for {part_name} (PK {part_pk})")
+        return True
+
+    print(f"WARNING: {total} dependencies for '{part_name}' (PK {part_pk})")
+    for k, items in deps.items():
+        if items:
+            print(f"  • {len(items)} {k}: {[i.get('pk') for i in items]}")
+
+    if input(f"Type 'YES' to delete {total} deps: ") != "YES":
+        print("DEBUG: Cancelled (first)")
+        return False
+    if input(f"Type 'CONFIRM' to PERMANENTLY delete: ") != "CONFIRM":
+        print("DEBUG: Cancelled (second)")
+        return False
+
+    for key, items in deps.items():
+        for it in items:
+            pk = it.get("pk")
+            url = {
+                "stock":       f"{BASE_URL_STOCK}{pk}/",
+                "bom":         f"{BASE_URL_BOM}{pk}/",
+                "test":        f"{BASE_URL_TEST}{pk}/",
+                "build":       f"{BASE_URL_BUILD}{pk}/",
+                "sales":       f"{BASE_URL_SALES}{pk}/",
+                "attachments": f"{BASE_URL_ATTACHMENTS}{pk}/",
+                "parameters":  f"{BASE_URL_PARAMETERS}{pk}/",
+                "related":     f"{BASE_URL_RELATED}{pk}/",
+            }[key]
+            try:
+                r = requests.delete(url, headers=HEADERS)
+                print(f"DEBUG: Delete {key} {pk} → {r.status_code}")
+                if r.status_code != 204:
+                    raise Exception(f"Delete failed: {r.text}")
+            except requests.RequestException as e:
+                raise Exception(f"Network error deleting {key} {pk}: {e}")
+    return True
+
+def delete_part(part_name, part_pk, clean_deps):
+    print(f"DEBUG: Deleting part '{part_name}' (PK {part_pk})")
+    if not delete_dependencies(part_name, part_pk, clean_deps):
+        raise Exception("Dependencies block deletion")
+
+    # Set inactive first
     try:
-        with open(part_file, 'r', encoding='utf-8') as f:
-            part_data = json.load(f)
-    except json.JSONDecodeError as e:
-        print(f"DEBUG: Invalid JSON in {part_file}: {str(e)}")
-        return
+        r = requests.patch(f"{BASE_URL_PARTS}{part_pk}/", headers=HEADERS,
+                           json={"active": False})
+        print(f"DEBUG: Patch active=False → {r.status_code}")
+        if r.status_code not in (200, 201):
+            raise Exception(f"Patch failed: {r.text}")
+    except requests.RequestException as e:
+        raise Exception(f"Network error patching active: {e}")
+
+    try:
+        r = requests.delete(f"{BASE_URL_PARTS}{part_pk}/", headers=HEADERS)
+        print(f"DEBUG: DELETE part → {r.status_code}")
+        if r.status_code != 204:
+            raise Exception(f"Delete failed: {r.text}")
+        print(f"DEBUG: Part {part_name} (PK {part_pk}) removed")
+    except requests.RequestException as e:
+        raise Exception(f"Network error deleting part: {e}")
+
+# ----------------------------------------------------------------------
+# Process a single JSON file
+# ----------------------------------------------------------------------
+def process_part_file(part_file, remove_json=False, clean_deps=False):
+    print(f"DEBUG: Processing {part_file}")
+    try:
+        with open(part_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
     except Exception as e:
-        print(f"DEBUG: Error reading {part_file}: {str(e)}")
+        print(f"DEBUG: JSON error: {e}")
         return
-    
-    # Handle both single object and list formats
-    if isinstance(part_data, list):
-        print(f"DEBUG: Part data is a list, using first item")
-        part_data = part_data[0]
-    
-    part_name = part_data.get('name')
-    category_pk = part_data.get('category')
-    if not part_name or not category_pk:
-        print(f"DEBUG: Skipping part with missing name or category in {part_file}")
+
+    if isinstance(data, list):
+        data = data[0]
+
+    name = data.get("name")
+    cat  = data.get("category")
+    if not name or cat is None:
+        print("DEBUG: Missing name or category – skip")
         return
-    
-    # Check if part exists
-    part_pk = check_part_exists(part_name, category_pk)
-    if not part_pk:
-        print(f"DEBUG: Part '{part_name}' does not exist in InvenTree, skipping")
+
+    existing = check_part_exists(name, cat)
+    if not existing:
+        print(f"DEBUG: Part '{name}' not found – skip")
         return
-    
-    # Delete the part
-    delete_part(part_name, part_pk)
-    
-    # Optionally remove JSON file
+
+    for p in existing:
+        delete_part(name, p["pk"], clean_deps)
+
     if remove_json:
-        print(f"DEBUG: Removing part file {part_file}")
         try:
             os.remove(part_file)
-            print(f"DEBUG: Successfully removed {part_file}")
+            print(f"DEBUG: Removed {part_file}")
         except Exception as e:
-            print(f"DEBUG: Error removing {part_file}: {str(e)}")
+            print(f"DEBUG: Remove file error: {e}")
 
+# ----------------------------------------------------------------------
+# CLI
+# ----------------------------------------------------------------------
 def main():
-    # Parse CLI arguments
-    parser = argparse.ArgumentParser(description="Delete InvenTree parts based on data/parts JSON files.")
-    parser.add_argument('patterns', nargs='*', help="Glob patterns for parts (e.g., '*.json', 'Paint/Yellow_Paint.json')")
-    parser.add_argument('--remove-json', action='store_true', help="Remove part JSON files after deletion")
+    parser = argparse.ArgumentParser(
+        description="Delete InvenTree parts based on data/parts JSON files."
+    )
+    parser.add_argument(
+        "patterns", nargs="*",
+        help="Glob patterns (relative to data/parts)"
+    )
+    parser.add_argument("--remove-json", action="store_true",
+                        help="Delete the JSON file after successful removal")
+    parser.add_argument("--clean-dependencies", action="store_true",
+                        help="Delete all dependencies (two confirmations)")
     args = parser.parse_args()
-    
-    print("DEBUG: Starting main function")
+
     if not TOKEN:
-        print("DEBUG: INVENTREE_TOKEN not set")
-        raise Exception("INVENTREE_TOKEN environment variable not set. Set it with: export INVENTREE_TOKEN='your-token'")
+        raise Exception("INVENTREE_TOKEN not set")
     if not BASE_URL:
-        print("DEBUG: INVENTREE_URL not set")
-        raise Exception("INVENTREE_URL environment variable not set. Set it with: export INVENTREE_URL='http://localhost:8000/'")
-    
-    print(f"DEBUG: Using BASE_URL: {BASE_URL}")
-    dirname = "data/parts"
-    
-    print(f"DEBUG: Checking directory: {dirname}")
-    if not os.path.exists(dirname):
-        print(f"DEBUG: Directory '{dirname}' does not exist")
-        raise FileNotFoundError(f"Directory '{dirname}' not found. Please ensure you're running the script from the correct location.")
-    
-    if not os.access(dirname, os.R_OK):
-        print(f"DEBUG: Cannot read {dirname}")
-        raise PermissionError(f"Insufficient permissions to read {dirname}")
-    
-    # Get glob patterns from command-line arguments
-    print(f"DEBUG: Raw command-line arguments: {sys.argv[1:]}")
-    glob_patterns = args.patterns
-    print(f"DEBUG: Glob patterns provided: {glob_patterns}")
-    if not glob_patterns:
-        print("DEBUG: No glob patterns provided")
-        raise Exception("Usage: python3 rm-inv-parts.py [glob_pattern...] [--remove-json]")
-    
-    try:
-        part_files = []
-        for pattern in glob_patterns:
-            pattern_path = os.path.join(dirname, pattern)
-            print(f"DEBUG: Expanding glob pattern: {pattern_path}")
-            matched_files = glob.glob(pattern_path, recursive=True)
-            print(f"DEBUG: Matched {len(matched_files)} files for pattern '{pattern}': {matched_files}")
-            part_files.extend(matched_files)
-        
-        # Handle case where pattern is passed literally (e.g., no shell expansion)
-        if not part_files:
-            print(f"DEBUG: No files matched, attempting to interpret patterns as filenames")
-            for pattern in glob_patterns:
-                pattern_path = os.path.join(dirname, pattern)
-                if os.path.isfile(pattern_path) and pattern_path.endswith('.json'):
-                    print(f"DEBUG: Adding literal file: {pattern_path}")
-                    part_files.append(pattern_path)
-        
-        part_files = sorted(set(part_files))  # Remove duplicates and sort
-        print(f"DEBUG: Total unique part files to process: {len(part_files)}: {part_files}")
-        if not part_files:
-            print(f"DEBUG: No JSON files matched or found, exiting")
-            return
-        
-        for part_file in part_files:
-            if not part_file.endswith('.json') or os.path.basename(part_file) == 'category.json':
-                print(f"DEBUG: Skipping non-part file: {part_file}")
-                continue
-            process_part_file(part_file, args.remove_json)
-            
-    except Exception as e:
-        print(f"DEBUG: Error in main loop: {str(e)}")
-        raise
+        raise Exception("INVENTREE_URL not set")
+
+    root = "data/parts"
+    if not os.path.isdir(root):
+        raise FileNotFoundError(f"{root} missing")
+
+    # ---- collect files ----
+    files = []
+    for pat in args.patterns:
+        full = os.path.join(root, pat)
+        matches = glob.glob(full, recursive=True)
+        files.extend(matches)
+
+    if not files:
+        for pat in args.patterns:
+            fp = os.path.join(root, pat)
+            if os.path.isfile(fp) and fp.endswith(".json"):
+                files.append(fp)
+
+    files = sorted(set(f for f in files if f.endswith(".json") and os.path.basename(f) != "category.json"))
+    print(f"DEBUG: {len(files)} files to process")
+
+    for f in files:
+        process_part_file(f, args.remove_json, args.clean_dependencies)
 
 if __name__ == "__main__":
     main()
