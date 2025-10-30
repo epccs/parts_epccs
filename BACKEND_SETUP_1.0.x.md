@@ -304,13 +304,27 @@ sudo docker compose up -d
 curl -v -L http://inventree.local
 ```
 
-### f. Stop Containers
+### f. Update Containers
+
+```bash
+cd ~/git/InvenTree/contrib/container/
+sudo docker compose pull
+sudo docker compose down
+sudo docker compose up -d inventree-db inventree-cache
+# wait for a while (~10 sec, slow system needs more, use top or htop.) Use --rm to clean up the temporary container
+sudo docker compose run --rm inventree-server invoke update
+# wait for migrations, Static file collection, plugin updates.  
+sudo docker compose up -d
+curl -v -L http://inventree.local
+```
+
+### g. Stop Containers
 
 ```bash
 sudo docker compose down
 ```
 
-### g. Nuke Containers
+### h. Nuke Containers
 
 Development progresses in stages, from time to time a fresh install is needed.
 

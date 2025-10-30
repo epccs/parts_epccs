@@ -190,34 +190,34 @@ git clone --branch stable https://github.com/inventree/InvenTree.git ~/git/Inven
 cd ~/git/InvenTree
 
 # 2. Install Python dependencies
-docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke install
+sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke install
 
 # 3. Run database migrations (ensures schema is up-to-date)
-docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke migrate
+sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke migrate
 
 # 4. Set up test data and default admin user (admin / inventree)
-docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke dev.setup-test --dev
+sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke dev.setup-test --dev
 
 # 5. Install frontend dependencies
-docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke int.frontend-install
+sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke int.frontend-install
 
 # 6. Compile frontend translations
-docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke int.frontend-trans
+sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke int.frontend-trans
 
 # 7. Build frontend assets
-docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke int.frontend-build
+sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke int.frontend-build
 
 # 8. Collect static files
-docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke static
+sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke static
 ```
 
 ### b. Start Containers in detached mode
 
 ```bash
 cd ~/git/InvenTree/
-docker compose --project-directory . -f contrib/container/dev-docker-compose.yml up -d
+sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml up -d
 # default admin user is: admin / inventree
-curl -v -L -H "Host: localhost" http://localhost:8000
+curl -v -L http://localhost:8000
 ```
 
 ### c. Stop Containers
@@ -229,7 +229,43 @@ sudo docker compose --project-directory . -f contrib/container/dev-docker-compos
 sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml logs
 ```
 
-### d. Nuke Containers
+### d. Update Containers
+
+```bash
+cd ~/git/InvenTree
+
+# git is using the stable branch (git clone --branch stable) 
+git pull
+
+# 1. Stop everything
+sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml down
+
+# 2. Pull base images (only postgres)
+sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml pull
+
+# 3. Build the dev image (required!)
+sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml build inventree-dev-server
+
+# 4. Start ONLY the database
+sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml up -d inventree-dev-db
+
+# 5. Wait for DB to be ready
+echo "Waiting for PostgreSQL..."
+until sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml exec inventree-dev-db pg_isready -U pguser -d inventree >/dev/null 2>&1; do
+  sleep 2
+done
+
+# 6. Run update (migrations, frontend, static)
+sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml run --rm inventree-dev-server invoke update
+
+# 7. Start everything
+sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml up -d
+curl -v -L http://localhost:8000
+```
+
+<https://grok.com/share/c2hhcmQtMw%3D%3D_63919905-6c07-4516-ae09-a6240cafcbf4>
+
+### e. Nuke Containers
 
 Development progresses in stages, from time to time a fresh install is needed.
 
@@ -245,7 +281,7 @@ cd ~/git/InvenTree
 git pull
 ```
 
-### e. Optional Enhancements
+### f. Optional Enhancements
 
 File Ownership: If editing source files locally, add post-build:
 
