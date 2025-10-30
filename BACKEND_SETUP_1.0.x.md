@@ -95,8 +95,10 @@ sudo nano /etc/fstab
 sudo systemctl daemon-reload
 sudo mount /srv/samba-share
 sudo chown -R 1000:1000 /srv/samba-share
-# lost+found should stay as root
-sudo chown -R root:root /srv/samba-share/lost+found
+sudo chmod -R 0775 /srv/samba-share
+sudo chmod 0775 /srv/samba-share   # for the dir itself
+# /srv/samba-share is NOT the root of an ext4 filesystem (it's mounted from /dev/sda2, so lost+found is just leftover from mkfs and not needed).
+sudo rmdir /srv/samba-share/lost+found
 # Create the backup subdirectory and set premissions for containers to use
 sudo mkdir -p /srv/samba-share/inventree-backup
 sudo chown -R 1000:1000 /srv/samba-share/inventree-backup
@@ -110,16 +112,30 @@ sudo smbpasswd -a rsutherland
 
 # [optional:] use samba to make the backup visabl and mounted to this location
 mkdir -p ~/samba
+
+# need a user map (see bellow) to map rsutherland -> INVENTREE\rsutherland cleanly
+sudo nano /etc/samba/users.map
+# and then edit the samba config
 sudo nano /etc/samba/smb.conf
 ```
 
-Samba is serving the HDD mount. It forces all files created to be owned by 1000:1000 on the server, matching the system admin account that the InvenTree container uses. No client-side UID/GID config is needed in Windows or Linux, just map the drive with the credential(s) for valid users.
+User map
+
+```conf
+rsutherland = INVENTREE\rsutherland
+```
+
+Samba config to serve the HDD mount. It forces all files created to be owned by 1000:1000 on the server, matching the system admin account that the InvenTree container uses. No client-side UID/GID config is needed in Windows or Linux, just map the drive with the credential(s) for valid users.
 
 ```conf
 # modify the workgroup to reduce confusion for the Credential Manager 
 # otherwise the full username ends up in a namespace as `MicrosoftAccount\rsutherland` that is causing me problems
+# also the "\r" might be interpreted as an escape sequence
 [global]
 workgroup = INVENTREE
+# netbios name max. 15 chars
+netbios name = INVENTREE-SRV
+username map = /etc/samba/users.map
 # add this to the very end of the /etc/samba/smb.conf file
 [Samba-Inventree]
 comment = Inventree Data Share
@@ -129,9 +145,10 @@ read only = no
 guest ok = no
 create mask = 0775
 directory mask = 0775
-valid users = rsutherland  # the full user name is `INVENTREE\rustherland`
-force user = rsutherland   # Forces ownership to UID 1000 (the first user made e.g., the admin user)
-force group = rsutherland  # Forces ownership to GID 1000 (I used rsutherland when installing Ubuntu)
+valid users = rsutherland
+force user = rsutherland   
+force group = rsutherland  
+# Forces ownership to UID:GID to 1000:1000 (the first user made when installing)
 ```
 
 ```bash
@@ -139,7 +156,7 @@ force group = rsutherland  # Forces ownership to GID 1000 (I used rsutherland wh
 sudo service smbd restart
 # Check for errors
 testparm
-# Windows can mount \\inventree2\Samba-Inventree with credentials (and so can Linux)
+# Windows can mount \\INVENTREE-SRV\Samba-Inventree with credentials (and so can Linux)
 ```
 
 The Samba share can be mounted on the local system, and will work simular to how it does from Windows. To delay mounting the CIFS share, you can use the noauto and x-systemd.automount options in your /etc/fstab entry. This will prevent the system from mounting the share at boot and instead use systemd to automatically mount it when it is first accessed. Example /etc/fstab entry assuming gid and uid are 1000:
@@ -150,19 +167,20 @@ sudo nano /etc/fstab
 ```
 
 ```conf
-//inventree/Samba-Inventree /home/rsutherland/samba cifs credentials=/etc/samba/samba_credentials.conf,noauto,x-systemd.automount,uid=1000,gid=1000,file_mode=0664,dir_mode=0775 0 0
+//INVENTREE-SRV/Samba-Inventree /home/rsutherland/samba cifs credentials=/etc/samba/samba_credentials.conf,noauto,x-systemd.automount,uid=1000,gid=1000,file_mode=0664,dir_mode=0775,vers=3.0 0 0
 ```
 
 Create a file to store your credentials. A good location is in a secure system location. E.g., /etc/samba/samba_credentials.conf for a system-wide mount.
 
 ```bash
-# use an editor to add the mount to the end of fstab
+# use an editor to add the mount to the end of fstab add rw (CIFS driver ignores rw in fstab if credentials= is present)
 sudo nano /etc/samba/samba_credentials.conf
 ```
 
 ```conf
 username=rsutherland
 password=your_password
+domain=INVENTREE
 ```
 
 ```bash
@@ -179,6 +197,10 @@ sudo journalctl -u smbd
 mkdir -p ~/samba/inventree-backup
 # the samba mount will force the uid and gid to be what the container is happy with
 ```
+
+Sometime it works sometimes not so much
+
+<https://grok.com/share/c2hhcmQtMw%3D%3D_271e147c-f067-4113-a87f-baa94c98a35f>
 
 ## 1. Install Inventree's Docker Backend Files
 
