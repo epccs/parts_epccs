@@ -1,15 +1,19 @@
+#!/usr/bin/env python3
 # file name: rm-inv-categories.py
-# Use InvenTree API to delete categories from an InvenTree instance based on the hierarchical structure in data/parts.
-# https://docs.inventree.org/en/latest/api/schema/#api-schema-documentation
-# Accepts Linux globbing patterns (e.g., '*', 'Electronics/Passives/*') to specify category folders to delete.
-# Only deletes categories if they are empty (no parts in them or their subcategories).
-# todo: deletes categories if there are no subcategories either.
-# Optional CLI flag --remove-json to delete the category.json files after successful deletion.
-# Compatibility: Uses the structure produced by inv-parts2json.py.
-# Example usage:
-#   python3 ./api/rm-inv-categories.py "Category_0/Category_1/Category_2/Category_3/Category_4/Category_5" --remove-json # removes ./data/parts/Category_0/Category_1/Category_2/Category_3/Category_4/Category_5/category.json
-#   python3 ./api/rm-inv-categories.py "Electronics/Passives/Capacitors"
-#   python3 ./api/rm-inv-parts.py "Electronics/Passives/Capacitors/C_*.json" && python3 ./api/rm-inv-categories.py "Electronics/Passives/Capacitors" --remove-json
+# version: 2025-10-27-v1
+# --------------------------------------------------------------
+# Delete EMPTY part categories based on folder structure in data/parts.
+# * Only deletes if category has ZERO parts.
+# * Supports --remove-json to delete category.json files.
+# * Safe: skips non-empty categories.
+# --------------------------------------------------------------
+# example usage:
+#      # Delete empty Paint category (after removing Yellow_Paint, see rm-inv-parts.py examples)
+#      python3 ./api/rm-inv-categories.py "Paint"
+#
+#      # Delete Capacitors category (after removing all C_*.json)
+#      python3 ./api/rm-inv-parts.py "Electronics/Passives/Capacitors/C_*.json" --clean-dependencies --remove-json
+#      python3 ./api/rm-inv-categories.py "Electronics/Passives/Capacitors" --remove-json
 
 import requests
 import json
@@ -18,197 +22,158 @@ import glob
 import sys
 import argparse
 
-# API endpoints and authentication
-BASE_URL_CATEGORIES = os.getenv("INVENTREE_URL") + "api/part/category/" if os.getenv("INVENTREE_URL") else None
+# ----------------------------------------------------------------------
+# API endpoints
+# ----------------------------------------------------------------------
+if os.getenv("INVENTREE_URL"):
+    BASE_URL = os.getenv("INVENTREE_URL")
+    BASE_URL_CATEGORIES = BASE_URL + "api/part/category/"
+    BASE_URL_PARTS = BASE_URL + "api/part/"
+else:
+    BASE_URL = None
+    BASE_URL_CATEGORIES = BASE_URL_PARTS = None
+
 TOKEN = os.getenv("INVENTREE_TOKEN")
 HEADERS = {
     "Authorization": f"Token {TOKEN}",
-    "Accept": "application/json"
+    "Content-Type": "application/json",
+    "Accept": "application/json",
 }
 
-def check_category_exists(name, parent_pk=None):
-    """Check if a category with the given name and parent exists and return its pk if found."""
-    print(f"DEBUG: Checking if category '{name}' exists with parent {parent_pk}")
-    params = {'name': name}
-    if parent_pk is not None:
-        params['parent'] = parent_pk
-    
+# ----------------------------------------------------------------------
+# Get category by path (folder structure)
+# ----------------------------------------------------------------------
+def get_category_pk_from_path(folder_path):
+    """Return PK of the leaf category from folder path, or None if not found."""
+    print(f"DEBUG: Resolving category from path: {folder_path}")
+    parts = os.path.relpath(folder_path, "data/parts").split(os.sep)
+    cur_pk = None
+    for name in parts:
+        if name == ".":
+            continue
+        params = {"name": name}
+        if cur_pk:
+            params["parent"] = cur_pk
+        try:
+            r = requests.get(BASE_URL_CATEGORIES, headers=HEADERS, params=params)
+            print(f"DEBUG: Category lookup {name} (parent={cur_pk}) → {r.status_code}")
+            if r.status_code != 200:
+                print(f"DEBUG: Failed to lookup {name}: {r.text}")
+                return None
+            data = r.json()
+            results = data.get("results", data) if isinstance(data, dict) else data
+            if not results:
+                print(f"DEBUG: Category '{name}' not found")
+                return None
+            cur_pk = results[0]["pk"]
+            print(f"DEBUG: → {name} (PK {cur_pk})")
+        except requests.RequestException as e:
+            print(f"DEBUG: Network error: {e}")
+            return None
+    return cur_pk
+
+# ----------------------------------------------------------------------
+# Check if category has parts
+# ----------------------------------------------------------------------
+def category_has_parts(cat_pk):
+    """Return True if category has any parts."""
     try:
-        response = requests.get(BASE_URL_CATEGORIES, headers=HEADERS, params=params)
-        print(f"DEBUG: Category check response status: {response.status_code}")
-        if response.status_code != 200:
-            print(f"DEBUG: Failed to check category: {response.text}")
-            raise Exception(f"Failed to check existing category: {response.status_code} - {response.text}")
-        
-        results = response.json()
-        if isinstance(results, dict) and 'results' in results:
-            print(f"DEBUG: Found {len(results['results'])} matching categories")
-            return results['results'][0]['pk'] if results['results'] else None
+        r = requests.get(BASE_URL_PARTS, headers=HEADERS, params={"category": cat_pk})
+        print(f"DEBUG: Parts in cat {cat_pk} → {r.status_code}")
+        if r.status_code != 200:
+            return True  # assume has parts on error
+        data = r.json()
+        count = data.get("count", len(data.get("results", data))) if isinstance(data, dict) else len(data)
+        has_parts = count > 0
+        print(f"DEBUG: Category {cat_pk} has {count} parts → {'YES' if has_parts else 'NO'}")
+        return has_parts
+    except requests.RequestException as e:
+        print(f"DEBUG: Network error checking parts: {e}")
+        return True  # safe default
+
+# ----------------------------------------------------------------------
+# Delete category
+# ----------------------------------------------------------------------
+def delete_category(cat_pk, cat_path):
+    """Delete category if empty."""
+    if category_has_parts(cat_pk):
+        print(f"WARNING: Category '{cat_path}' (PK {cat_pk}) has parts — SKIPPED")
+        return False
+
+    try:
+        r = requests.delete(f"{BASE_URL_CATEGORIES}{cat_pk}/", headers=HEADERS)
+        print(f"DEBUG: DELETE category {cat_pk} → {r.status_code}")
+        if r.status_code == 204:
+            print(f"DEBUG: Category '{cat_path}' (PK {cat_pk}) deleted")
+            return True
         else:
-            print(f"DEBUG: Direct list response with {len(results)} categories")
-            return results[0]['pk'] if results else None
-    except requests.exceptions.RequestException as e:
-        print(f"DEBUG: Network error checking category: {str(e)}")
-        raise Exception(f"Network error checking category: {str(e)}")
+            print(f"DEBUG: Delete failed: {r.text}")
+            return False
+    except requests.RequestException as e:
+        print(f"DEBUG: Network error deleting category: {e}")
+        return False
 
-def is_category_empty(category_pk):
-    """Check if a category is empty (no parts in it or its subcategories)."""
-    print(f"DEBUG: Checking if category PK {category_pk} is empty")
-    params = {'category': category_pk, 'cascade': True}  # Cascade to check subcategories
-    try:
-        response = requests.get(os.getenv("INVENTREE_URL") + "api/part/", headers=HEADERS, params=params)
-        print(f"DEBUG: Part count response status: {response.status_code}")
-        if response.status_code != 200:
-            print(f"DEBUG: Failed to check part count: {response.text}")
-            raise Exception(f"Failed to check part count for category {category_pk}")
-        
-        results = response.json()
-        count = results['count'] if isinstance(results, dict) and 'count' in results else len(results)
-        print(f"DEBUG: Found {count} parts in category {category_pk} (including subcategories)")
-        return count == 0
-    except requests.exceptions.RequestException as e:
-        print(f"DEBUG: Network error checking category emptiness: {str(e)}")
-        raise Exception(f"Network error checking category emptiness: {str(e)}")
-
-def delete_category(category_name, category_pk):
-    """Delete a category by its pk."""
-    print(f"DEBUG: Attempting to delete category '{category_name}' with PK {category_pk}")
-    delete_url = f"{BASE_URL_CATEGORIES}{category_pk}/"
-    
-    try:
-        response = requests.delete(delete_url, headers=HEADERS)
-        print(f"DEBUG: Category deletion response status: {response.status_code}")
-        if response.status_code != 204:
-            print(f"DEBUG: Failed to delete category '{category_name}': {response.text}")
-            raise Exception(f"Failed to delete category '{category_name}': {response.status_code} - {response.text}")
-        print(f"DEBUG: Successfully deleted category '{category_name}' with PK {category_pk}")
-    except requests.exceptions.RequestException as e:
-        print(f"DEBUG: Network error deleting category '{category_name}': {str(e)}")
-        raise Exception(f"Network error deleting category '{category_name}': {str(e)}")
-
-def get_parent_pk(category_folder, categories_data):
-    """Determine the parent PK for a category folder based on its parent directory."""
-    print(f"DEBUG: Determining parent PK for folder: {category_folder}")
-    parent_dir = os.path.dirname(category_folder)
-    if parent_dir == 'data/parts' or parent_dir == os.path.normpath('data/parts'):
-        print(f"DEBUG: Folder {category_folder} is top-level, parent PK is None")
-        return None
-    
-    parent_name = os.path.basename(parent_dir)
-    cat_file = os.path.join(parent_dir, 'category.json')
-    if not os.path.exists(cat_file):
-        print(f"DEBUG: No category.json in parent folder {parent_dir}, assuming no parent PK")
-        return None
-    
-    try:
-        with open(cat_file, 'r', encoding='utf-8') as f:
-            parent_cats = json.load(f)
-        for cat in parent_cats:
-            if cat.get('name') == parent_name:
-                parent_pk = cat.get('pk')
-                print(f"DEBUG: Found parent category '{parent_name}' with PK {parent_pk}")
-                return parent_pk
-        print(f"DEBUG: Parent category '{parent_name}' not found in {cat_file}")
-        return None
-    except Exception as e:
-        print(f"DEBUG: Error reading parent category file {cat_file}: {str(e)}")
-        return None
-
-def process_category_folder(category_folder, remove_json=False):
-    """Process a category folder to delete the corresponding category if empty."""
-    print(f"DEBUG: Processing category folder: {category_folder}")
-    category_name = os.path.basename(category_folder)
-    
-    # Determine parent PK
-    parent_pk = get_parent_pk(category_folder, None)
-    
-    # Check if category exists
-    category_pk = check_category_exists(category_name, parent_pk)
-    if not category_pk:
-        print(f"DEBUG: Category '{category_name}' does not exist in InvenTree, skipping")
+# ----------------------------------------------------------------------
+# Process a folder (category path)
+# ----------------------------------------------------------------------
+def process_category_folder(folder_path, remove_json=False):
+    print(f"DEBUG: Processing category folder: {folder_path}")
+    cat_pk = get_category_pk_from_path(folder_path)
+    if not cat_pk:
+        print(f"DEBUG: Category path not found in InvenTree — skipping")
         return
-    
-    # Check if category is empty
-    if not is_category_empty(category_pk):
-        print(f"DEBUG: Category '{category_name}' is not empty (has parts), skipping deletion")
-        return
-    
-    # Delete the category
-    delete_category(category_name, category_pk)
-    
-    # Optionally remove category.json
-    if remove_json:
-        cat_file = os.path.join(category_folder, 'category.json')
-        if os.path.exists(cat_file):
-            print(f"DEBUG: Removing category.json from {category_folder}")
+
+    cat_path = os.path.relpath(folder_path, "data/parts")
+    if delete_category(cat_pk, cat_path):
+        # Optionally remove category.json
+        json_file = os.path.join(folder_path, "category.json")
+        if remove_json and os.path.isfile(json_file):
             try:
-                os.remove(cat_file)
-                print(f"DEBUG: Successfully removed {cat_file}")
+                os.remove(json_file)
+                print(f"DEBUG: Removed {json_file}")
             except Exception as e:
-                print(f"DEBUG: Error removing {cat_file}: {str(e)}")
-        else:
-            print(f"DEBUG: No category.json found in {category_folder}")
+                print(f"DEBUG: Failed to remove {json_file}: {e}")
 
+# ----------------------------------------------------------------------
+# CLI
+# ----------------------------------------------------------------------
 def main():
-    # Parse CLI arguments
-    parser = argparse.ArgumentParser(description="Delete InvenTree categories based on data/parts structure.")
-    parser.add_argument('patterns', nargs='*', help="Glob patterns for categories (e.g., '*', 'Electronics/Passives/*')")
-    parser.add_argument('--remove-json', action='store_true', help="Remove category.json files after deletion")
+    parser = argparse.ArgumentParser(
+        description="Delete EMPTY InvenTree part categories based on data/parts folder structure."
+    )
+    parser.add_argument(
+        "patterns", nargs="*",
+        help="Glob patterns for category folders (e.g. 'Electronics/Passives/Capacitors', 'Paint')"
+    )
+    parser.add_argument("--remove-json", action="store_true",
+                        help="Delete category.json files after successful deletion")
     args = parser.parse_args()
-    
-    print("DEBUG: Starting main function")
+
     if not TOKEN:
-        print("DEBUG: INVENTREE_TOKEN not set")
-        raise Exception("INVENTREE_TOKEN environment variable not set. Set it with: export INVENTREE_TOKEN='your-token'")
-    if not BASE_URL_CATEGORIES:
-        print("DEBUG: INVENTREE_URL not set")
-        raise Exception("INVENTREE_URL environment variable not set. Set it with: export INVENTREE_URL='http://localhost:8000/'")
-    
-    print(f"DEBUG: Using BASE_URL_CATEGORIES: {BASE_URL_CATEGORIES}")
-    dirname = "data/parts"
-    
-    print(f"DEBUG: Checking directory: {dirname}")
-    if not os.path.exists(dirname):
-        print(f"DEBUG: Directory '{dirname}' does not exist")
-        raise FileNotFoundError(f"Directory '{dirname}' not found. Please ensure you're running the script from the correct location.")
-    
-    if not os.access(dirname, os.R_OK):
-        print(f"DEBUG: Cannot read {dirname}")
-        raise PermissionError(f"Insufficient permissions to read {dirname}")
-    
-    # Get glob patterns from command-line arguments
-    glob_patterns = args.patterns
-    print(f"DEBUG: Glob patterns provided: {glob_patterns}")
-    if not glob_patterns:
-        print("DEBUG: No glob patterns provided")
-        raise Exception("Usage: python3 rm-inv-categories.py [glob_pattern...] [--remove-json]")
-    
-    try:
-        category_folders = []
-        for pattern in glob_patterns:
-            pattern_path = os.path.join(dirname, pattern)
-            print(f"DEBUG: Expanding glob pattern: {pattern_path}")
-            matched_folders = glob.glob(pattern_path, recursive=True)
-            matched_folders = [f for f in matched_folders if os.path.isdir(f)]
-            print(f"DEBUG: Matched {len(matched_folders)} folders for pattern '{pattern}': {matched_folders}")
-            category_folders.extend(matched_folders)
-        
-        category_folders = sorted(set(category_folders))  # Remove duplicates and sort
-        print(f"DEBUG: Total unique category folders to process: {len(category_folders)}: {category_folders}")
-        if not category_folders:
-            print(f"DEBUG: No folders matched the provided patterns, exiting")
-            return
-        
-        # Process categories bottom-up (delete leaves first)
-        category_folders.sort(key=lambda x: -x.count(os.sep))  # Sort by depth (deepest first)
-        print(f"DEBUG: Processing categories in bottom-up order: {category_folders}")
-        
-        for category_folder in category_folders:
-            process_category_folder(category_folder, args.remove_json)
-            
-    except Exception as e:
-        print(f"DEBUG: Error in main loop: {str(e)}")
-        raise
+        raise Exception("INVENTREE_TOKEN not set")
+    if not BASE_URL:
+        raise Exception("INVENTREE_URL not set")
+
+    root = "data/parts"
+    if not os.path.isdir(root):
+        raise FileNotFoundError(f"{root} missing")
+
+    # ---- collect folders ----
+    folders = []
+    for pat in args.patterns or ["*"]:
+        full = os.path.join(root, pat)
+        matches = glob.glob(full, recursive=True)
+        folders.extend([m for m in matches if os.path.isdir(m)])
+
+    folders = sorted(set(folders))
+    print(f"DEBUG: {len(folders)} category folders to check")
+
+    deleted = 0
+    for f in folders:
+        if process_category_folder(f, args.remove_json):
+            deleted += 1
+
+    print(f"SUMMARY: {deleted} empty categories deleted")
 
 if __name__ == "__main__":
     main()
