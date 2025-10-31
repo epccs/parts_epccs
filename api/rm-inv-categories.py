@@ -14,6 +14,7 @@
 #      # Delete Capacitors category (after removing all C_*.json)
 #      python3 ./api/rm-inv-parts.py "Electronics/Passives/Capacitors/C_*.json" --clean-dependencies --remove-json
 #      python3 ./api/rm-inv-categories.py "Electronics/Passives/Capacitors" --remove-json
+#      # note: the last example does not alter category.json or remove it, at this time handling is manual.
 
 import requests
 import json
