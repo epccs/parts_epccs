@@ -1,122 +1,168 @@
+#!/usr/bin/env python3
 # file name: inv-companies2json.py
-# Use InvenTree API for Companies with the goal of pulling data from InvenTree to populate a folder (data/companies).
-# https://docs.inventree.org/en/latest/api/schema/#api-schema-documentation
-# Use each company from InvenTree to create a json file under the `data/companies` folder
-# sanitize the company name for the filename by replacing spaces with underscores and removing dots (e.g., Acme Inc. 
-# becomes Acme_Inc), also replace invalid chars. Keep the sanitized name inside the JSON as well to push into another 
-# InvenTree instance.
-# Import Compatibility: The structure should be compatible with the `json2inv-companies.py` import script that can recreate 
-#                       the Companies in another InvenTree instance.
+# version: 2025-10-31-v2
+# --------------------------------------------------------------
+# Export InvenTree companies → data/companies/*.json
+# * CLI glob patterns (e.g. "Customer_?.json", "Acme_Inc.json")
+# * Sanitizes name for filename & JSON (spaces→_, dots→removed, invalid chars→_)
+# * Compatible with json2inv-companies.py import script
+# --------------------------------------------------------------
+# example usage:
+#    Export everything
+#    python3 ./api/inv-companies2json.py
+#
+#    Export all (*) or a single-character (?) Customer glob
+#    python3 ./api/inv-companies2json.py "Customer_*.json"
+#    python3 ./api/inv-companies2json.py "Customer_?.json"
+#
+#    Export one company
+#    python3 ./api/inv-companies2json.py "Acme_Inc.json"
 
 import requests
 import json
 import os
+import glob
 import re
+import argparse
 
-# API endpoint and authentication (for Company Management)
-# https://docs.inventree.org/en/latest/api/schema/#api-schema-documentation
+# ----------------------------------------------------------------------
+# API endpoint & auth
+# ----------------------------------------------------------------------
 if os.getenv("INVENTREE_URL"):
     BASE_URL = os.getenv("INVENTREE_URL") + "api/company/"
 else:
     BASE_URL = None
+
 TOKEN = os.getenv("INVENTREE_TOKEN")
 HEADERS = {
     "Authorization": f"Token {TOKEN}",
     "Accept": "application/json"
 }
 
+# ----------------------------------------------------------------------
+# Sanitize company name for filename & JSON
+# ----------------------------------------------------------------------
 def sanitize_company_name(name):
-    """Sanitize company name for JSON and filename by replacing spaces with underscores and removing dots."""
+    """Replace spaces with _, remove dots, and strip invalid filename chars."""
     print(f"DEBUG: Sanitizing company name: {name}")
     sanitized = name.replace(' ', '_').replace('.', '')
-    sanitized = re.sub(r'[<>:"/\\|?*]', '_', sanitized.strip())  # Additional sanitization for invalid chars
-    print(f"DEBUG: Sanitized company name to: {sanitized}")
+    sanitized = re.sub(r'[<>:"/\\|?*]', '_', sanitized.strip())
+    print(f"DEBUG: Sanitized → {sanitized}")
     return sanitized
 
+# ----------------------------------------------------------------------
+# Fetch all companies (handles pagination)
+# ----------------------------------------------------------------------
 def fetch_companies(url):
-    """Fetch all companies, handling pagination."""
-    print(f"DEBUG: Fetching companies from URL: {url}")
+    """Return a flat list of all companies."""
+    print(f"DEBUG: Fetching companies from {url}")
     companies = []
     try:
         while url:
-            print(f"DEBUG: Sending GET request to {url}")
-            response = requests.get(url, headers=HEADERS)
-            print(f"DEBUG: API response status: {response.status_code}")
-            if response.status_code != 200:
-                print(f"DEBUG: API request failed: {response.text}")
-                raise Exception(f"API request failed: {response.status_code} - {response.text}")
-            
-            data = response.json()
+            resp = requests.get(url, headers=HEADERS)
+            print(f"DEBUG: GET {url} → {resp.status_code}")
+            if resp.status_code != 200:
+                raise Exception(f"API error {resp.status_code}: {resp.text}")
+
+            data = resp.json()
             if isinstance(data, dict) and "results" in data:
-                print(f"DEBUG: Paginated response, found {len(data['results'])} items")
                 companies.extend(data["results"])
                 url = data.get("next")
-                print(f"DEBUG: Next page URL: {url}")
-            else:
-                print(f"DEBUG: Direct list response, found {len(data)} items")
+                print(f"DEBUG: Next page → {url}")
+            else:                       # non-paginated list
                 companies.extend(data)
                 url = None
         print(f"DEBUG: Total companies fetched: {len(companies)}")
         return companies
-    except requests.exceptions.RequestException as e:
-        print(f"DEBUG: Network error fetching companies: {str(e)}")
-        raise Exception(f"Network error: {str(e)}")
+    except requests.RequestException as e:
+        raise Exception(f"Network error: {e}")
 
+# ----------------------------------------------------------------------
+# Save one company to file
+# ----------------------------------------------------------------------
 def save_company_to_file(company):
-    """Save a single company's data to a JSON file named after the sanitized company name."""
-    company_name = company.get("name")
-    if not company_name:
-        print(f"DEBUG: Skipping company with missing name: {company}")
+    name = company.get("name")
+    if not name:
+        print(f"DEBUG: Skipping company with no name: {company}")
         return
-    
-    # Modify company data: sanitize name and clear image
-    company_modified = company.copy()
-    company_modified['name'] = sanitize_company_name(company_name)
-    company_modified['image'] = ""
-    print(f"DEBUG: Modified company data: name={company_modified['name']}, image={company_modified['image']}")
-    
+
+    sanitized = sanitize_company_name(name)
+    company_mod = company.copy()
+    company_mod["name"] = sanitized
+    company_mod["image"] = ""           # clear image for import
+
     dirname = "data/companies"
-    print(f"DEBUG: Ensuring directory exists: {dirname}")
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
-        print(f"DEBUG: Created directory: {dirname}")
-    
-    filename = f"{dirname}/{company_modified['name']}.json"
-    print(f"DEBUG: Saving company {company_modified['name']} to {filename}")
-    
+    os.makedirs(dirname, exist_ok=True)
+    filename = f"{dirname}/{sanitized}.json"
+
     try:
         with open(filename, "w", encoding="utf-8") as f:
-            json.dump(company_modified, f, indent=4)
-            f.write('\n')
-        print(f"DEBUG: Successfully saved {filename}")
+            json.dump(company_mod, f, indent=4)
+            f.write("\n")
+        print(f"DEBUG: Saved → {filename}")
     except Exception as e:
-        print(f"DEBUG: Error saving {filename}: {str(e)}")
-        raise Exception(f"Error saving {filename}: {str(e)}")
+        print(f"DEBUG: Failed to write {filename}: {e}")
 
+# ----------------------------------------------------------------------
+# Main – now supports glob patterns
+# ----------------------------------------------------------------------
 def main():
-    print("DEBUG: Starting main function")
+    parser = argparse.ArgumentParser(
+        description="Export InvenTree companies to data/companies/*.json (with glob support)."
+    )
+    parser.add_argument(
+        "patterns", nargs="*",
+        help="Glob patterns for company names (e.g. 'Customer_?.json', 'Acme_Inc.json'). "
+             "Default: export ALL companies."
+    )
+    args = parser.parse_args()
+
     if not TOKEN:
-        print("DEBUG: INVENTREE_TOKEN not set")
-        raise Exception("INVENTREE_TOKEN environment variable not set. Set it with: export INVENTREE_TOKEN='your-token'")
+        raise Exception("INVENTREE_TOKEN not set")
     if not BASE_URL:
-        print("DEBUG: INVENTREE_URL not set")
-        raise Exception("INVENTREE_URL environment variable not set. Set it with: export INVENTREE_URL='http://localhost:8000/'")
-    
+        raise Exception("INVENTREE_URL not set")
+
     print(f"DEBUG: Using BASE_URL: {BASE_URL}")
-    try:
-        # Fetch all companies
-        print(f"DEBUG: Fetching companies")
-        companies = fetch_companies(BASE_URL)
-        print(f"DEBUG: Retrieved {len(companies)} companies")
-        
-        # Save each company to a separate JSON file
-        for company in companies:
-            print(f"DEBUG: Processing company: {company.get('name', 'unknown')}")
-            save_company_to_file(company)
-            
-    except Exception as e:
-        print(f"DEBUG: Error in main: {str(e)}")
-        raise
+
+    # ------------------------------------------------------------------
+    # 1. Fetch ALL companies
+    # ------------------------------------------------------------------
+    all_companies = fetch_companies(BASE_URL)
+
+    # ------------------------------------------------------------------
+    # 2. Build a set of desired sanitized names from glob patterns
+    # ------------------------------------------------------------------
+    if args.patterns:
+        # Expand globs against the *sanitized* names we will create
+        desired = set()
+        for pat in args.patterns:
+            # Replace * with .+ for regex matching (simple glob→regex)
+            regex = "^" + pat.replace("*", ".*").replace("?", ".") + "$"
+            desired.update(re.compile(regex, re.IGNORECASE))
+        print(f"DEBUG: Filtering with {len(desired)} patterns")
+    else:
+        desired = None  # export all
+
+    # ------------------------------------------------------------------
+    # 3. Export matching companies
+    # ------------------------------------------------------------------
+    exported = 0
+    for comp in all_companies:
+        orig_name = comp.get("name", "")
+        if not orig_name:
+            continue
+
+        sanitized = sanitize_company_name(orig_name)
+
+        # Skip if pattern filter is active and name doesn't match
+        if desired and not any(pat.search(sanitized) for pat in desired):
+            print(f"DEBUG: Skipping (no pattern match): {sanitized}")
+            continue
+
+        save_company_to_file(comp)
+        exported += 1
+
+    print(f"SUMMARY: Exported {exported} companies")
 
 if __name__ == "__main__":
     main()
