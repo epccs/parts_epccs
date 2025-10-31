@@ -1,27 +1,28 @@
 #!/usr/bin/env python3
 # file name: inv-companies2json.py
-# version: 2025-10-31-v2
+# version: 2025-10-31-v4
 # --------------------------------------------------------------
 # Export InvenTree companies → data/companies/*.json
-# * CLI glob patterns (e.g. "Customer_?.json", "Acme_Inc.json")
-# * Sanitizes name for filename & JSON (spaces→_, dots→removed, invalid chars→_)
+# * CLI glob patterns (e.g. "Customer_?", "DigiKey")
+# * Matches sanitized company name (spaces→_, dots→removed)
+# * Strips .json from pattern automatically
 # * Compatible with json2inv-companies.py import script
 # --------------------------------------------------------------
 # example usage:
-#    Export everything
-#    python3 ./api/inv-companies2json.py
+# Export everything
+# python3 ./api/inv-companies2json.py
 #
-#    Export all (*) or a single-character (?) Customer glob
-#    python3 ./api/inv-companies2json.py "Customer_*.json"
-#    python3 ./api/inv-companies2json.py "Customer_?.json"
+# Export all (*) or a single-character (?) companies
+# python3 ./api/inv-companies2json.py "Customer_*"
+# python3 ./api/inv-companies2json.py "Customer_?"
 #
-#    Export one company
-#    python3 ./api/inv-companies2json.py "Acme_Inc.json"
+# Export one company
+# python3 ./api/inv-companies2json.py "DigiKey"
+# --------------------------------------------------------------
 
 import requests
 import json
 import os
-import glob
 import re
 import argparse
 
@@ -69,7 +70,7 @@ def fetch_companies(url):
                 companies.extend(data["results"])
                 url = data.get("next")
                 print(f"DEBUG: Next page → {url}")
-            else:                       # non-paginated list
+            else:
                 companies.extend(data)
                 url = None
         print(f"DEBUG: Total companies fetched: {len(companies)}")
@@ -89,7 +90,7 @@ def save_company_to_file(company):
     sanitized = sanitize_company_name(name)
     company_mod = company.copy()
     company_mod["name"] = sanitized
-    company_mod["image"] = ""           # clear image for import
+    company_mod["image"] = ""
 
     dirname = "data/companies"
     os.makedirs(dirname, exist_ok=True)
@@ -104,7 +105,7 @@ def save_company_to_file(company):
         print(f"DEBUG: Failed to write {filename}: {e}")
 
 # ----------------------------------------------------------------------
-# Main – now supports glob patterns
+# Main – supports glob patterns (without .json)
 # ----------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(
@@ -112,8 +113,8 @@ def main():
     )
     parser.add_argument(
         "patterns", nargs="*",
-        help="Glob patterns for company names (e.g. 'Customer_?.json', 'Acme_Inc.json'). "
-             "Default: export ALL companies."
+        help="Glob patterns for company names (e.g. 'Customer_?', 'DigiKey'). "
+             "Default: export ALL companies. .json suffix is ignored."
     )
     args = parser.parse_args()
 
@@ -130,18 +131,22 @@ def main():
     all_companies = fetch_companies(BASE_URL)
 
     # ------------------------------------------------------------------
-    # 2. Build a set of desired sanitized names from glob patterns
+    # 2. Build list of compiled regex patterns from glob args (strip .json)
     # ------------------------------------------------------------------
+    patterns = []
     if args.patterns:
-        # Expand globs against the *sanitized* names we will create
-        desired = set()
-        for pat in args.patterns:
-            # Replace * with .+ for regex matching (simple glob→regex)
-            regex = "^" + pat.replace("*", ".*").replace("?", ".") + "$"
-            desired.update(re.compile(regex, re.IGNORECASE))
-        print(f"DEBUG: Filtering with {len(desired)} patterns")
+        for raw_pat in args.patterns:
+            # Remove .json if present
+            pat = raw_pat.removesuffix(".json").strip()
+            if not pat:
+                continue
+            # Convert glob → regex
+            regex = "^" + re.escape(pat).replace("\\*", ".*").replace("\\?", ".") + "$"
+            pattern = re.compile(regex, re.IGNORECASE)
+            patterns.append(pattern)
+        print(f"DEBUG: Filtering with {len(patterns)} patterns: {[p.pattern for p in patterns]}")
     else:
-        desired = None  # export all
+        patterns = None
 
     # ------------------------------------------------------------------
     # 3. Export matching companies
@@ -154,8 +159,8 @@ def main():
 
         sanitized = sanitize_company_name(orig_name)
 
-        # Skip if pattern filter is active and name doesn't match
-        if desired and not any(pat.search(sanitized) for pat in desired):
+        # Match against sanitized name
+        if patterns and not any(pat.search(sanitized) for pat in patterns):
             print(f"DEBUG: Skipping (no pattern match): {sanitized}")
             continue
 
