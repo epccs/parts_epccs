@@ -18,6 +18,9 @@
 #
 #   # Export capacitors with 0x0x size (e.g. 0402, 0603)
 #   python3 ./api/inv-parts2json.py "C_*_0?0?"
+#
+#   # Export Widget_Board which is in parts/Electronics/PCB/
+#   python3 ./api/inv-parts2json.py "Widget_Board"
 # --------------------------------------------------------------
 
 import requests
