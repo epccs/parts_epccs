@@ -20,6 +20,10 @@ and deleting data using JSON files in `data/companies` and `data/parts`.
   export INVENTREE_TOKEN='your-token'             # Your API token
   ```
 
+- InvenTree API
+
+  <https://docs.inventree.org/en/latest/api/schema/#api-schema-documentation>
+
 ## Scripts Overview
 
 ### 1. inv-companies2json.py
@@ -32,13 +36,20 @@ Usage:
 python3 ./api/inv-companies2json.py
 ```
 
-- Output: Creates JSON files (e.g., `data/companies/Customer_A.json`) with sanitized names
-  (spaces to `_`, dots removed, `image` set to `""`).
+- Output: Creates JSON files (e.g., `data/companies/Customer_A.json`) with sanitized names.
+- - Export InvenTree companies -> data/companies/*.json
+- - CLI glob patterns (e.g. "Customer_?", "DigiKey")
+- - Matches sanitized company name (spaces to `_`, dots removed, `image` set to `""`)
+- - Strips .json from file name pattern automatically
+- - Compatible with json2inv-companies.py import script
+
 - Example:
 
   ```bash
+  # Export data/companies/Bourns_Inc.json with data from Inventree (sanitized "name": "Bourns Inc")
+  python3 ./api/inv-companies2json.py "Bourns_Inc"
+  # Export all InvenTree companies to data/companies/*.json after sanitizing company name
   python3 ./api/inv-companies2json.py
-  # Creates data/companies/Bourns_Inc.json with "name": "Bourns_Inc"
   ```
 
 ### 2. json2inv-companies.py
