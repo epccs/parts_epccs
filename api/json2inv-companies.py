@@ -1,177 +1,171 @@
+#!/usr/bin/env python3
 # file name: json2inv-companies.py
-# Use InvenTree API for Companies with the goal of pulling data from a folder `data/companies` and populating an InvenTree instance.
-# https://docs.inventree.org/en/latest/api/schema/#api-schema-documentation
-# Each company was exported from InvenTree into a JSON file under the `data/companies` folder.
-# Supports individual file imports via command-line arguments with globbing (e.g., 'Customer_?.json').
-# If no arguments are provided, imports all JSON files in data/companies (equivalent to '*.json').
-# Compatibility: This program is compatible with the export of inv-companies2json.py.
-# Example usage:
+# version: 2025-11-01-v1
+# --------------------------------------------------------------
+# Import companies from data/companies/*.json → InvenTree
+#
+# * CLI glob patterns (e.g. "Customer_?.json", "Bourns_Inc.json")
+# * No args → import **all** JSON files (equivalent to "*.json")
+# * Skips duplicates (checks by exact name)
+# * Compatible with inv-companies2json.py export
+#
+# example usage:
 #   python3 ./api/json2inv-companies.py "Customer_?.json"
 #   python3 ./api/json2inv-companies.py "Bourns_Inc.json"
-#   python3 ./api/json2inv-companies.py  # Imports all companies
+#   python3 ./api/json2inv-companies.py          # all
 #   python3 ./api/json2inv-companies.py "*.json"
+# --------------------------------------------------------------
+# if debugging is needed: https://grok.com/share/c2hhcmQtMw%3D%3D_5cacf023-0403-4114-82c1-8decc20f700a
 
 import requests
 import json
 import os
 import glob
-import sys
 import argparse
 
-# API endpoint and authentication
-BASE_URL = os.getenv("INVENTREE_URL") + "api/company/" if os.getenv("INVENTREE_URL") else None
+# ----------------------------------------------------------------------
+# API endpoint & auth
+# ----------------------------------------------------------------------
+BASE_URL = os.getenv("INVENTREE_URL")
+if BASE_URL:
+    BASE_URL = BASE_URL.rstrip("/") + "/api/company/"
+else:
+    BASE_URL = None
+
 TOKEN = os.getenv("INVENTREE_TOKEN")
 HEADERS = {
     "Authorization": f"Token {TOKEN}",
     "Content-Type": "application/json",
-    "Accept": "application/json"
+    "Accept": "application/json",
 }
 
+# ----------------------------------------------------------------------
+# Helper: check if company exists (by exact name)
+# ----------------------------------------------------------------------
 def check_company_exists(name):
-    """Check if a company with the given name already exists."""
+    """Return list of matching companies (or empty list)."""
     print(f"DEBUG: Checking if company '{name}' exists")
-    params = {'name': name}
-    
+    params = {"name": name}
     try:
-        response = requests.get(BASE_URL, headers=HEADERS, params=params)
-        print(f"DEBUG: Company check response status: {response.status_code}")
-        if response.status_code != 200:
-            print(f"DEBUG: Failed to check company: {response.text}")
-            raise Exception(f"Failed to check existing company: {response.status_code} - {response.text}")
-        
-        results = response.json()
-        if isinstance(results, dict) and 'results' in results:
-            print(f"DEBUG: Found {len(results['results'])} matching companies")
-            return results['results']
-        else:
-            print(f"DEBUG: Direct list response with {len(results)} companies")
-            return results
-    except requests.exceptions.RequestException as e:
-        print(f"DEBUG: Network error checking company: {str(e)}")
-        raise Exception(f"Network error checking company: {str(e)}")
+        r = requests.get(BASE_URL, headers=HEADERS, params=params)
+        print(f"DEBUG: Company check status {r.status_code}")
+        if r.status_code != 200:
+            raise Exception(f"Check failed: {r.status_code} – {r.text}")
+        data = r.json()
+        results = data.get("results", data) if isinstance(data, dict) else data
+        print(f"DEBUG: Found {len(results)} matches")
+        return results
+    except requests.RequestException as e:
+        raise Exception(f"Network error checking company: {e}")
 
-def import_company(company_file):
-    """Import a single company from a JSON file."""
-    print(f"DEBUG: Reading company file: {company_file}")
+
+# ----------------------------------------------------------------------
+# Import one company from a JSON file
+# ----------------------------------------------------------------------
+def import_company(filepath):
+    """Read JSON, validate, and POST to InvenTree."""
+    print(f"DEBUG: Importing {filepath}")
     try:
-        with open(company_file, 'r', encoding='utf-8') as f:
-            company_data = json.load(f)
-    except json.JSONDecodeError as e:
-        print(f"DEBUG: Invalid JSON in {company_file}: {str(e)}")
-        raise Exception(f"Invalid JSON in {company_file}: {str(e)}")
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
     except Exception as e:
-        print(f"DEBUG: Error reading {company_file}: {str(e)}")
-        raise Exception(f"Error reading {company_file}: {str(e)}")
-    
-    # Handle both single object and list formats
-    if isinstance(company_data, list):
-        print(f"DEBUG: Company data is a list, using first item")
-        company_data = company_data[0]
-    
-    # Prepare POST data with writable fields
-    post_data = {}
-    allowed_fields = [
-        'name', 'description', 'website', 'address', 'phone', 'email',
-        'contact', 'currency', 'is_supplier', 'is_manufacturer', 'is_customer'
+        raise Exception(f"Failed to read {filepath}: {e}")
+
+    if isinstance(data, list):
+        data = data[0]
+
+    # Allowed writable fields
+    allowed = [
+        "name", "description", "website", "address", "phone", "email",
+        "contact", "currency", "is_supplier", "is_manufacturer", "is_customer"
     ]
-    for field in allowed_fields:
-        if field in company_data:
-            post_data[field] = company_data[field]
-    
-    if not post_data.get('name'):
-        print(f"DEBUG: Skipping company with missing name in {company_file}")
+    payload = {k: data.get(k) for k in allowed if k in data}
+    if not payload.get("name"):
+        print("DEBUG: Skipping – no name")
         return None
-    
-    print(f"DEBUG: Prepared company POST data: {post_data}")
-    
-    # Check if company already exists
-    existing_companies = check_company_exists(post_data['name'])
-    if existing_companies:
-        print(f"DEBUG: Company '{post_data['name']}' already exists with PK {existing_companies[0]['pk']}")
-        return existing_companies[0]['pk']
-    
-    # Create company
-    try:
-        print(f"DEBUG: Posting company to {BASE_URL}")
-        response = requests.post(BASE_URL, headers=HEADERS, json=post_data)
-        print(f"DEBUG: Company creation response status: {response.status_code}")
-        if response.status_code != 201:
-            print(f"DEBUG: Failed to create company from {company_file}: {response.text}")
-            raise Exception(f"Failed to create company from {company_file}: {response.status_code} - {response.text}")
-        new_company = response.json()
-        print(f"DEBUG: Created company '{new_company['name']}' with PK {new_company['pk']}")
-        return new_company['pk']
-    except requests.exceptions.RequestException as e:
-        print(f"DEBUG: Network error creating company: {str(e)}")
-        raise Exception(f"Network error creating company from {company_file}: {str(e)}")
-    except json.JSONDecodeError as e:
-        print(f"DEBUG: Invalid JSON response creating company: {str(e)}")
-        raise Exception(f"Invalid JSON response creating company from {company_file}: {str(e)}")
 
-def main():
-    # Parse CLI arguments
-    parser = argparse.ArgumentParser(description="Import InvenTree companies from data/companies JSON files.")
-    parser.add_argument('patterns', nargs='*', default=['*.json'], help="Glob patterns for companies (e.g., 'Customer_?.json', 'Bourns_Inc.json'); defaults to '*.json'")
-    args = parser.parse_args()
-    
-    print("DEBUG: Starting main function")
-    if not TOKEN:
-        print("DEBUG: INVENTREE_TOKEN not set")
-        raise Exception("INVENTREE_TOKEN environment variable not set. Set it with: export INVENTREE_TOKEN='your-token'")
-    if not BASE_URL:
-        print("DEBUG: INVENTREE_URL not set")
-        raise Exception("INVENTREE_URL environment variable not set. Set it with: export INVENTREE_URL='http://localhost:8000/'")
-    
-    print(f"DEBUG: Using BASE_URL: {BASE_URL}")
-    dirname = "data/companies"
-    
-    print(f"DEBUG: Checking directory: {dirname}")
-    if not os.path.exists(dirname):
-        print(f"DEBUG: Directory '{dirname}' does not exist")
-        raise FileNotFoundError(f"Directory '{dirname}' not found. Please ensure you're running the script from the correct location.")
-    
-    if not os.access(dirname, os.R_OK):
-        print(f"DEBUG: Cannot read {dirname}")
-        raise PermissionError(f"Insufficient permissions to read {dirname}")
-    
+    print(f"DEBUG: Payload → {payload}")
+
+    # Skip if already exists
+    existing = check_company_exists(payload["name"])
+    if existing:
+        pk = existing[0]["pk"]
+        print(f"DEBUG: Company already exists (PK {pk}) – skipping")
+        return pk
+
+    # Create
     try:
-        print(f"DEBUG: Glob patterns provided: {args.patterns}")
-        company_files = []
-        for pattern in args.patterns:
-            pattern_path = os.path.join(dirname, pattern)
-            print(f"DEBUG: Expanding glob pattern: {pattern_path}")
-            matched_files = glob.glob(pattern_path, recursive=False)
-            print(f"DEBUG: Matched {len(matched_files)} files for pattern '{pattern}': {matched_files}")
-            company_files.extend(matched_files)
-        
-        # Handle case where pattern is a literal file
-        if not company_files:
-            print(f"DEBUG: No files matched, attempting to interpret patterns as filenames")
-            for pattern in args.patterns:
-                pattern_path = os.path.join(dirname, pattern)
-                if os.path.isfile(pattern_path) and pattern_path.endswith('.json'):
-                    print(f"DEBUG: Adding literal file: {pattern_path}")
-                    company_files.append(pattern_path)
-        
-        company_files = sorted(set(company_files))  # Remove duplicates and sort
-        print(f"DEBUG: Found {len(company_files)} company files: {company_files}")
-        if not company_files:
-            print(f"DEBUG: No JSON files matched or found, exiting")
-            return
-        
-        for company_file in company_files:
-            if not company_file.endswith('.json'):
-                print(f"DEBUG: Skipping non-JSON file: {company_file}")
-                continue
-            print(f"DEBUG: Processing company file: {company_file}")
-            import_company(company_file)
-            
-    except PermissionError as e:
-        print(f"DEBUG: Permission error accessing {dirname}: {str(e)}")
-        raise
-    except Exception as e:
-        print(f"DEBUG: Error in main loop: {str(e)}")
-        raise
+        r = requests.post(BASE_URL, headers=HEADERS, json=payload)
+        print(f"DEBUG: POST → {r.status_code}")
+        if r.status_code != 201:
+            raise Exception(f"Create failed: {r.text}")
+        new = r.json()
+        print(f"DEBUG: Created '{new['name']}' (PK {new['pk']})")
+        return new["pk"]
+    except requests.RequestException as e:
+        raise Exception(f"Network error creating company: {e}")
+
+
+# ----------------------------------------------------------------------
+# CLI + glob handling
+# ----------------------------------------------------------------------
+def main():
+    parser = argparse.ArgumentParser(
+        description="Import InvenTree companies from data/companies/*.json"
+    )
+    parser.add_argument(
+        "patterns", nargs="*",
+        help="Glob patterns (e.g. 'Customer_?.json'). Default: all *.json"
+    )
+    args = parser.parse_args()
+
+    if not TOKEN:
+        raise Exception("INVENTREE_TOKEN not set")
+    if not BASE_URL:
+        raise Exception("INVENTREE_URL not set")
+
+    print(f"DEBUG: Using BASE_URL: {BASE_URL}")
+
+    dirname = "data/companies"
+    if not os.path.isdir(dirname):
+        raise FileNotFoundError(f"{dirname} not found")
+
+    # ------------------------------------------------------------------
+    # Resolve files
+    # ------------------------------------------------------------------
+    files = []
+    for pat in args.patterns or ["*.json"]:
+        full = os.path.join(dirname, pat)
+        matches = glob.glob(full, recursive=False)
+        files.extend(matches)
+
+    # Fallback: treat args as literal filenames
+    if not files:
+        for pat in args.patterns:
+            fp = os.path.join(dirname, pat)
+            if os.path.isfile(fp) and fp.endswith(".json"):
+                files.append(fp)
+
+    files = sorted(set(f for f in files if f.endswith(".json")))
+    print(f"DEBUG: {len(files)} files to import")
+
+    if not files:
+        print("DEBUG: No JSON files found – exiting")
+        return
+
+    # ------------------------------------------------------------------
+    # Import loop
+    # ------------------------------------------------------------------
+    imported = 0
+    for f in files:
+        try:
+            pk = import_company(f)
+            if pk:
+                imported += 1
+        except Exception as e:
+            print(f"ERROR: {e}")
+
+    print(f"SUMMARY: Imported {imported} companies")
 
 if __name__ == "__main__":
     main()
