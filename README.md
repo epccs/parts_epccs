@@ -16,6 +16,23 @@ InvenTree setup instructions.
 
 The data folder holds JSON files that mirror the Inventory Management System.
 
+```text
+data/
+├── companies/                 # Companies (Suppliers and Manufacturers) from inv-companies2json.py
+│   └── DigiKey.json
+│
+├── parts/                     # Real parts only from inv-parts2json.py
+│   └── Electronics/Passives/Capacitors/C_100nF_0402.json
+│
+├── assemblies/                # Assemblies with BOMs from inv-assemblies2json.py
+│   └── Electronics/PCBA/Widget_Board.json
+│   └── Electronics/PCBA/Widget_Board.bom.json
+│
+└── templates/                 # Template Part from inv-template2json.py
+    └── Furniture/Tables/Square_Table.json
+    └── Furniture/Tables/Square_Table.bom.json
+```
+
 [Parts_JSON.md](Parts_JSON.md)
 
 ## Setup GitHub CLI on the Linux backend
