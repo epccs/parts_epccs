@@ -1,0 +1,11 @@
+{
+    "pk": 902,
+    "name": "Test_Board",
+    "revision": "",
+    "IPN": "",
+    "description": "Board with a lot of SMT parts on it",
+    "is_template": true,
+    "category": 16,
+    "image": "",
+    "thumbnail": ""
+}

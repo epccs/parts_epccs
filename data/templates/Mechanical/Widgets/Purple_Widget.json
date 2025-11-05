@@ -1,0 +1,11 @@
+{
+    "pk": 76,
+    "name": "Purple_Widget",
+    "revision": "",
+    "IPN": "widget.purple",
+    "description": "A purple widget",
+    "is_template": true,
+    "category": 14,
+    "image": "",
+    "thumbnail": ""
+}

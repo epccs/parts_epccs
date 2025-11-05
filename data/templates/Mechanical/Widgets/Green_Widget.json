@@ -1,0 +1,11 @@
+{
+    "pk": 73,
+    "name": "Green_Widget",
+    "revision": "",
+    "IPN": "widget.green",
+    "description": "A green widget",
+    "is_template": true,
+    "category": 14,
+    "image": "",
+    "thumbnail": ""
+}

@@ -1,0 +1,19 @@
+[
+    {
+        "pk": 28,
+        "name": "Category_5",
+        "description": "Part category, level 6",
+        "default_location": null,
+        "default_keywords": null,
+        "level": 5,
+        "parent": 27,
+        "part_count": 0,
+        "subcategories": 0,
+        "pathstring": "Category_0/Category_1/Category_2/Category_3/Category_4/Category_5",
+        "starred": false,
+        "structural": true,
+        "icon": "",
+        "parent_default_location": null,
+        "image": ""
+    }
+]

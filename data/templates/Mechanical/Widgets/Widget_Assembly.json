@@ -1,0 +1,11 @@
+{
+    "pk": 77,
+    "name": "Widget_Assembly",
+    "revision": "",
+    "IPN": "WID-TEMPLATE",
+    "description": "An assembled widget",
+    "is_template": true,
+    "category": 14,
+    "image": "",
+    "thumbnail": ""
+}

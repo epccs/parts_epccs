@@ -1,37 +1,28 @@
 #!/usr/bin/env python3
 # file name: inv-template2json.py
-# version: 2025-11-05-v1
+# version: 2025-11-05-v3
 # --------------------------------------------------------------
-# Export InvenTree template parts + **recursive BOM** to:
-#   data/templates/<category>/Part_Name.json
-#   data/templates/<category>/Part_Name.bom.json
+# Export InvenTree **template parts** + **recursive BOM** to:
+# data/templates/<category>/Part_Name[.revision].json
+# data/templates/<category>/Part_Name[.revision].bom.json  (only if BOM exists)
 #
-# * Separate files for easy import
-# * Full subassembly nesting in .bom.json
-# * Glob filtering on sanitized names
-# --------------------------------------------------------------
+# * CLI glob patterns (e.g. "*_Table")
+# * Revision in filename if present
+# * Sanitized pathstring in category.json
+# * No .bom.json if no BOM items
+# * Compatible with json2inv-templates.py
+#
 # example usage:
-# # Export every template part BOM
-# python3 ./api/inv-template2json.py
-#
-# # Export only Table (e.g. "Squar_Table", "Round_Table") templates
-# python3 ./api/inv-template2json.py "*_Table"
+#   python3 ./api/inv-template2json.py
+#   python3 ./api/inv-template2json.py "*_Table"
+#   python3 ./api/inv-template2json.py "Round_Table"
 # --------------------------------------------------------------
 # File Structure of dev data after running with "Round_Table":
 # data/templates/
 # ├── Furniture/
 # │   ├── Tables/
-# │   │   ├── Round_Table.json
-# │   │   ├── Round_Table.bom.json
-# │   └── category.json
-# └── category.json
-# --------------------------------------------------------------
-# todo: if version is not null add it to file name (see assemblies)
-# data/templates/
-# ├── Furniture/
-# │   ├── Tables/
 # │   │   ├── Round_Table.[version.]json
-# │   │   ├── Round_Table.[version.]bom.json
+# │   │   ├── [Round_Table.[version.]bom.json] (if BOM exists)
 # │   └── category.json
 # └── category.json
 # --------------------------------------------------------------
@@ -41,7 +32,6 @@ import json
 import os
 import re
 import argparse
-from urllib.parse import urlparse
 
 # ----------------------------------------------------------------------
 # API & Auth
@@ -49,9 +39,9 @@ from urllib.parse import urlparse
 BASE_URL = os.getenv("INVENTREE_URL")
 if BASE_URL:
     BASE_URL = BASE_URL.rstrip("/")
-    BASE_URL_PARTS = f"{BASE_URL}/api/part/"
+    BASE_URL_PARTS      = f"{BASE_URL}/api/part/"
     BASE_URL_CATEGORIES = f"{BASE_URL}/api/part/category/"
-    BASE_URL_BOM = f"{BASE_URL}/api/bom/"
+    BASE_URL_BOM        = f"{BASE_URL}/api/bom/"
 else:
     BASE_URL_PARTS = BASE_URL_CATEGORIES = BASE_URL_BOM = None
 
@@ -74,6 +64,14 @@ def sanitize_part_name(name):
     sanitized = name.replace(' ', '_').replace('.', ',')
     sanitized = re.sub(r'[<>:"/\\|?*]', '_', sanitized.strip())
     return sanitized
+
+def sanitize_revision(rev):
+    """Sanitize revision string for filename."""
+    if not rev:
+        return ""
+    rev = str(rev).strip()
+    rev = re.sub(r'[<>:"/\\|?*]', '_', rev)
+    return rev
 
 # ----------------------------------------------------------------------
 # Fetch with pagination
@@ -103,7 +101,7 @@ def save_to_file(data, filepath):
         f.write("\n")
 
 # ----------------------------------------------------------------------
-# Category maps
+# Category maps – sanitized pathstring
 # ----------------------------------------------------------------------
 def build_category_maps(categories):
     pk_to_path = {}
@@ -115,21 +113,16 @@ def build_category_maps(categories):
         parent = str(cat.get("parent")) if cat.get("parent") is not None else "None"
         if not (pk and name and raw_path):
             continue
-
-        # Sanitize each part of the path
         path_parts = raw_path.split("/")
         san_parts = [sanitize_category_name(p) for p in path_parts]
         san_path = "/".join(san_parts)
-
         san_name = sanitize_category_name(name)
         cat_mod = cat.copy()
         cat_mod["name"] = san_name
-        cat_mod["pathstring"] = san_path  # FIXED: sanitized pathstring
+        cat_mod["pathstring"] = san_path
         cat_mod["image"] = ""
-
         pk_to_path[pk] = san_path
         parent_to_subs.setdefault(parent, []).append(cat_mod)
-
     return pk_to_path, parent_to_subs
 
 def write_category_files(root_dir, pk_to_path, parent_to_subs):
@@ -150,26 +143,20 @@ def write_category_files(root_dir, pk_to_path, parent_to_subs):
 # Recursive BOM fetcher
 # ----------------------------------------------------------------------
 def fetch_recursive_bom(part_pk, visited=None, depth=0, max_depth=10):
-    """Return full BOM tree with subassemblies expanded."""
     if visited is None:
         visited = set()
     if part_pk in visited or depth > max_depth:
         return []
-
     visited.add(part_pk)
     bom_items = fetch_data(f"{BASE_URL_BOM}?part={part_pk}")
     tree = []
-
     for item in bom_items:
         sub_pk = item.get("sub_part")
         if not sub_pk:
             continue
-
-        # Get sub_part detail
         sub_part = requests.get(f"{BASE_URL_PARTS}{sub_pk}/", headers=HEADERS).json()
         sub_name = sanitize_part_name(sub_part.get("name", ""))
         sub_ipn = sub_part.get("IPN", "")
-
         node = {
             "quantity": item.get("quantity"),
             "note": item.get("note", ""),
@@ -181,13 +168,9 @@ def fetch_recursive_bom(part_pk, visited=None, depth=0, max_depth=10):
             },
             "children": []
         }
-
-        # Recurse into subassembly if it's a template or has BOM
         if sub_part.get("is_template") or any(b.get("part") == sub_pk for b in bom_items):
             node["children"] = fetch_recursive_bom(sub_pk, visited.copy(), depth + 1, max_depth)
-
         tree.append(node)
-
     return tree
 
 # ----------------------------------------------------------------------
@@ -225,21 +208,27 @@ def main():
                 continue
             regex = "^" + re.escape(pat).replace("\\*", ".*").replace("\\?", ".") + "$"
             patterns.append(re.compile(regex, re.IGNORECASE))
-        print(f"DEBUG: Filtering with pattern(s): {args.patterns}")
+        print(f"DEBUG: Filtering with {len(patterns)} patterns")
 
     # 3. Fetch templates
     print("DEBUG: Fetching template parts...")
     templates = fetch_data(BASE_URL_PARTS, params={"is_template": "true", "limit": 100})
-
     exported = 0
+
     for part in templates:
         pk = part.get("pk")
         name = part.get("name")
+        raw_rev = part.get("revision")
         cat_pk = part.get("category")
         if not (pk and name):
             continue
 
         san_name = sanitize_part_name(name)
+        revision = sanitize_revision(raw_rev)
+        rev_suffix = f".{revision}" if revision else ""
+        base_name = f"{san_name}{rev_suffix}"
+
+        # Pattern filter
         if patterns and not any(p.search(san_name) for p in patterns):
             continue
 
@@ -251,30 +240,34 @@ def main():
         dir_parts = [sanitize_category_name(p) for p in pathstring.split("/")]
         dir_path = os.path.join(root_dir, *dir_parts)
 
-        # --- Save clean part JSON ---
+        # Save clean part JSON
         part_clean = {
-            "pk": part.get("pk"),
+            "pk": pk,
             "name": san_name,
+            "revision": revision,
             "IPN": part.get("IPN", ""),
             "description": part.get("description", ""),
-            "revision": part.get("revision", ""),
             "is_template": True,
             "category": cat_pk,
             "image": "",
             "thumbnail": ""
         }
-        save_to_file(part_clean, os.path.join(dir_path, f"{san_name}.json"))
+        save_to_file(part_clean, os.path.join(dir_path, f"{base_name}.json"))
 
-        # --- Save recursive BOM ---
-        print(f"DEBUG: Exporting BOM tree for: {san_name}")
+        # Save recursive BOM **only if not empty**
+        print(f"DEBUG: Exporting BOM tree for: {base_name}")
         bom_tree = fetch_recursive_bom(pk)
-        bom_path = os.path.join(dir_path, f"{san_name}.bom.json")
-        save_to_file(bom_tree, bom_path)
+        if bom_tree:  # Only write if BOM has items
+            bom_path = os.path.join(dir_path, f"{base_name}.bom.json")
+            save_to_file(bom_tree, bom_path)
+            print(f"DEBUG: Saved BOM → {bom_path}")
+        else:
+            print(f"DEBUG: No BOM items for {base_name} – skipping .bom.json")
 
         exported += 1
 
-    print(f"SUMMARY: Exported {exported} templates + recursive BOMs to {root_dir}/")
-    print("         Use *.json for part import, *.bom.json for BOM import.")
+    print(f"SUMMARY: Exported {exported} templates + BOMs (only when present) to {root_dir}/")
+    print(" Use *.json for part import, *.bom.json for BOM import (if exists).")
 
 if __name__ == "__main__":
     main()

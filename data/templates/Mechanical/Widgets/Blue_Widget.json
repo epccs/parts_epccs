@@ -1,0 +1,11 @@
+{
+    "pk": 74,
+    "name": "Blue_Widget",
+    "revision": "",
+    "IPN": "widget.blue",
+    "description": "A blue widget",
+    "is_template": true,
+    "category": 14,
+    "image": "",
+    "thumbnail": ""
+}

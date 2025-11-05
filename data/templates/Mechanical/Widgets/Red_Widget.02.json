@@ -1,0 +1,11 @@
+{
+    "pk": 80,
+    "name": "Red_Widget",
+    "revision": "02",
+    "IPN": "widget.red.02",
+    "description": "A red widget with 02 variation",
+    "is_template": true,
+    "category": 14,
+    "image": "",
+    "thumbnail": ""
+}

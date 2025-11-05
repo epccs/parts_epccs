@@ -1,0 +1,11 @@
+{
+    "pk": 75,
+    "name": "Pink_Widget",
+    "revision": "",
+    "IPN": "widget.pink",
+    "description": "A pink widget",
+    "is_template": true,
+    "category": 14,
+    "image": "",
+    "thumbnail": ""
+}
