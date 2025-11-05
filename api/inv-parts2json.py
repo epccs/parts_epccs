@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-parts2json.py
-# version: 2025-11-05-v1
+# version: 2025-11-05-v2
 # --------------------------------------------------------------
 # Export **real parts only** (no assemblies, no templates)
 # → data/parts/
@@ -8,6 +8,7 @@
 # * CLI glob patterns (e.g. "C_*_0402", "C_*_0?0?")
 # * Skips: assembly=True, is_template=True
 # * Creates category folders + category.json
+# * **Revision in filename** if present
 # * No args → export all real parts
 #
 # example usage:
@@ -16,15 +17,6 @@
 #   python3 ./api/inv-parts2json.py "C_*_0?0?"
 # --------------------------------------------------------------
 # File Structure of dev data after running with "*_Top":
-# data/parts/
-# ├── Furniture/
-# │   ├── Tables/
-# │   │   ├── Round_Top.json
-# │   │   ├── Square_Top.json
-# │   └── category.json
-# └── category.json
-# --------------------------------------------------------------
-# todo: if version is not null add it to file name (see assemblies)
 # data/parts/
 # ├── Furniture/
 # │   ├── Tables/
@@ -70,6 +62,14 @@ def sanitize_part_name(name):
     sanitized = re.sub(r'[<>:"/\\|?*]', '_', sanitized.strip())
     return sanitized
 
+def sanitize_revision(rev):
+    """Sanitize revision string for filename."""
+    if not rev:
+        return ""
+    rev = str(rev).strip()
+    rev = re.sub(r'[<>:"/\\|?*]', '_', rev)
+    return rev
+
 # ----------------------------------------------------------------------
 # Fetch data (handles pagination)
 # ----------------------------------------------------------------------
@@ -98,7 +98,7 @@ def save_to_file(data, filepath):
         f.write("\n")
 
 # ----------------------------------------------------------------------
-# Build category maps
+# Build category maps – sanitized pathstring
 # ----------------------------------------------------------------------
 def build_category_maps(categories):
     pk_to_path = {}
@@ -110,21 +110,17 @@ def build_category_maps(categories):
         parent = str(cat.get("parent")) if cat.get("parent") is not None else "None"
         if not (pk and name and raw_path):
             continue
-
         # Sanitize each part of the path
         path_parts = raw_path.split("/")
         san_parts = [sanitize_category_name(p) for p in path_parts]
         san_path = "/".join(san_parts)
-
         san_name = sanitize_category_name(name)
         cat_mod = cat.copy()
         cat_mod["name"] = san_name
-        cat_mod["pathstring"] = san_path  # FIXED: sanitized pathstring
+        cat_mod["pathstring"] = san_path  # sanitized pathstring
         cat_mod["image"] = ""
-
         pk_to_path[pk] = san_path
         parent_to_subs.setdefault(parent, []).append(cat_mod)
-
     return pk_to_path, parent_to_subs
 
 # ----------------------------------------------------------------------
@@ -201,6 +197,7 @@ def main():
     for part in parts:
         cat_pk = part.get("category")
         name   = part.get("name")
+        raw_rev = part.get("revision")  # can be null
         if not (cat_pk and name):
             continue
 
@@ -210,6 +207,9 @@ def main():
             continue
 
         san_name = sanitize_part_name(name)
+        revision = sanitize_revision(raw_rev)
+        rev_suffix = f".{revision}" if revision else ""
+        base_name = f"{san_name}{rev_suffix}"
 
         # Apply pattern filter
         if patterns and not any(p.search(san_name) for p in patterns):
@@ -225,9 +225,10 @@ def main():
         # Save
         part_mod = part.copy()
         part_mod["name"] = san_name
+        part_mod["revision"] = revision  # keep in JSON
         part_mod["image"] = ""
         part_mod["thumbnail"] = ""
-        part_file = os.path.join(dir_path, f"{san_name}.json")
+        part_file = os.path.join(dir_path, f"{base_name}.json")
         save_to_file(part_mod, part_file)
         exported += 1
 
