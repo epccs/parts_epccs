@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-assemblies2json.py
-# version: 2025-11-04-v4
+# version: 2025-11-05-v1
 # --------------------------------------------------------------
 # Export **assemblies with BOMs** (single-level) → data/assemblies/
 #
@@ -98,19 +98,25 @@ def build_category_maps(categories):
     for cat in categories:
         pk = cat.get("pk")
         name = cat.get("name")
-        path = cat.get("pathstring")
+        raw_path = cat.get("pathstring")
         parent = str(cat.get("parent")) if cat.get("parent") is not None else "None"
-        if not (pk and name and path):
+        if not (pk and name and raw_path):
             continue
+
+        # Sanitize each part of the path
+        path_parts = raw_path.split("/")
+        san_parts = [sanitize_category_name(p) for p in path_parts]
+        san_path = "/".join(san_parts)
+
         san_name = sanitize_category_name(name)
         cat_mod = cat.copy()
         cat_mod["name"] = san_name
+        cat_mod["pathstring"] = san_path 
         cat_mod["image"] = ""
-        parts = path.split("/")
-        parts[-1] = san_name
-        san_path = "/".join(parts)
+
         pk_to_path[pk] = san_path
         parent_to_subs.setdefault(parent, []).append(cat_mod)
+
     return pk_to_path, parent_to_subs
 
 def write_category_files(root_dir, pk_to_path, parent_to_subs):

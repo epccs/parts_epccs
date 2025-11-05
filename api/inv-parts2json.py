@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-parts2json.py
-# version: 2025-11-04-v2
+# version: 2025-11-05-v1
 # --------------------------------------------------------------
 # Export **real parts only** (no assemblies, no templates)
 # → data/parts/
@@ -14,6 +14,24 @@
 #   python3 ./api/inv-parts2json.py
 #   python3 ./api/inv-parts2json.py "C_*_0402"
 #   python3 ./api/inv-parts2json.py "C_*_0?0?"
+# --------------------------------------------------------------
+# File Structure of dev data after running with "*_Top":
+# data/parts/
+# ├── Furniture/
+# │   ├── Tables/
+# │   │   ├── Round_Top.json
+# │   │   ├── Square_Top.json
+# │   └── category.json
+# └── category.json
+# --------------------------------------------------------------
+# todo: if version is not null add it to file name (see assemblies)
+# data/parts/
+# ├── Furniture/
+# │   ├── Tables/
+# │   │   ├── Round_Top.[version.]json
+# │   │   ├── Square_Top.[version.]json
+# │   └── category.json
+# └── category.json
 # --------------------------------------------------------------
 
 import requests
@@ -88,19 +106,25 @@ def build_category_maps(categories):
     for cat in categories:
         pk = cat.get("pk")
         name = cat.get("name")
-        path = cat.get("pathstring")
+        raw_path = cat.get("pathstring")
         parent = str(cat.get("parent")) if cat.get("parent") is not None else "None"
-        if not (pk and name and path):
+        if not (pk and name and raw_path):
             continue
+
+        # Sanitize each part of the path
+        path_parts = raw_path.split("/")
+        san_parts = [sanitize_category_name(p) for p in path_parts]
+        san_path = "/".join(san_parts)
+
         san_name = sanitize_category_name(name)
         cat_mod = cat.copy()
         cat_mod["name"] = san_name
+        cat_mod["pathstring"] = san_path  # FIXED: sanitized pathstring
         cat_mod["image"] = ""
-        parts = path.split("/")
-        parts[-1] = san_name
-        san_path = "/".join(parts)
+
         pk_to_path[pk] = san_path
         parent_to_subs.setdefault(parent, []).append(cat_mod)
+
     return pk_to_path, parent_to_subs
 
 # ----------------------------------------------------------------------

@@ -12,9 +12,13 @@
 #      python3 ./api/rm-inv-categories.py "Paint"
 #
 #      # Delete Capacitors category (after removing all C_*.json)
-#      python3 ./api/rm-inv-parts.py "Electronics/Passives/Capacitors/C_*.json" --clean-dependencies --remove-json
+#      python3 ./api/rm-inv-parts.py "Electronics/Passives/Capacitors/C_*.json" --remove-json (todo: --clean-dependencies)
 #      python3 ./api/rm-inv-categories.py "Electronics/Passives/Capacitors" --remove-json
 #      # note: the last example does not alter category.json or remove it, at this time handling is manual.
+# --------------------------------------------------------------
+# todo: category.json are found under data/parts, data/templates, and data/assemblies
+# todo: add --clean-dependencies to remove blockers from InvenTree ... clean recursively from bottom up? (e.g., .cat1/2/3/bottom)
+# --------------------------------------------------------------
 
 import requests
 import json
