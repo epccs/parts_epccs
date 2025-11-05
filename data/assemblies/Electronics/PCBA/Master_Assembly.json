@@ -1,0 +1,11 @@
+{
+    "pk": 113,
+    "name": "Master_Assembly",
+    "revision": "",
+    "IPN": "MAST",
+    "description": "High level assembly of subassemblies",
+    "assembly": true,
+    "category": 16,
+    "image": "",
+    "thumbnail": ""
+}

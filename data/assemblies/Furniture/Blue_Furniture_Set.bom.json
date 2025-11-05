@@ -1,0 +1,22 @@
+[
+    {
+        "quantity": 1.0,
+        "note": "",
+        "sub_part": {
+            "pk": 100,
+            "name": "Blue_Round_Table",
+            "IPN": "",
+            "description": "A round table - with blue paint"
+        }
+    },
+    {
+        "quantity": 4.0,
+        "note": "",
+        "sub_part": {
+            "pk": 108,
+            "name": "Blue_Chair",
+            "IPN": "",
+            "description": "A chair - with blue paint"
+        }
+    }
+]

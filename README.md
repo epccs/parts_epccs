@@ -25,8 +25,8 @@ data/
 │   └── Electronics/Passives/Capacitors/C_100nF_0402.json
 │
 ├── assemblies/                # Assemblies with BOMs from inv-assemblies2json.py
-│   └── Electronics/PCBA/Widget_Board.json
-│   └── Electronics/PCBA/Widget_Board.bom.json
+│   └── Electronics/PCBA/Widget_Board.version.json
+│   └── Electronics/PCBA/Widget_Board.version.bom.json
 │
 └── templates/                 # Template Part from inv-template2json.py
     └── Furniture/Tables/Square_Table.json

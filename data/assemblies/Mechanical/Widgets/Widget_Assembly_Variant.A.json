@@ -1,0 +1,11 @@
+{
+    "pk": 81,
+    "name": "Widget_Assembly_Variant",
+    "revision": "A",
+    "IPN": "WID-REV-A",
+    "description": "An assembled widget which is a variant of a template",
+    "assembly": true,
+    "category": 14,
+    "image": "",
+    "thumbnail": ""
+}

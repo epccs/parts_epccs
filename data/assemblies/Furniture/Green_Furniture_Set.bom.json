@@ -1,0 +1,22 @@
+[
+    {
+        "quantity": 1.0,
+        "note": "",
+        "sub_part": {
+            "pk": 105,
+            "name": "Green_Square_Table",
+            "IPN": "",
+            "description": "A square table - with green paint"
+        }
+    },
+    {
+        "quantity": 4.0,
+        "note": "",
+        "sub_part": {
+            "pk": 109,
+            "name": "Green_Chair",
+            "IPN": "",
+            "description": "A chair - with green paint"
+        }
+    }
+]
