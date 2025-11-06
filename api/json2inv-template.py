@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # file name: json2inv-template.py
-# version: 2025-11-05-v3
+# version: 2025-11-05-v4
 # --------------------------------------------------------------
 # Import **template** parts + recursive BOM from data/templates/ → InvenTree
 #
 # * Folder structure → category hierarchy
 # * Supports: Part_Name[.revision].json + Part_Name[.revision].bom.json
-# * Creates part **first**, then imports BOM (fixes "pk does not exist")
+# * Creates part **first**, then imports BOM with **retry + delay**
 # * --force-ipn → generate IPN from name when missing
 # * --force → delete existing template (name + revision)
 # * --clean-dependencies → delete BOM/stock/etc. (with confirmation)
@@ -32,6 +32,7 @@ import os
 import glob
 import re
 import argparse
+import time
 from pathlib import Path
 
 # ----------------------------------------------------------------------
@@ -182,7 +183,7 @@ def parse_filename(filepath):
     basename = os.path.basename(filepath)
     if not basename.endswith(".json"):
         return None, None
-    name_part = basename[:-5]  # remove .json
+    name_part = basename[:-5]
     revision = ""
     if "." in name_part:
         name_part, revision = name_part.rsplit(".", 1)
@@ -253,6 +254,7 @@ def import_template_part(part_path: str, force_ipn: bool, force: bool, clean: bo
         new = r.json()
         part_pk = new["pk"]
         print(f"DEBUG: Created '{name}' rev '{revision}' (PK {part_pk})")
+        time.sleep(0.5)  # Let DB settle
     except Exception as e:
         raise RuntimeError(f"Failed to create template: {e}")
 
@@ -265,7 +267,7 @@ def import_template_part(part_path: str, force_ipn: bool, force: bool, clean: bo
         print(f"DEBUG: No .bom.json for {name} – skipping BOM")
 
 # ----------------------------------------------------------------------
-# Recursive BOM import
+# Recursive BOM import with retry
 # ----------------------------------------------------------------------
 def import_recursive_bom(parent_pk: int, bom_path: Path, level: int = 0):
     indent = "  " * level
@@ -283,38 +285,49 @@ def import_recursive_bom(parent_pk: int, bom_path: Path, level: int = 0):
         sub_name = sub["name"]
         sub_ipn = sub.get("IPN", "")
 
-        # Find sub-part
         sub_parts = part_exists(sub_name, "", sub_ipn)
         if not sub_parts:
             print(f"{indent}WARNING: Sub-part '{sub_name}' not found – skipping")
             continue
         sub_pk = sub_parts[0]["pk"]
 
-        # Create/update BOM line
         payload = {
             "part": parent_pk,
             "sub_part": sub_pk,
             "quantity": qty,
             "note": note,
         }
-        existing = requests.get(
-            BASE_URL_BOM, headers=HEADERS,
-            params={"part": parent_pk, "sub_part": sub_pk}
-        ).json()
-        existing = existing.get("results", existing) if isinstance(existing, dict) else existing
-        if existing:
-            bom_pk = existing[0]["pk"]
-            r = requests.patch(f"{BASE_URL_BOM}{bom_pk}/", headers=HEADERS, json=payload)
-            action = "UPDATED"
-        else:
-            r = requests.post(BASE_URL_BOM, headers=HEADERS, json=payload)
-            action = "CREATED"
-        if r.status_code not in (200, 201):
-            print(f"{indent}ERROR: BOM line failed: {r.text}")
-            continue
-        print(f"{indent}{action} BOM: {qty} × {sub_name}")
 
-        # Recurse
+        def try_post_bom(attempt=1):
+            existing = requests.get(
+                BASE_URL_BOM, headers=HEADERS,
+                params={"part": parent_pk, "sub_part": sub_pk}
+            ).json()
+            existing = existing.get("results", existing) if isinstance(existing, dict) else existing
+
+            if existing:
+                bom_pk = existing[0]["pk"]
+                r = requests.patch(f"{BASE_URL_BOM}{bom_pk}/", headers=HEADERS, json=payload)
+                action = "UPDATED"
+            else:
+                r = requests.post(BASE_URL_BOM, headers=HEADERS, json=payload)
+                action = "CREATED"
+
+            if r.status_code in (200, 201):
+                print(f"{indent}{action} BOM: {qty} × {sub_name}")
+                return True
+            else:
+                err = r.json()
+                if "part" in err and "object does not exist" in str(err["part"]):
+                    if attempt < 3:
+                        print(f"{indent}Retrying BOM line (attempt {attempt + 1})...")
+                        time.sleep(0.5)
+                        return try_post_bom(attempt + 1)
+                print(f"{indent}ERROR: BOM line failed: {r.text}")
+                return False
+
+        try_post_bom()
+
         if node.get("children"):
             child_bom = bom_path.parent / f"{sub_name}.bom.json"
             if child_bom.is_file():
@@ -345,7 +358,6 @@ def main():
     if not os.path.isdir(root):
         raise FileNotFoundError(f"{root} missing")
 
-    # Collect part JSON files
     files = []
     for pat in args.patterns:
         full = os.path.join(root, pat)
