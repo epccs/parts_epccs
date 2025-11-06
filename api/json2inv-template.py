@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # file name: json2inv-template.py
-# version: 2025-11-05-v2
+# version: 2025-11-05-v3
 # --------------------------------------------------------------
 # Import **template** parts + recursive BOM from data/templates/ → InvenTree
 #
 # * Folder structure → category hierarchy
 # * Supports: Part_Name[.revision].json + Part_Name[.revision].bom.json
+# * Creates part **first**, then imports BOM (fixes "pk does not exist")
 # * --force-ipn → generate IPN from name when missing
 # * --force → delete existing template (name + revision)
 # * --clean-dependencies → delete BOM/stock/etc. (with confirmation)
@@ -86,7 +87,6 @@ def create_category(name: str, parent_pk: int | None = None):
     return r.json()["pk"]
 
 def build_category_from_path(folder_path: str) -> int:
-    """Return leaf category PK from folder relative to data/templates/"""
     rel = os.path.relpath(folder_path, "data/templates")
     parts = [p for p in rel.split(os.sep) if p and p != "."]
     cur_pk = None
@@ -189,7 +189,7 @@ def parse_filename(filepath):
     return name_part, revision
 
 # ----------------------------------------------------------------------
-# Import one template part
+# Import one template part + BOM
 # ----------------------------------------------------------------------
 def import_template_part(part_path: str, force_ipn: bool, force: bool, clean: bool):
     print(f"DEBUG: Importing template: {part_path}")
@@ -245,7 +245,7 @@ def import_template_part(part_path: str, force_ipn: bool, force: bool, clean: bo
             print(f"DEBUG: Template '{name}' rev '{revision}' exists – skipping")
             return
 
-    # Create
+    # CREATE PART FIRST
     try:
         r = requests.post(BASE_URL_PARTS, headers=HEADERS, json=payload)
         if r.status_code != 201:
@@ -256,7 +256,7 @@ def import_template_part(part_path: str, force_ipn: bool, force: bool, clean: bo
     except Exception as e:
         raise RuntimeError(f"Failed to create template: {e}")
 
-    # Import BOM if .bom.json exists
+    # IMPORT BOM (only if exists)
     bom_path = Path(part_path).with_name(f"{name}{f'.{revision}' if revision else ''}.bom.json")
     if bom_path.is_file():
         print(f"DEBUG: Importing BOM from {bom_path}")
