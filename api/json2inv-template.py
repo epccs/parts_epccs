@@ -1,47 +1,54 @@
 #!/usr/bin/env python3
 # file name: json2inv-template.py
-# version: 2025-11-03-v1
+# version: 2025-11-05-v2
 # --------------------------------------------------------------
 # Import **template** parts + recursive BOM from data/templates/ → InvenTree
 #
-# * Folder structure → category hierarchy (ignores JSON “category” field)
-# * *.json      → part metadata (template flag forced true)
-# * *.bom.json  → recursive BOM tree (imported after part exists)
+# * Folder structure → category hierarchy
+# * Supports: Part_Name[.revision].json + Part_Name[.revision].bom.json
 # * --force-ipn → generate IPN from name when missing
-# * --force     → delete existing template (with optional --clean-dependencies)
-# * --clean-dependencies → delete stock/BOM/etc. after two confirmations
+# * --force → delete existing template (name + revision)
+# * --clean-dependencies → delete BOM/stock/etc. (with confirmation)
+# * .bom.json imported **only if exists**
 #
-# Example usage:
-#   python3 ./api/json2inv-template.py "Furniture/Tables/*_Table.json" --force-ipn
+# example usage:
+#   python3 ./api/json2inv-template.py "Furniture/Tables/*_Table.json"
 #   python3 ./api/json2inv-template.py "**/*.json" --force --clean-dependencies
 # --------------------------------------------------------------
-# WIP: https://grok.com/share/c2hhcmQtMw%3D%3D_754fb50b-a674-4d58-a206-e510b64792f5
+# File Structure of dev data after running with "Round_Table":
+# data/templates/
+# ├── Furniture/
+# │   ├── Tables/
+# │   │   ├── Round_Table.[version.]json
+# │   │   ├── [Round_Table.[version.]bom.json] (if BOM exists)
+# │   └── category.json
+# └── category.json
+# --------------------------------------------------------------
 
 import requests
 import json
 import os
 import glob
-import sys
+import re
 import argparse
 from pathlib import Path
 
 # ----------------------------------------------------------------------
-# API endpoints (built from INVENTREE_URL)
+# API endpoints
 # ----------------------------------------------------------------------
 BASE_URL = os.getenv("INVENTREE_URL")
 if BASE_URL:
     BASE_URL = BASE_URL.rstrip("/")
-    BASE_URL_PARTS      = f"{BASE_URL}/api/part/"
-    BASE_URL_CATEGORIES = f"{BASE_URL}/api/part/category/"
-    BASE_URL_BOM        = f"{BASE_URL}/api/bom/"
-    # (dependency endpoints – same as parts script)
-    BASE_URL_STOCK      = f"{BASE_URL}/api/stock/"
-    BASE_URL_TEST       = f"{BASE_URL}/api/part/test-template/"
-    BASE_URL_BUILD      = f"{BASE_URL}/api/build/"
-    BASE_URL_SALES      = f"{BASE_URL}/api/sales/order/"
-    BASE_URL_ATTACH     = f"{BASE_URL}/api/part/attachment/"
-    BASE_URL_PARAM      = f"{BASE_URL}/api/part/parameter/"
-    BASE_URL_RELATED    = f"{BASE_URL}/api/part/related/"
+    BASE_URL_PARTS       = f"{BASE_URL}/api/part/"
+    BASE_URL_CATEGORIES  = f"{BASE_URL}/api/part/category/"
+    BASE_URL_BOM         = f"{BASE_URL}/api/bom/"
+    BASE_URL_STOCK       = f"{BASE_URL}/api/stock/"
+    BASE_URL_TEST        = f"{BASE_URL}/api/part/test-template/"
+    BASE_URL_BUILD       = f"{BASE_URL}/api/build/"
+    BASE_URL_SALES       = f"{BASE_URL}/api/sales/order/"
+    BASE_URL_ATTACHMENTS = f"{BASE_URL}/api/part/attachment/"
+    BASE_URL_PARAMETERS  = f"{BASE_URL}/api/part/parameter/"
+    BASE_URL_RELATED     = f"{BASE_URL}/api/part/related/"
 else:
     raise RuntimeError("INVENTREE_URL not set")
 
@@ -56,7 +63,7 @@ HEADERS = {
 }
 
 # ----------------------------------------------------------------------
-# Helper: category existence
+# Category helpers
 # ----------------------------------------------------------------------
 def category_exists(name: str, parent_pk: int | None = None):
     params = {"name": name}
@@ -64,11 +71,10 @@ def category_exists(name: str, parent_pk: int | None = None):
         params["parent"] = parent_pk
     r = requests.get(BASE_URL_CATEGORIES, headers=HEADERS, params=params)
     if r.status_code != 200:
-        raise RuntimeError(f"Category check failed: {r.text}")
+        return None
     data = r.json()
     results = data.get("results", data) if isinstance(data, dict) else data
     return results[0] if results else None
-
 
 def create_category(name: str, parent_pk: int | None = None):
     payload = {"name": name}
@@ -79,9 +85,8 @@ def create_category(name: str, parent_pk: int | None = None):
         raise RuntimeError(f"Create category failed: {r.text}")
     return r.json()["pk"]
 
-
 def build_category_from_path(folder_path: str) -> int:
-    """Return leaf category PK for a folder relative to data/templates/"""
+    """Return leaf category PK from folder relative to data/templates/"""
     rel = os.path.relpath(folder_path, "data/templates")
     parts = [p for p in rel.split(os.sep) if p and p != "."]
     cur_pk = None
@@ -90,38 +95,31 @@ def build_category_from_path(folder_path: str) -> int:
         cur_pk = existing["pk"] if existing else create_category(name, cur_pk)
     return cur_pk
 
-
 # ----------------------------------------------------------------------
-# Helper: part existence (global name+IPN)
+# Part existence (by name + revision + IPN)
 # ----------------------------------------------------------------------
-def part_exists(name: str, ipn: str | None = None):
+def part_exists(name: str, revision: str, ipn: str | None = None):
     params = {"name": name}
+    if revision:
+        params["revision"] = revision
     if ipn:
         params["IPN"] = ipn
     r = requests.get(BASE_URL_PARTS, headers=HEADERS, params=params)
     if r.status_code != 200:
-        raise RuntimeError(f"Part check failed: {r.text}")
+        return []
     data = r.json()
     results = data.get("results", data) if isinstance(data, dict) else data
-    return results  # list of matching parts
-
+    return results
 
 # ----------------------------------------------------------------------
-# Dependency handling (identical to parts script)
+# Dependency handling
 # ----------------------------------------------------------------------
 def check_dependencies(part_pk: int):
-    deps = {
-        "stock": [], "bom": [], "test": [], "build": [], "sales": [],
-        "attachments": [], "parameters": [], "related": []
-    }
+    deps = {}
     for endpoint, key in [
-        (BASE_URL_STOCK, "stock"),
-        (BASE_URL_BOM, "bom"),
-        (BASE_URL_TEST, "test"),
-        (BASE_URL_BUILD, "build"),
-        (BASE_URL_SALES, "sales"),
-        (BASE_URL_ATTACH, "attachments"),
-        (BASE_URL_PARAM, "parameters"),
+        (BASE_URL_STOCK, "stock"), (BASE_URL_BOM, "bom"), (BASE_URL_TEST, "test"),
+        (BASE_URL_BUILD, "build"), (BASE_URL_SALES, "sales"),
+        (BASE_URL_ATTACHMENTS, "attachments"), (BASE_URL_PARAMETERS, "parameters"),
         (BASE_URL_RELATED, "related"),
     ]:
         try:
@@ -131,10 +129,9 @@ def check_dependencies(part_pk: int):
                 cnt = js.get("count", len(js)) if isinstance(js, dict) else len(js)
                 if cnt:
                     deps[key] = js.get("results", js)
-        except Exception:
+        except:
             pass
     return deps
-
 
 def delete_dependencies(part_name: str, part_pk: int, clean: bool):
     if not clean:
@@ -144,10 +141,7 @@ def delete_dependencies(part_name: str, part_pk: int, clean: bool):
     if total == 0:
         return True
     print(f"WARNING: {total} dependencies for '{part_name}' (PK {part_pk})")
-    for k, items in deps.items():
-        if items:
-            print(f" • {len(items)} {k}")
-    if input(f"Type 'YES' to delete {total} deps for '{part_name}': ") != "YES":
+    if input(f"Type 'YES' to delete {total} deps: ") != "YES":
         return False
     if input(f"Type 'CONFIRM' to PERMANENTLY delete: ") != "CONFIRM":
         return False
@@ -160,163 +154,176 @@ def delete_dependencies(part_name: str, part_pk: int, clean: bool):
                 "test": f"{BASE_URL_TEST}{pk}/",
                 "build": f"{BASE_URL_BUILD}{pk}/",
                 "sales": f"{BASE_URL_SALES}{pk}/",
-                "attachments": f"{BASE_URL_ATTACH}{pk}/",
-                "parameters": f"{BASE_URL_PARAM}{pk}/",
+                "attachments": f"{BASE_URL_ATTACHMENTS}{pk}/",
+                "parameters": f"{BASE_URL_PARAMETERS}{pk}/",
                 "related": f"{BASE_URL_RELATED}{pk}/",
             }[key]
             try:
-                r = requests.delete(url, headers=HEADERS)
-                if r.status_code != 204:
-                    raise RuntimeError(f"Delete {key} {pk} failed: {r.text}")
-            except Exception as e:
-                raise RuntimeError(f"Network error deleting {key} {pk}: {e}")
+                requests.delete(url, headers=HEADERS)
+            except:
+                pass
     return True
-
 
 def delete_part(part_name: str, part_pk: int, clean_deps: bool):
     if not delete_dependencies(part_name, part_pk, clean_deps):
         raise RuntimeError("Dependencies block deletion")
-    # deactivate first
-    r = requests.patch(f"{BASE_URL_PARTS}{part_pk}/", headers=HEADERS,
-                       json={"active": False})
-    if r.status_code not in (200, 201):
-        raise RuntimeError(f"Patch active=False failed: {r.text}")
+    try:
+        requests.patch(f"{BASE_URL_PARTS}{part_pk}/", headers=HEADERS, json={"active": False})
+    except:
+        pass
     r = requests.delete(f"{BASE_URL_PARTS}{part_pk}/", headers=HEADERS)
     if r.status_code != 204:
         raise RuntimeError(f"DELETE part failed: {r.text}")
 
+# ----------------------------------------------------------------------
+# Parse filename → name + revision
+# ----------------------------------------------------------------------
+def parse_filename(filepath):
+    basename = os.path.basename(filepath)
+    if not basename.endswith(".json"):
+        return None, None
+    name_part = basename[:-5]  # remove .json
+    revision = ""
+    if "." in name_part:
+        name_part, revision = name_part.rsplit(".", 1)
+    return name_part, revision
 
 # ----------------------------------------------------------------------
-# Core import – part metadata
+# Import one template part
 # ----------------------------------------------------------------------
 def import_template_part(part_path: str, force_ipn: bool, force: bool, clean: bool):
-    with open(part_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    print(f"DEBUG: Importing template: {part_path}")
+    name, revision = parse_filename(part_path)
+    if not name:
+        print("DEBUG: Invalid filename – skipping")
+        return
 
-    # ------------------------------------------------------------------
-    # 1. Build payload (whitelist + force template flag)
-    # ------------------------------------------------------------------
+    try:
+        with open(part_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as e:
+        print(f"DEBUG: JSON error: {e}")
+        return
+
+    if isinstance(data, list):
+        data = data[0]
+
+    # Build payload
     allowed = [
         "name", "description", "IPN", "revision", "keywords",
         "barcode", "minimum_stock", "units", "assembly", "component",
         "trackable", "purchaseable", "salable", "virtual", "active"
     ]
     payload = {k: data.get(k) for k in allowed if data.get(k) is not None}
-    payload.setdefault("active", True)
-    payload["is_template"] = True                     # <-- force template
+    payload["name"] = name
+    payload["revision"] = revision
+    payload["is_template"] = True
+    payload["active"] = True
 
-    if not payload.get("name"):
-        print(f"SKIP: no name in {part_path}")
-        return
-
-    # ------------------------------------------------------------------
-    # 2. IPN handling
-    # ------------------------------------------------------------------
+    # Force IPN
     ipn = payload.get("IPN")
-    if force_ipn and (ipn is None or ipn == ""):
-        ipn = payload["name"][:50]
+    if force_ipn and (not ipn or ipn.strip() == ""):
+        ipn = name[:50]
         payload["IPN"] = ipn
-        print(f"Generated IPN → {ipn}")
+        print(f"DEBUG: Generated IPN → {ipn}")
 
-    # ------------------------------------------------------------------
-    # 3. Category from folder
-    # ------------------------------------------------------------------
+    # Folder-based category
     folder = os.path.dirname(part_path)
     cat_pk = build_category_from_path(folder)
     payload["category"] = cat_pk
 
-    # ------------------------------------------------------------------
-    # 4. Global existence check
-    # ------------------------------------------------------------------
-    existing = part_exists(payload["name"], ipn)
-    if existing and force:
-        for p in existing:
-            print(f"--force: deleting existing PK {p['pk']} ({p['name']})")
-            delete_part(p["name"], p["pk"], clean)
-    elif existing:
-        print(f"SKIP: '{payload['name']}' (IPN={ipn}) already exists")
-        # still import BOM if it changed
-        part_pk = existing[0]["pk"]
-    else:
-        # ----------------------------------------------------------------
-        # 5. CREATE
-        # ----------------------------------------------------------------
+    print(f"DEBUG: Payload → {payload}")
+
+    # Check existence
+    existing = part_exists(name, revision, ipn)
+    if existing:
+        if force:
+            for p in existing:
+                print(f"DEBUG: --force: deleting existing PK {p['pk']}")
+                delete_part(p["name"], p["pk"], clean)
+        else:
+            print(f"DEBUG: Template '{name}' rev '{revision}' exists – skipping")
+            return
+
+    # Create
+    try:
         r = requests.post(BASE_URL_PARTS, headers=HEADERS, json=payload)
         if r.status_code != 201:
-            raise RuntimeError(f"Create part failed: {r.text}")
-        part_pk = r.json()["pk"]
-        print(f"CREATED: {payload['name']} (PK {part_pk})")
+            raise RuntimeError(f"Create failed: {r.text}")
+        new = r.json()
+        part_pk = new["pk"]
+        print(f"DEBUG: Created '{name}' rev '{revision}' (PK {part_pk})")
+    except Exception as e:
+        raise RuntimeError(f"Failed to create template: {e}")
 
-    # ------------------------------------------------------------------
-    # 6. Import recursive BOM (if .bom.json exists)
-    # ------------------------------------------------------------------
-    bom_path = Path(part_path).with_name(Path(part_path).stem + ".bom.json")
+    # Import BOM if .bom.json exists
+    bom_path = Path(part_path).with_name(f"{name}{f'.{revision}' if revision else ''}.bom.json")
     if bom_path.is_file():
+        print(f"DEBUG: Importing BOM from {bom_path}")
         import_recursive_bom(part_pk, bom_path)
     else:
-        print(f"No .bom.json for {payload['name']}")
-
+        print(f"DEBUG: No .bom.json for {name} – skipping BOM")
 
 # ----------------------------------------------------------------------
 # Recursive BOM import
 # ----------------------------------------------------------------------
 def import_recursive_bom(parent_pk: int, bom_path: Path, level: int = 0):
-    """Import a full BOM tree – each node becomes a BOM line."""
     indent = "  " * level
-    with open(bom_path, "r", encoding="utf-8") as f:
-        tree = json.load(f)
+    try:
+        with open(bom_path, "r", encoding="utf-8") as f:
+            tree = json.load(f)
+    except Exception as e:
+        print(f"{indent}ERROR: Failed to read BOM: {e}")
+        return
 
     for node in tree:
-        qty = node.get("quantity")
+        qty = node.get("quantity", 1)
         note = node.get("note", "")
         sub = node["sub_part"]
         sub_name = sub["name"]
         sub_ipn = sub.get("IPN", "")
 
-        # Resolve sub-part PK (must already exist because we import top-down)
-        sub_parts = part_exists(sub_name, sub_ipn or None)
+        # Find sub-part
+        sub_parts = part_exists(sub_name, "", sub_ipn)
         if not sub_parts:
-            raise RuntimeError(f"Sub-part '{sub_name}' not found – import order issue")
+            print(f"{indent}WARNING: Sub-part '{sub_name}' not found – skipping")
+            continue
         sub_pk = sub_parts[0]["pk"]
 
-        # Create / update BOM line
+        # Create/update BOM line
         payload = {
             "part": parent_pk,
             "sub_part": sub_pk,
             "quantity": qty,
             "note": note,
         }
-        # Check if line already exists
         existing = requests.get(
             BASE_URL_BOM, headers=HEADERS,
             params={"part": parent_pk, "sub_part": sub_pk}
         ).json()
         existing = existing.get("results", existing) if isinstance(existing, dict) else existing
-
         if existing:
-            # PATCH (update quantity/note)
             bom_pk = existing[0]["pk"]
             r = requests.patch(f"{BASE_URL_BOM}{bom_pk}/", headers=HEADERS, json=payload)
             action = "UPDATED"
         else:
             r = requests.post(BASE_URL_BOM, headers=HEADERS, json=payload)
             action = "CREATED"
-
         if r.status_code not in (200, 201):
-            raise RuntimeError(f"BOM line failed: {r.text}")
+            print(f"{indent}ERROR: BOM line failed: {r.text}")
+            continue
         print(f"{indent}{action} BOM: {qty} × {sub_name}")
 
-        # Recurse into children
+        # Recurse
         if node.get("children"):
-            child_bom_path = bom_path.parent / f"{sub_name}.bom.json"
-            if child_bom_path.is_file():
-                import_recursive_bom(sub_pk, child_bom_path, level + 1)
+            child_bom = bom_path.parent / f"{sub_name}.bom.json"
+            if child_bom.is_file():
+                import_recursive_bom(sub_pk, child_bom, level + 1)
             else:
-                print(f"{indent}  No .bom.json for sub-assembly {sub_name}")
-
+                print(f"{indent}No .bom.json for sub-assembly {sub_name}")
 
 # ----------------------------------------------------------------------
-# CLI
+# Main
 # ----------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(
@@ -329,7 +336,7 @@ def main():
     parser.add_argument("--force-ipn", action="store_true",
                         help="Generate IPN from name when missing")
     parser.add_argument("--force", action="store_true",
-                        help="Delete existing template before re-creating")
+                        help="Delete existing template (name+revision) before import")
     parser.add_argument("--clean-dependencies", action="store_true",
                         help="Delete dependencies (requires two confirmations)")
     args = parser.parse_args()
@@ -338,32 +345,24 @@ def main():
     if not os.path.isdir(root):
         raise FileNotFoundError(f"{root} missing")
 
-    # ------------------------------------------------------------------
-    # Collect part JSON files (exclude category.json and *.bom.json)
-    # ------------------------------------------------------------------
+    # Collect part JSON files
     files = []
     for pat in args.patterns:
-        full_pat = os.path.join(root, pat)
-        matches = glob.glob(full_pat, recursive=True)
+        full = os.path.join(root, pat)
+        matches = glob.glob(full, recursive=True)
         files.extend(matches)
 
     files = sorted({
         f for f in files
         if f.endswith(".json") and not f.endswith(".bom.json") and os.path.basename(f) != "category.json"
     })
+    print(f"DEBUG: {len(files)} template files to import")
 
-    print(f"Found {len(files)} template part files")
     for f in files:
         try:
-            import_template_part(
-                f,
-                force_ipn=args.force_ipn,
-                force=args.force,
-                clean=args.clean_dependencies
-            )
+            import_template_part(f, args.force_ipn, args.force, args.clean_dependencies)
         except Exception as e:
-            print(f"ERROR importing {f}: {e}", file=sys.stderr)
-
+            print(f"ERROR: {e}")
 
 if __name__ == "__main__":
     main()
