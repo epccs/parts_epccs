@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json2inv-template.py
-# version: 2025-11-06-v1
+# version: 2025-11-06-v5
 # --------------------------------------------------------------
 # Import **template** parts + single-level BOM from data/templates/ -> InvenTree
 #

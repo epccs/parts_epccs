@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-template2json.py
-# version: 2025-11-06-v1
+# version: 2025-11-06-v4
 # --------------------------------------------------------------
 # Export InvenTree **template parts** + **single-level BOM** to:
 # data/templates/<category>/Part_Name[.revision].json
@@ -212,11 +212,19 @@ def main():
         dir_path = os.path.join(root_dir, *dir_parts)
         # Save clean part JSON
         part_clean = {
-            "pk": pk,
             "name": san_name,
             "revision": revision,
             "IPN": part.get("IPN", ""),
             "description": part.get("description", ""),
+            "keywords": part.get("keywords", ""),
+            "units": part.get("units", ""),
+            "minimum_stock": part.get("minimum_stock", 0),
+            "assembly": part.get("assembly", False),
+            "component": part.get("component", False),
+            "trackable": part.get("trackable", False),
+            "purchaseable": part.get("purchaseable", False),
+            "salable": part.get("salable", False),
+            "virtual": part.get("virtual", False),
             "is_template": True,
             "category": cat_pk,
             "image": "",
