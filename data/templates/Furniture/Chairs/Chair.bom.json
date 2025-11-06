@@ -7,8 +7,7 @@
             "name": "Wood_Screw",
             "IPN": "",
             "description": "Screw for fixing wood to other wood"
-        },
-        "children": []
+        }
     },
     {
         "quantity": 4.0,
@@ -18,7 +17,6 @@
             "name": "Leg",
             "IPN": "",
             "description": "Leg for a chair or a table"
-        },
-        "children": []
+        }
     }
 ]

@@ -7,8 +7,7 @@
             "name": "R_10K_0805_1%",
             "IPN": null,
             "description": "10K resistor in 0805 SMD package"
-        },
-        "children": []
+        }
     },
     {
         "quantity": 10.0,
@@ -18,8 +17,7 @@
             "name": "C_1uF_0805",
             "IPN": null,
             "description": "Ceramic capacitor, 1uF in 0805 SMD package"
-        },
-        "children": []
+        }
     },
     {
         "quantity": 5.0,
@@ -29,8 +27,7 @@
             "name": "M3x8_Torx",
             "IPN": null,
             "description": "Torx head screw, M3 thread, 8.0mm"
-        },
-        "children": []
+        }
     },
     {
         "quantity": 3.0,
@@ -40,8 +37,7 @@
             "name": "Red_Widget",
             "IPN": "widget.red",
             "description": "A red widget"
-        },
-        "children": []
+        }
     },
     {
         "quantity": 6.0,
@@ -51,8 +47,7 @@
             "name": "Green_Widget",
             "IPN": "widget.green",
             "description": "A green widget"
-        },
-        "children": []
+        }
     },
     {
         "quantity": 5.0,
@@ -62,8 +57,7 @@
             "name": "Blue_Widget",
             "IPN": "widget.blue",
             "description": "A blue widget"
-        },
-        "children": []
+        }
     },
     {
         "quantity": 4.0,
@@ -73,7 +67,6 @@
             "name": "Pink_Widget",
             "IPN": "widget.pink",
             "description": "A pink widget"
-        },
-        "children": []
+        }
     }
 ]
