@@ -1,64 +1,61 @@
 #!/usr/bin/env python3
 # file name: json2inv-parts.py
-# version: 2025-11-05-v2
+# version: 2025-11-07-v1
 # --------------------------------------------------------------
-# Import parts from data/parts → InvenTree.
-# * Folder structure → category hierarchy
+# Import parts from data/parts -> InvenTree.
+# * Folder structure -> category hierarchy
 # * Supports revision in filename: Part_Name.revision.json
-# * --force-ipn → generate IPN from name when missing
-# * --force → delete existing part by **name + revision**
-# * --clean-dependencies → delete dependencies (BOM, stock, etc.)
+# * --force-ipn -> generate IPN from name when missing
+# * --force -> delete existing part by **name + revision**
+# * --clean-dependencies -> delete dependencies (BOM, stock, etc.)
 # --------------------------------------------------------------
 # Example usage:
-#   python3 ./api/json2inv-parts.py "Electronics/Passives/Capacitors/C_*.json" --force-ipn --force --clean-dependencies
-#   python3 ./api/json2inv-parts.py "Paint/Yellow_Paint.json" --force-ipn
-#   python3 ./api/json2inv-parts.py  # Imports all parts
-#   python3 ./api/json2inv-parts.py "**/*.json" --force-ipn --force
+# python3 ./api/json2inv-parts.py "Electronics/Passives/Capacitors/C_*" --force-ipn --force --clean-dependencies
+# python3 ./api/json2inv-parts.py "Paint/Yellow_Paint" --force-ipn
+# python3 ./api/json2inv-parts.py # Imports all parts
+# python3 ./api/json2inv-parts.py "**/*" --force-ipn --force
 # --------------------------------------------------------------
 # File Structure of dev data after running with "*_Top":
 # data/parts/
-# ├── Furniture/
-# │   ├── Tables/
-# │   │   ├── Round_Top.[version.]json
-# │   │   ├── Square_Top.[version.]json
-# │   └── category.json
-# └── category.json
+# +-- Furniture/
+# ¦ +-- Tables/
+# ¦ ¦ +-- Round_Top.[version.]json
+# ¦ ¦ +-- Square_Top.[version.]json
+# ¦ +-- category.json
+# +-- category.json
 # --------------------------------------------------------------
-
 import requests
 import json
 import os
 import glob
 import argparse
-
+from collections import defaultdict
 # ----------------------------------------------------------------------
 # API endpoints
 # ----------------------------------------------------------------------
 BASE_URL = os.getenv("INVENTREE_URL")
 if BASE_URL:
     BASE_URL = BASE_URL.rstrip("/")
-    BASE_URL_PARTS       = f"{BASE_URL}/api/part/"
-    BASE_URL_CATEGORIES  = f"{BASE_URL}/api/part/category/"
-    BASE_URL_BOM         = f"{BASE_URL}/api/bom/"
-    BASE_URL_STOCK       = f"{BASE_URL}/api/stock/"
-    BASE_URL_TEST        = f"{BASE_URL}/api/part/test-template/"
-    BASE_URL_BUILD       = f"{BASE_URL}/api/build/"
-    BASE_URL_SALES       = f"{BASE_URL}/api/sales/order/"
+    BASE_URL_PARTS = f"{BASE_URL}/api/part/"
+    BASE_URL_CATEGORIES = f"{BASE_URL}/api/part/category/"
+    BASE_URL_BOM = f"{BASE_URL}/api/bom/"
+    BASE_URL_STOCK = f"{BASE_URL}/api/stock/"
+    BASE_URL_TEST = f"{BASE_URL}/api/part/test-template/"
+    BASE_URL_BUILD = f"{BASE_URL}/api/build/"
+    BASE_URL_SALES = f"{BASE_URL}/api/sales/order/"
     BASE_URL_ATTACHMENTS = f"{BASE_URL}/api/part/attachment/"
-    BASE_URL_PARAMETERS  = f"{BASE_URL}/api/part/parameter/"
-    BASE_URL_RELATED     = f"{BASE_URL}/api/part/related/"
+    BASE_URL_PARAMETERS = f"{BASE_URL}/api/part/parameter/"
+    BASE_URL_RELATED = f"{BASE_URL}/api/part/related/"
 else:
     BASE_URL_PARTS = BASE_URL_CATEGORIES = BASE_URL_BOM = None
     BASE_URL_STOCK = BASE_URL_BUILD = BASE_URL_SALES = BASE_URL_ATTACHMENTS = None
     BASE_URL_PARAMETERS = BASE_URL_RELATED = None
-
 TOKEN = os.getenv("INVENTREE_TOKEN")
 HEADERS = {
     "Authorization": f"Token {TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 }
-
 # ----------------------------------------------------------------------
 # Category existence
 # ----------------------------------------------------------------------
@@ -75,7 +72,6 @@ def check_category_exists(name, parent_pk=None):
         return results
     except:
         return []
-
 # ----------------------------------------------------------------------
 # Part existence (by name + revision + optional IPN)
 # ----------------------------------------------------------------------
@@ -97,7 +93,6 @@ def check_part_exists(name, revision, ipn=None):
         return results
     except:
         return []
-
 # ----------------------------------------------------------------------
 # Dependency handling
 # ----------------------------------------------------------------------
@@ -122,7 +117,6 @@ def check_dependencies(part_pk):
         except:
             pass
     return deps
-
 def delete_dependencies(part_name, part_pk, clean):
     if not clean:
         return False
@@ -153,7 +147,6 @@ def delete_dependencies(part_name, part_pk, clean):
             except:
                 pass
     return True
-
 def delete_part(part_name, part_pk, clean_deps):
     print(f"DEBUG: Deleting part '{part_name}' (PK {part_pk})")
     if not delete_dependencies(part_name, part_pk, clean_deps):
@@ -168,7 +161,6 @@ def delete_part(part_name, part_pk, clean_deps):
             raise Exception(f"Delete failed: {r.text}")
     except:
         pass
-
 # ----------------------------------------------------------------------
 # Category hierarchy – folder-based
 # ----------------------------------------------------------------------
@@ -191,20 +183,18 @@ def create_category_hierarchy(folder_path, parent_pk=None):
         except Exception as e:
             raise Exception(f"Network error creating category {name}: {e}")
     return cur
-
 # ----------------------------------------------------------------------
-# Parse filename → name + revision
+# Parse filename -> name + revision
 # ----------------------------------------------------------------------
 def parse_filename(filepath):
     basename = os.path.basename(filepath)
     if not basename.endswith(".json"):
         return None, None
-    name_part = basename[:-5]  # remove .json
+    name_part = basename[:-5] # remove .json
     revision = ""
     if "." in name_part:
-        name_part, revision = name_part.rsplit(".", 1)
+        name_part, revision = name_part.split(".", 1)
     return name_part, revision
-
 # ----------------------------------------------------------------------
 # Import one part
 # ----------------------------------------------------------------------
@@ -214,17 +204,14 @@ def import_part(part_path, force_ipn=False, force=False, clean=False):
     if not name:
         print("DEBUG: Invalid filename – skipping")
         return
-
     try:
         with open(part_path, "r", encoding="utf-8") as f:
             data = json.load(f)
     except Exception as e:
         print(f"DEBUG: JSON error: {e}")
         return
-
     if isinstance(data, list):
         data = data[0]
-
     # Build payload
     allowed = [
         "name", "description", "IPN", "revision", "keywords",
@@ -235,26 +222,21 @@ def import_part(part_path, force_ipn=False, force=False, clean=False):
     if not payload.get("name"):
         print("DEBUG: No name – skipping")
         return
-
     # Override with filename-derived name/revision
     payload["name"] = name
     payload["revision"] = revision
     payload["active"] = True
-
     # Force IPN
     ipn = payload.get("IPN")
     if force_ipn and (not ipn or ipn.strip() == ""):
         ipn = name[:50]
         payload["IPN"] = ipn
-        print(f"DEBUG: Generated IPN → {ipn}")
-
+        print(f"DEBUG: Generated IPN -> {ipn}")
     # Folder-based category
     folder = os.path.dirname(part_path)
     cat_pk = create_category_hierarchy(folder)
     payload["category"] = cat_pk
-
-    print(f"DEBUG: Payload → {payload}")
-
+    print(f"DEBUG: Payload -> {payload}")
     # Check existence (name + revision + IPN)
     existing = check_part_exists(name, revision, ipn)
     if existing and force:
@@ -264,7 +246,6 @@ def import_part(part_path, force_ipn=False, force=False, clean=False):
     elif existing:
         print(f"DEBUG: Part '{name}' rev '{revision}' exists – skipping")
         return
-
     # Create
     try:
         r = requests.post(BASE_URL_PARTS, headers=HEADERS, json=payload)
@@ -274,17 +255,16 @@ def import_part(part_path, force_ipn=False, force=False, clean=False):
         print(f"DEBUG: Created '{new['name']}' rev '{new.get('revision', '')}' (PK {new['pk']})")
     except Exception as e:
         print(f"ERROR: {e}")
-
 # ----------------------------------------------------------------------
 # Main
 # ----------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(
-        description="Import parts from data/parts → InvenTree (with revision support)"
+        description="Import parts from data/parts -> InvenTree (with revision support)"
     )
     parser.add_argument(
-        "patterns", nargs="*", default=["**/*.json"],
-        help="Glob patterns (default: all *.json under data/parts)"
+        "patterns", nargs="*",
+        help="Glob patterns (default: all under data/parts)"
     )
     parser.add_argument("--force-ipn", action="store_true",
                         help="Generate IPN from name when missing")
@@ -293,34 +273,48 @@ def main():
     parser.add_argument("--clean-dependencies", action="store_true",
                         help="Delete dependencies (requires two confirmations)")
     args = parser.parse_args()
-
     if not TOKEN:
         raise Exception("INVENTREE_TOKEN not set")
     if not BASE_URL:
         raise Exception("INVENTREE_URL not set")
-
     root = "data/parts"
     if not os.path.isdir(root):
         raise FileNotFoundError(f"{root} missing")
-
     # Collect files
-    files = []
-    for pat in args.patterns:
-        full = os.path.join(root, pat)
-        matches = glob.glob(full, recursive=True)
-        files.extend(matches)
-
-    if not files:
+    matched_files = []
+    if args.patterns:
         for pat in args.patterns:
-            fp = os.path.join(root, pat)
-            if os.path.isfile(fp) and fp.endswith(".json"):
-                files.append(fp)
-
-    files = sorted(set(f for f in files if f.endswith(".json") and os.path.basename(f) != "category.json"))
-    print(f"DEBUG: {len(files)} part files to process")
-
+            recursive = "**" in pat
+            # No revision
+            no_rev_pat = os.path.join(root, pat + ".json")
+            matched_files.extend(glob.glob(no_rev_pat, recursive=recursive))
+            # With revision
+            rev_pat = os.path.join(root, pat + ".*.json")
+            matched_files.extend(glob.glob(rev_pat, recursive=recursive))
+    else:
+        matched_files = glob.glob(os.path.join(root, "**/*.json"), recursive=True)
+    files = sorted(set(f for f in matched_files if os.path.basename(f) != "category.json"))
+    # Build key_to_files for conflict check
+    key_to_files = defaultdict(list)
     for f in files:
-        import_part(f, args.force_ipn, args.force, args.clean_dependencies)
-
+        basename = os.path.basename(f)[:-5]
+        parts = basename.split(".", 1)
+        if len(parts) == 0:
+            continue
+        name = parts[0]
+        rev = parts[1] if len(parts) > 1 else ""
+        rel_dir = os.path.relpath(os.path.dirname(f), root)
+        key = os.path.join(rel_dir, name).replace("\\", "/")
+        key_to_files[key].append((f, rev))
+    # Check for conflicts
+    for key, flist in key_to_files.items():
+        revs = [r for _, r in flist]
+        if len(revs) > 1 and "" in revs:
+            files_str = ", ".join([os.path.basename(f) for f, _ in flist])
+            raise Exception(f"Error for {key}: both no-revision and revisioned files exist: {files_str}")
+    print(f"DEBUG: {len(files)} part files to process")
+    for key, flist in key_to_files.items():
+        for f, rev in flist:
+            import_part(f, args.force_ipn, args.force, args.clean_dependencies)
 if __name__ == "__main__":
     main()
