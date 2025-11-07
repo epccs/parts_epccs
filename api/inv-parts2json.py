@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-parts2json.py
-# version: 2025-11-05-v2
+# version: 2025-11-07-v1
 # --------------------------------------------------------------
 # Export **real parts only** (no assemblies, no templates)
 # → data/parts/
@@ -18,12 +18,12 @@
 # --------------------------------------------------------------
 # File Structure of dev data after running with "*_Top":
 # data/parts/
-# ├── Furniture/
-# │   ├── Tables/
-# │   │   ├── Round_Top.[version.]json
-# │   │   ├── Square_Top.[version.]json
-# │   └── category.json
-# └── category.json
+# +-- Furniture/
+# ¦ +-- Tables/
+# ¦ ¦ +-- Round_Top.[version.]json
+# ¦ ¦ +-- Square_Top.[version.]json
+# ¦ +-- category.json
+# +-- category.json
 # --------------------------------------------------------------
 
 import requests
