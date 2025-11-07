@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json2inv-template.py
-# version: 2025-11-06-v5
+# version: 2025-11-06-v6
 # --------------------------------------------------------------
 # Import **template** parts + single-level BOM from data/templates/ -> InvenTree
 #
@@ -233,7 +233,6 @@ def import_template_part(part_path: str, force_ipn: bool, force: bool, clean: bo
         part_pk = new["pk"]
         print(f"DEBUG: Created '{name}' rev '{revision}' (PK {part_pk})")
         print(f"Part created at: {BASE_URL}/web/part/{part_pk}/details")
-        input("Press enter to continue with BOM import...")
     except Exception as e:
         raise RuntimeError(f"Failed to create template: {e}")
     # IMPORT BOM (only if exists)
@@ -242,7 +241,7 @@ def import_template_part(part_path: str, force_ipn: bool, force: bool, clean: bo
         print(f"DEBUG: Importing BOM from {bom_path}")
         import_bom(part_pk, bom_path)
     else:
-        print(f"DEBUG: No .bom.json for {name} – skipping BOM")
+        print(f"DEBUG: No .bom.json for {name} - skipping BOM")
 # ----------------------------------------------------------------------
 # Single-level BOM import with retry
 # ----------------------------------------------------------------------
