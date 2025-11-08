@@ -1,6 +1,6 @@
-# Inventree 1.0.x on Ubuntu 25.04
+# Inventree 1.x on Ubuntu 25.04
 
-This guide will help you Install Inventree 1.0.x on Ubuntu 25.04 (<https://inventree.local>).
+This guide will help you Install Inventree 1.x on Ubuntu 24.04, (also seems to work on 25.10).
 
 - ToDo: https is not working.
 - ToDo: email is not working (SMTP fail)
