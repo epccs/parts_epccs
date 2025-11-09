@@ -1,5 +1,4 @@
 {
-    "pk": 5,
     "name": "Yageo",
     "description": "",
     "website": "",
@@ -14,23 +13,22 @@
     "is_customer": false,
     "is_manufacturer": true,
     "is_supplier": false,
-    "parts_supplied": 0,
-    "parts_manufactured": 25,
-    "address_count": 1,
-    "primary_address": {
-        "pk": 42,
-        "company": 5,
-        "title": "Branch1",
-        "primary": true,
-        "line1": "Kings Place 31",
-        "line2": "",
-        "postal_code": "10948",
-        "postal_city": "Hoehne",
-        "province": "South Dakota",
-        "country": "Belarus",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 42,
+            "company": 5,
+            "title": "Branch1",
+            "primary": true,
+            "line1": "Kings Place 31",
+            "line2": "",
+            "postal_code": "10948",
+            "postal_city": "Hoehne",
+            "province": "South Dakota",
+            "country": "Belarus",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

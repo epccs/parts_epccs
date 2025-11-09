@@ -1,5 +1,4 @@
 {
-    "pk": 1,
     "name": "DigiKey",
     "description": "DigiKey Electronics",
     "website": "https://www.digikey.com/",
@@ -14,23 +13,37 @@
     "is_customer": false,
     "is_manufacturer": false,
     "is_supplier": true,
-    "parts_supplied": 200,
-    "parts_manufactured": 0,
-    "address_count": 2,
-    "primary_address": {
-        "pk": 54,
-        "company": 1,
-        "title": "Secondary Address",
-        "primary": true,
-        "line1": "04964 Cox View Suite 815",
-        "line2": "",
-        "postal_code": "94832",
-        "postal_city": "Wesleyport",
-        "province": "Delaware",
-        "country": "Bolivia",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 53,
+            "company": 1,
+            "title": "Primary Address",
+            "primary": false,
+            "line1": "2038 Carla Tunnel",
+            "line2": "",
+            "postal_code": "59870",
+            "postal_city": "West Robert",
+            "province": "Rhode Island",
+            "country": "United Kingdom",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 54,
+            "company": 1,
+            "title": "Secondary Address",
+            "primary": true,
+            "line1": "04964 Cox View Suite 815",
+            "line2": "",
+            "postal_code": "94832",
+            "postal_city": "Wesleyport",
+            "province": "Delaware",
+            "country": "Bolivia",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

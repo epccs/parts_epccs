@@ -1,5 +1,4 @@
 {
-    "pk": 38,
     "name": "McMaster-Carr",
     "description": "Supplier of mechanical components",
     "website": "https://www.mcmaster.com/",
@@ -14,23 +13,22 @@
     "is_customer": false,
     "is_manufacturer": false,
     "is_supplier": true,
-    "parts_supplied": 240,
-    "parts_manufactured": 0,
-    "address_count": 1,
-    "primary_address": {
-        "pk": 16,
-        "company": 38,
-        "title": "Branch1",
-        "primary": true,
-        "line1": "Schroeders Avenue 56",
-        "line2": "",
-        "postal_code": "8014",
-        "postal_city": "Sylvanite",
-        "province": "",
-        "country": "Cayman Islands",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 16,
+            "company": 38,
+            "title": "Branch1",
+            "primary": true,
+            "line1": "Schroeders Avenue 56",
+            "line2": "",
+            "postal_code": "8014",
+            "postal_city": "Sylvanite",
+            "province": "",
+            "country": "Cayman Islands",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

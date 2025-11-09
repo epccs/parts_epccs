@@ -1,5 +1,4 @@
 {
-    "pk": 41,
     "name": "Future",
     "description": "Electronic components distributor",
     "website": "https://www.futureelectronics.com/",
@@ -14,23 +13,67 @@
     "is_customer": false,
     "is_manufacturer": false,
     "is_supplier": true,
-    "parts_supplied": 60,
-    "parts_manufactured": 0,
-    "address_count": 4,
-    "primary_address": {
-        "pk": 6,
-        "company": 41,
-        "title": "HQ",
-        "primary": true,
-        "line1": "Wogan Terrace 79",
-        "line2": "",
-        "postal_code": "20157",
-        "postal_city": "Teasdale",
-        "province": "",
-        "country": "Lebanon",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 6,
+            "company": 41,
+            "title": "HQ",
+            "primary": true,
+            "line1": "Wogan Terrace 79",
+            "line2": "",
+            "postal_code": "20157",
+            "postal_city": "Teasdale",
+            "province": "",
+            "country": "Lebanon",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 38,
+            "company": 41,
+            "title": "HQ",
+            "primary": false,
+            "line1": "Lawn Court 67",
+            "line2": "",
+            "postal_code": "17280",
+            "postal_city": "Brantleyville",
+            "province": "",
+            "country": "American Samoa",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 14,
+            "company": 41,
+            "title": "North Branch",
+            "primary": false,
+            "line1": "Prospect Place 76",
+            "line2": "",
+            "postal_code": "16890",
+            "postal_city": "Martinez",
+            "province": "New York",
+            "country": "St. Helena",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 49,
+            "company": 41,
+            "title": "North Branch",
+            "primary": false,
+            "line1": "Empire Boulevard 26",
+            "line2": "",
+            "postal_code": "2962",
+            "postal_city": "Chaparrito",
+            "province": "",
+            "country": "Kyrgyzstan",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

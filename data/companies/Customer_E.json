@@ -1,5 +1,4 @@
 {
-    "pk": 35,
     "name": "Customer_E",
     "description": "Another company we sell things to",
     "website": "",
@@ -14,23 +13,37 @@
     "is_customer": true,
     "is_manufacturer": false,
     "is_supplier": false,
-    "parts_supplied": 0,
-    "parts_manufactured": 0,
-    "address_count": 2,
-    "primary_address": {
-        "pk": 8,
-        "company": 35,
-        "title": "HQ",
-        "primary": true,
-        "line1": "Hope Street 45",
-        "line2": "",
-        "postal_code": "23861",
-        "postal_city": "Wyano",
-        "province": "",
-        "country": "Eritrea",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 8,
+            "company": 35,
+            "title": "HQ",
+            "primary": true,
+            "line1": "Hope Street 45",
+            "line2": "",
+            "postal_code": "23861",
+            "postal_city": "Wyano",
+            "province": "",
+            "country": "Eritrea",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 46,
+            "company": 35,
+            "title": "North Branch",
+            "primary": false,
+            "line1": "Schenck Court 49",
+            "line2": "Supplementary address",
+            "postal_code": "20023",
+            "postal_city": "Otranto",
+            "province": "",
+            "country": "Jordan",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

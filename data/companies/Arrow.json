@@ -1,5 +1,4 @@
 {
-    "pk": 3,
     "name": "Arrow",
     "description": "Arrow Electronics",
     "website": "https://www.arrow.com/",
@@ -14,23 +13,37 @@
     "is_customer": false,
     "is_manufacturer": false,
     "is_supplier": true,
-    "parts_supplied": 60,
-    "parts_manufactured": 0,
-    "address_count": 2,
-    "primary_address": {
-        "pk": 52,
-        "company": 3,
-        "title": "Secondary Address",
-        "primary": true,
-        "line1": "70680 Shannon Rapid Apt. 570",
-        "line2": "",
-        "postal_code": "96124",
-        "postal_city": "Jenniferport",
-        "province": "Arkansas",
-        "country": "Holy See (Vatican City State)",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 51,
+            "company": 3,
+            "title": "Primary Address",
+            "primary": false,
+            "line1": "9253 Brown Fort",
+            "line2": "",
+            "postal_code": "55907",
+            "postal_city": "South Joshua",
+            "province": "Wisconsin",
+            "country": "Lesotho",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 52,
+            "company": 3,
+            "title": "Secondary Address",
+            "primary": true,
+            "line1": "70680 Shannon Rapid Apt. 570",
+            "line2": "",
+            "postal_code": "96124",
+            "postal_city": "Jenniferport",
+            "province": "Arkansas",
+            "country": "Holy See (Vatican City State)",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

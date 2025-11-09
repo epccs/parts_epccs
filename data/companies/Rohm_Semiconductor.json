@@ -1,5 +1,4 @@
 {
-    "pk": 17,
     "name": "Rohm_Semiconductor",
     "description": "",
     "website": "",
@@ -14,23 +13,52 @@
     "is_customer": false,
     "is_manufacturer": true,
     "is_supplier": false,
-    "parts_supplied": 0,
-    "parts_manufactured": 8,
-    "address_count": 3,
-    "primary_address": {
-        "pk": 7,
-        "company": 17,
-        "title": "HQ",
-        "primary": true,
-        "line1": "Aberdeen Street 94",
-        "line2": "",
-        "postal_code": "2572",
-        "postal_city": "Staples",
-        "province": "Montana",
-        "country": "Argentina",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 7,
+            "company": 17,
+            "title": "HQ",
+            "primary": true,
+            "line1": "Aberdeen Street 94",
+            "line2": "",
+            "postal_code": "2572",
+            "postal_city": "Staples",
+            "province": "Montana",
+            "country": "Argentina",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 9,
+            "company": 17,
+            "title": "North Branch",
+            "primary": false,
+            "line1": "Railroad Avenue 9",
+            "line2": "",
+            "postal_code": "13025",
+            "postal_city": "Norfolk",
+            "province": "",
+            "country": "Reunion",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 24,
+            "company": 17,
+            "title": "Old factory",
+            "primary": false,
+            "line1": "Putnam Avenue 53",
+            "line2": "",
+            "postal_code": "23091",
+            "postal_city": "Avoca",
+            "province": "",
+            "country": "Niger",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

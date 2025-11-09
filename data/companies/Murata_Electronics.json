@@ -1,5 +1,4 @@
 {
-    "pk": 27,
     "name": "Murata_Electronics",
     "description": "",
     "website": "",
@@ -14,23 +13,37 @@
     "is_customer": false,
     "is_manufacturer": true,
     "is_supplier": false,
-    "parts_supplied": 0,
-    "parts_manufactured": 1,
-    "address_count": 2,
-    "primary_address": {
-        "pk": 64,
-        "company": 27,
-        "title": "Secondary Address",
-        "primary": true,
-        "line1": "477 Michael Heights Suite 185",
-        "line2": "",
-        "postal_code": "88719",
-        "postal_city": "South Catherine",
-        "province": "Wisconsin",
-        "country": "Netherlands",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 63,
+            "company": 27,
+            "title": "Primary Address",
+            "primary": false,
+            "line1": "31892 Hess Extensions",
+            "line2": "",
+            "postal_code": "52552",
+            "postal_city": "Jamesberg",
+            "province": "Illinois",
+            "country": "Faroe Islands",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 64,
+            "company": 27,
+            "title": "Secondary Address",
+            "primary": true,
+            "line1": "477 Michael Heights Suite 185",
+            "line2": "",
+            "postal_code": "88719",
+            "postal_city": "South Catherine",
+            "province": "Wisconsin",
+            "country": "Netherlands",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

@@ -1,5 +1,4 @@
 {
-    "pk": 22,
     "name": "Samsung_Electro-Mechanics",
     "description": "",
     "website": "",
@@ -14,23 +13,22 @@
     "is_customer": false,
     "is_manufacturer": true,
     "is_supplier": false,
-    "parts_supplied": 0,
-    "parts_manufactured": 6,
-    "address_count": 1,
-    "primary_address": {
-        "pk": 18,
-        "company": 22,
-        "title": "North Branch",
-        "primary": true,
-        "line1": "Everit Street 31",
-        "line2": "",
-        "postal_code": "9854",
-        "postal_city": "Leeper",
-        "province": "Idaho",
-        "country": "Netherlands Antilles",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 18,
+            "company": 22,
+            "title": "North Branch",
+            "primary": true,
+            "line1": "Everit Street 31",
+            "line2": "",
+            "postal_code": "9854",
+            "postal_city": "Leeper",
+            "province": "Idaho",
+            "country": "Netherlands Antilles",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

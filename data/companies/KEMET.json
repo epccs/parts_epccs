@@ -1,5 +1,4 @@
 {
-    "pk": 28,
     "name": "KEMET",
     "description": "",
     "website": "",
@@ -14,23 +13,37 @@
     "is_customer": false,
     "is_manufacturer": true,
     "is_supplier": false,
-    "parts_supplied": 0,
-    "parts_manufactured": 1,
-    "address_count": 2,
-    "primary_address": {
-        "pk": 58,
-        "company": 28,
-        "title": "Secondary Address",
-        "primary": true,
-        "line1": "735 Scott Port Apt. 604",
-        "line2": "",
-        "postal_code": "81197",
-        "postal_city": "North Elizabeth",
-        "province": "Indiana",
-        "country": "Dominican Republic",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 57,
+            "company": 28,
+            "title": "Primary Address",
+            "primary": false,
+            "line1": "282 Thomas Courts",
+            "line2": "",
+            "postal_code": "65851",
+            "postal_city": "South Ronald",
+            "province": "Rhode Island",
+            "country": "Falkland Islands (Malvinas)",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 58,
+            "company": 28,
+            "title": "Secondary Address",
+            "primary": true,
+            "line1": "735 Scott Port Apt. 604",
+            "line2": "",
+            "postal_code": "81197",
+            "postal_city": "North Elizabeth",
+            "province": "Indiana",
+            "country": "Dominican Republic",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

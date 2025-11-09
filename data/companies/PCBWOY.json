@@ -1,5 +1,4 @@
 {
-    "pk": 43,
     "name": "PCBWOY",
     "description": "PCB fabricator / supplier",
     "website": "",
@@ -14,23 +13,37 @@
     "is_customer": false,
     "is_manufacturer": false,
     "is_supplier": true,
-    "parts_supplied": 3,
-    "parts_manufactured": 0,
-    "address_count": 2,
-    "primary_address": {
-        "pk": 32,
-        "company": 43,
-        "title": "Old factory",
-        "primary": true,
-        "line1": "McKibben Street 77",
-        "line2": "",
-        "postal_code": "12370",
-        "postal_city": "Russellville",
-        "province": "",
-        "country": "Benin",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 32,
+            "company": 43,
+            "title": "Old factory",
+            "primary": true,
+            "line1": "McKibben Street 77",
+            "line2": "",
+            "postal_code": "12370",
+            "postal_city": "Russellville",
+            "province": "",
+            "country": "Benin",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 40,
+            "company": 43,
+            "title": "Old factory",
+            "primary": false,
+            "line1": "Coffey Street 41",
+            "line2": "",
+            "postal_code": "17032",
+            "postal_city": "Westwood",
+            "province": "",
+            "country": "Hungary",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

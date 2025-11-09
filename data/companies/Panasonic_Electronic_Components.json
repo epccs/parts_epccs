@@ -1,5 +1,4 @@
 {
-    "pk": 6,
     "name": "Panasonic_Electronic_Components",
     "description": "",
     "website": "",
@@ -14,23 +13,22 @@
     "is_customer": false,
     "is_manufacturer": true,
     "is_supplier": false,
-    "parts_supplied": 0,
-    "parts_manufactured": 36,
-    "address_count": 1,
-    "primary_address": {
-        "pk": 30,
-        "company": 6,
-        "title": "HQ",
-        "primary": true,
-        "line1": "Belvidere Street 51",
-        "line2": "",
-        "postal_code": "21202",
-        "postal_city": "Dola",
-        "province": "",
-        "country": "Liberia",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 30,
+            "company": 6,
+            "title": "HQ",
+            "primary": true,
+            "line1": "Belvidere Street 51",
+            "line2": "",
+            "postal_code": "21202",
+            "postal_city": "Dola",
+            "province": "",
+            "country": "Liberia",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

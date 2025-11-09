@@ -1,5 +1,4 @@
 {
-    "pk": 4,
     "name": "Susumu",
     "description": "",
     "website": "",
@@ -14,23 +13,22 @@
     "is_customer": false,
     "is_manufacturer": true,
     "is_supplier": false,
-    "parts_supplied": 0,
-    "parts_manufactured": 35,
-    "address_count": 1,
-    "primary_address": {
-        "pk": 43,
-        "company": 4,
-        "title": "Branch1",
-        "primary": true,
-        "line1": "Rogers Avenue 7",
-        "line2": "",
-        "postal_code": "4431",
-        "postal_city": "Limestone",
-        "province": "",
-        "country": "San Marino",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 43,
+            "company": 4,
+            "title": "Branch1",
+            "primary": true,
+            "line1": "Rogers Avenue 7",
+            "line2": "",
+            "postal_code": "4431",
+            "postal_city": "Limestone",
+            "province": "",
+            "country": "San Marino",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

@@ -1,5 +1,4 @@
 {
-    "pk": 2,
     "name": "Mouser",
     "description": "Mouser Electronics",
     "website": "https://mouser.com/",
@@ -14,23 +13,37 @@
     "is_customer": false,
     "is_manufacturer": false,
     "is_supplier": true,
-    "parts_supplied": 61,
-    "parts_manufactured": 0,
-    "address_count": 2,
-    "primary_address": {
-        "pk": 17,
-        "company": 2,
-        "title": "Old factory",
-        "primary": true,
-        "line1": "Ashford Street 71",
-        "line2": "",
-        "postal_code": "24165",
-        "postal_city": "Leland",
-        "province": "",
-        "country": "Jamaica",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 39,
+            "company": 2,
+            "title": "North Branch",
+            "primary": false,
+            "line1": "Hopkins Street 66",
+            "line2": "",
+            "postal_code": "8156",
+            "postal_city": "Morriston",
+            "province": "",
+            "country": "Niue",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 17,
+            "company": 2,
+            "title": "Old factory",
+            "primary": true,
+            "line1": "Ashford Street 71",
+            "line2": "",
+            "postal_code": "24165",
+            "postal_city": "Leland",
+            "province": "",
+            "country": "Jamaica",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

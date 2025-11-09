@@ -1,5 +1,4 @@
 {
-    "pk": 40,
     "name": "Newark",
     "description": "Online distributor of electronic components",
     "website": "https://www.newark.com/",
@@ -14,23 +13,22 @@
     "is_customer": false,
     "is_manufacturer": false,
     "is_supplier": true,
-    "parts_supplied": 60,
-    "parts_manufactured": 0,
-    "address_count": 1,
-    "primary_address": {
-        "pk": 22,
-        "company": 40,
-        "title": "Old factory",
-        "primary": true,
-        "line1": "Dekoven Court 3",
-        "line2": "",
-        "postal_code": "18301",
-        "postal_city": "Emison",
-        "province": "",
-        "country": "Tuvalu",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 22,
+            "company": 40,
+            "title": "Old factory",
+            "primary": true,
+            "line1": "Dekoven Court 3",
+            "line2": "",
+            "postal_code": "18301",
+            "postal_city": "Emison",
+            "province": "",
+            "country": "Tuvalu",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

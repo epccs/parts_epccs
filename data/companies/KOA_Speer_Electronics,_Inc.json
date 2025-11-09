@@ -1,5 +1,4 @@
 {
-    "pk": 15,
     "name": "KOA_Speer_Electronics,_Inc",
     "description": "",
     "website": "",
@@ -14,23 +13,37 @@
     "is_customer": false,
     "is_manufacturer": true,
     "is_supplier": false,
-    "parts_supplied": 0,
-    "parts_manufactured": 4,
-    "address_count": 2,
-    "primary_address": {
-        "pk": 2,
-        "company": 15,
-        "title": "Branch1",
-        "primary": true,
-        "line1": "Norfolk Street 33",
-        "line2": "Supplementary address",
-        "postal_code": "16669",
-        "postal_city": "Bergoo",
-        "province": "",
-        "country": "Gabon",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 2,
+            "company": 15,
+            "title": "Branch1",
+            "primary": true,
+            "line1": "Norfolk Street 33",
+            "line2": "Supplementary address",
+            "postal_code": "16669",
+            "postal_city": "Bergoo",
+            "province": "",
+            "country": "Gabon",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 27,
+            "company": 15,
+            "title": "Old factory",
+            "primary": false,
+            "line1": "Gates Avenue 52",
+            "line2": "",
+            "postal_code": "15699",
+            "postal_city": "Finderne",
+            "province": "",
+            "country": "France",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

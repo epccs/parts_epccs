@@ -1,5 +1,4 @@
 {
-    "pk": 33,
     "name": "Customer_C",
     "description": "Another company we sell things to",
     "website": "",
@@ -14,23 +13,37 @@
     "is_customer": true,
     "is_manufacturer": false,
     "is_supplier": false,
-    "parts_supplied": 0,
-    "parts_manufactured": 0,
-    "address_count": 2,
-    "primary_address": {
-        "pk": 1,
-        "company": 33,
-        "title": "South Branch",
-        "primary": true,
-        "line1": "Beverly Road 67",
-        "line2": "",
-        "postal_code": "21952",
-        "postal_city": "Dupuyer",
-        "province": "",
-        "country": "Haiti",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 1,
+            "company": 33,
+            "title": "South Branch",
+            "primary": true,
+            "line1": "Beverly Road 67",
+            "line2": "",
+            "postal_code": "21952",
+            "postal_city": "Dupuyer",
+            "province": "",
+            "country": "Haiti",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 44,
+            "company": 33,
+            "title": "South Branch",
+            "primary": false,
+            "line1": "Melba Court 12",
+            "line2": "",
+            "postal_code": "15043",
+            "postal_city": "Greer",
+            "province": "",
+            "country": "Bulgaria",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

@@ -1,5 +1,4 @@
 {
-    "pk": 26,
     "name": "TDK_Corporation",
     "description": "",
     "website": "",
@@ -14,23 +13,37 @@
     "is_customer": false,
     "is_manufacturer": true,
     "is_supplier": false,
-    "parts_supplied": 0,
-    "parts_manufactured": 3,
-    "address_count": 2,
-    "primary_address": {
-        "pk": 66,
-        "company": 26,
-        "title": "Secondary Address",
-        "primary": true,
-        "line1": "7282 Ashley Radial Apt. 869",
-        "line2": "",
-        "postal_code": "08612",
-        "postal_city": "Lake Curtistown",
-        "province": "Pennsylvania",
-        "country": "Monaco",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 65,
+            "company": 26,
+            "title": "Primary Address",
+            "primary": false,
+            "line1": "USS Roberson",
+            "line2": "",
+            "postal_code": "52891",
+            "postal_city": "Port Darren",
+            "province": "Georgia",
+            "country": "Netherlands",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 66,
+            "company": 26,
+            "title": "Secondary Address",
+            "primary": true,
+            "line1": "7282 Ashley Radial Apt. 869",
+            "line2": "",
+            "postal_code": "08612",
+            "postal_city": "Lake Curtistown",
+            "province": "Pennsylvania",
+            "country": "Monaco",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

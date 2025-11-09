@@ -1,5 +1,4 @@
 {
-    "pk": 39,
     "name": "LCSC",
     "description": "Electronic components distributor",
     "website": "https://lcsc.com/",
@@ -14,23 +13,37 @@
     "is_customer": false,
     "is_manufacturer": false,
     "is_supplier": true,
-    "parts_supplied": 60,
-    "parts_manufactured": 0,
-    "address_count": 2,
-    "primary_address": {
-        "pk": 60,
-        "company": 39,
-        "title": "Secondary Address",
-        "primary": true,
-        "line1": "77673 Bishop Turnpike",
-        "line2": "",
-        "postal_code": "74969",
-        "postal_city": "North Cheryl",
-        "province": "Hawaii",
-        "country": "Portugal",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 59,
+            "company": 39,
+            "title": "Primary Address",
+            "primary": false,
+            "line1": "191 Garcia Tunnel",
+            "line2": "",
+            "postal_code": "46785",
+            "postal_city": "Port Jeffreyton",
+            "province": "Maryland",
+            "country": "New Caledonia",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 60,
+            "company": 39,
+            "title": "Secondary Address",
+            "primary": true,
+            "line1": "77673 Bishop Turnpike",
+            "line2": "",
+            "postal_code": "74969",
+            "postal_city": "North Cheryl",
+            "province": "Hawaii",
+            "country": "Portugal",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

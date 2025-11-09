@@ -1,5 +1,4 @@
 {
-    "pk": 23,
     "name": "AVX_Corporation",
     "description": "",
     "website": "",
@@ -14,23 +13,22 @@
     "is_customer": false,
     "is_manufacturer": true,
     "is_supplier": false,
-    "parts_supplied": 0,
-    "parts_manufactured": 5,
-    "address_count": 1,
-    "primary_address": {
-        "pk": 3,
-        "company": 23,
-        "title": "West Branch",
-        "primary": true,
-        "line1": "Surf Avenue 9",
-        "line2": "",
-        "postal_code": "16825",
-        "postal_city": "Albany",
-        "province": "",
-        "country": "Bahamas",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 3,
+            "company": 23,
+            "title": "West Branch",
+            "primary": true,
+            "line1": "Surf Avenue 9",
+            "line2": "",
+            "postal_code": "16825",
+            "postal_city": "Albany",
+            "province": "",
+            "country": "Bahamas",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

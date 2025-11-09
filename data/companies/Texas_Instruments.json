@@ -1,5 +1,4 @@
 {
-    "pk": 29,
     "name": "Texas_Instruments",
     "description": "",
     "website": "https://www.ti.com/",
@@ -14,23 +13,37 @@
     "is_customer": false,
     "is_manufacturer": true,
     "is_supplier": true,
-    "parts_supplied": 0,
-    "parts_manufactured": 1,
-    "address_count": 2,
-    "primary_address": {
-        "pk": 68,
-        "company": 29,
-        "title": "Secondary Address",
-        "primary": true,
-        "line1": "264 David Villages",
-        "line2": "",
-        "postal_code": "97718",
-        "postal_city": "Lake Michael",
-        "province": "New Mexico",
-        "country": "Kenya",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 67,
+            "company": 29,
+            "title": "Primary Address",
+            "primary": false,
+            "line1": "7494 Stewart Meadows",
+            "line2": "",
+            "postal_code": "92231",
+            "postal_city": "South Cesarborough",
+            "province": "Texas",
+            "country": "Haiti",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 68,
+            "company": 29,
+            "title": "Secondary Address",
+            "primary": true,
+            "line1": "264 David Villages",
+            "line2": "",
+            "postal_code": "97718",
+            "postal_city": "Lake Michael",
+            "province": "New Mexico",
+            "country": "Kenya",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

@@ -1,5 +1,4 @@
 {
-    "pk": 13,
     "name": "Bourns_Inc",
     "description": "",
     "website": "",
@@ -14,23 +13,52 @@
     "is_customer": false,
     "is_manufacturer": true,
     "is_supplier": false,
-    "parts_supplied": 0,
-    "parts_manufactured": 2,
-    "address_count": 3,
-    "primary_address": {
-        "pk": 12,
-        "company": 13,
-        "title": "Old factory",
-        "primary": true,
-        "line1": "Pacific Street 18",
-        "line2": "",
-        "postal_code": "24162",
-        "postal_city": "Navarre",
-        "province": "",
-        "country": "South Africa",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 15,
+            "company": 13,
+            "title": "East Branch",
+            "primary": false,
+            "line1": "Lott Street 40",
+            "line2": "",
+            "postal_code": "12603",
+            "postal_city": "Coultervillle",
+            "province": "Maine",
+            "country": "Tanzania",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 12,
+            "company": 13,
+            "title": "Old factory",
+            "primary": true,
+            "line1": "Pacific Street 18",
+            "line2": "",
+            "postal_code": "24162",
+            "postal_city": "Navarre",
+            "province": "",
+            "country": "South Africa",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 28,
+            "company": 13,
+            "title": "Old factory",
+            "primary": false,
+            "line1": "Eldert Street 86",
+            "line2": "",
+            "postal_code": "15077",
+            "postal_city": "Nanafalia",
+            "province": "Tennessee",
+            "country": "Puerto Rico",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

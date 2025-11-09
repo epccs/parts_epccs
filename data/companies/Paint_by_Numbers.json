@@ -1,5 +1,4 @@
 {
-    "pk": 36,
     "name": "Paint_by_Numbers",
     "description": "Supplier of high quality paint",
     "website": "",
@@ -14,23 +13,22 @@
     "is_customer": false,
     "is_manufacturer": false,
     "is_supplier": true,
-    "parts_supplied": 15,
-    "parts_manufactured": 0,
-    "address_count": 1,
-    "primary_address": {
-        "pk": 5,
-        "company": 36,
-        "title": "HQ",
-        "primary": true,
-        "line1": "Orient Avenue 59",
-        "line2": "",
-        "postal_code": "18609",
-        "postal_city": "Corinne",
-        "province": "Alabama",
-        "country": "France, Metropolitan",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 5,
+            "company": 36,
+            "title": "HQ",
+            "primary": true,
+            "line1": "Orient Avenue 59",
+            "line2": "",
+            "postal_code": "18609",
+            "postal_city": "Corinne",
+            "province": "Alabama",
+            "country": "France, Metropolitan",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

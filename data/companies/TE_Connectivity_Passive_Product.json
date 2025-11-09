@@ -1,5 +1,4 @@
 {
-    "pk": 7,
     "name": "TE_Connectivity_Passive_Product",
     "description": "",
     "website": "",
@@ -14,23 +13,37 @@
     "is_customer": false,
     "is_manufacturer": true,
     "is_supplier": false,
-    "parts_supplied": 0,
-    "parts_manufactured": 18,
-    "address_count": 2,
-    "primary_address": {
-        "pk": 19,
-        "company": 7,
-        "title": "South Branch",
-        "primary": true,
-        "line1": "Polar Street 77",
-        "line2": "",
-        "postal_code": "23061",
-        "postal_city": "Harviell",
-        "province": "",
-        "country": "Albania",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 26,
+            "company": 7,
+            "title": "HQ",
+            "primary": false,
+            "line1": "Clarkson Avenue 25",
+            "line2": "Supplementary address",
+            "postal_code": "8712",
+            "postal_city": "Gerton",
+            "province": "",
+            "country": "Macau",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 19,
+            "company": 7,
+            "title": "South Branch",
+            "primary": true,
+            "line1": "Polar Street 77",
+            "line2": "",
+            "postal_code": "23061",
+            "postal_city": "Harviell",
+            "province": "",
+            "country": "Albania",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

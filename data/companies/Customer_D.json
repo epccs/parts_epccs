@@ -1,5 +1,4 @@
 {
-    "pk": 34,
     "name": "Customer_D",
     "description": "Another company we sell things to",
     "website": "",
@@ -14,23 +13,37 @@
     "is_customer": true,
     "is_manufacturer": false,
     "is_supplier": false,
-    "parts_supplied": 0,
-    "parts_manufactured": 0,
-    "address_count": 2,
-    "primary_address": {
-        "pk": 31,
-        "company": 34,
-        "title": "Branch1",
-        "primary": true,
-        "line1": "Catherine Street 12",
-        "line2": "",
-        "postal_code": "11036",
-        "postal_city": "Hollymead",
-        "province": "",
-        "country": "Djibouti",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 31,
+            "company": 34,
+            "title": "Branch1",
+            "primary": true,
+            "line1": "Catherine Street 12",
+            "line2": "",
+            "postal_code": "11036",
+            "postal_city": "Hollymead",
+            "province": "",
+            "country": "Djibouti",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 37,
+            "company": 34,
+            "title": "North Branch",
+            "primary": false,
+            "line1": "Heath Place 19",
+            "line2": "",
+            "postal_code": "18164",
+            "postal_city": "Vaughn",
+            "province": "",
+            "country": "Italy",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

@@ -1,5 +1,4 @@
 {
-    "pk": 32,
     "name": "Customer_B",
     "description": "Another company we sell things to",
     "website": "",
@@ -14,23 +13,52 @@
     "is_customer": true,
     "is_manufacturer": false,
     "is_supplier": false,
-    "parts_supplied": 0,
-    "parts_manufactured": 0,
-    "address_count": 3,
-    "primary_address": {
-        "pk": 10,
-        "company": 32,
-        "title": "East Branch",
-        "primary": true,
-        "line1": "Sharon Street 80",
-        "line2": "",
-        "postal_code": "855",
-        "postal_city": "Walton",
-        "province": "",
-        "country": "Senegal",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 13,
+            "company": 32,
+            "title": "Branch1",
+            "primary": false,
+            "line1": "Bleecker Street 29",
+            "line2": "",
+            "postal_code": "21645",
+            "postal_city": "Corriganville",
+            "province": "",
+            "country": "Barbados",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 10,
+            "company": 32,
+            "title": "East Branch",
+            "primary": true,
+            "line1": "Sharon Street 80",
+            "line2": "",
+            "postal_code": "855",
+            "postal_city": "Walton",
+            "province": "",
+            "country": "Senegal",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 45,
+            "company": 32,
+            "title": "East Branch",
+            "primary": false,
+            "line1": "Nichols Avenue 88",
+            "line2": "",
+            "postal_code": "19342",
+            "postal_city": "Machias",
+            "province": "",
+            "country": "Saint Kitts and Nevis",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

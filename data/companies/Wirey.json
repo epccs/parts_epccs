@@ -1,5 +1,4 @@
 {
-    "pk": 42,
     "name": "Wirey",
     "description": "Supplier of wire",
     "website": "",
@@ -14,23 +13,37 @@
     "is_customer": false,
     "is_manufacturer": false,
     "is_supplier": true,
-    "parts_supplied": 11,
-    "parts_manufactured": 0,
-    "address_count": 2,
-    "primary_address": {
-        "pk": 35,
-        "company": 42,
-        "title": "Branch1",
-        "primary": true,
-        "line1": "Preston Court 80",
-        "line2": "",
-        "postal_code": "4462",
-        "postal_city": "Manila",
-        "province": "",
-        "country": "Russian Federation",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 35,
+            "company": 42,
+            "title": "Branch1",
+            "primary": true,
+            "line1": "Preston Court 80",
+            "line2": "",
+            "postal_code": "4462",
+            "postal_city": "Manila",
+            "province": "",
+            "country": "Russian Federation",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 36,
+            "company": 42,
+            "title": "Branch1",
+            "primary": false,
+            "line1": "Malta Street 56",
+            "line2": "",
+            "postal_code": "6388",
+            "postal_city": "Weedville",
+            "province": "",
+            "country": "Turkmenistan",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

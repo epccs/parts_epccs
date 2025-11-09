@@ -1,5 +1,4 @@
 {
-    "pk": 12,
     "name": "Vishay_Dale",
     "description": "",
     "website": "",
@@ -14,23 +13,37 @@
     "is_customer": false,
     "is_manufacturer": true,
     "is_supplier": false,
-    "parts_supplied": 0,
-    "parts_manufactured": 19,
-    "address_count": 2,
-    "primary_address": {
-        "pk": 70,
-        "company": 12,
-        "title": "Secondary Address",
-        "primary": true,
-        "line1": "7608 Ryan Prairie",
-        "line2": "",
-        "postal_code": "07211",
-        "postal_city": "Gibsonbury",
-        "province": "New Mexico",
-        "country": "Greenland",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 69,
+            "company": 12,
+            "title": "Primary Address",
+            "primary": false,
+            "line1": "08681 Johnson Crossroad Apt. 033",
+            "line2": "",
+            "postal_code": "55862",
+            "postal_city": "Amandaton",
+            "province": "Delaware",
+            "country": "Montenegro",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 70,
+            "company": 12,
+            "title": "Secondary Address",
+            "primary": true,
+            "line1": "7608 Ryan Prairie",
+            "line2": "",
+            "postal_code": "07211",
+            "postal_city": "Gibsonbury",
+            "province": "New Mexico",
+            "country": "Greenland",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

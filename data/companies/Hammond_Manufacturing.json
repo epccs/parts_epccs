@@ -1,5 +1,4 @@
 {
-    "pk": 31,
     "name": "Hammond_Manufacturing",
     "description": "Manufacturers of electronic enclosures, project boxes",
     "website": "https://www.hammfg.com/",
@@ -14,23 +13,37 @@
     "is_customer": false,
     "is_manufacturer": true,
     "is_supplier": false,
-    "parts_supplied": 0,
-    "parts_manufactured": 5,
-    "address_count": 2,
-    "primary_address": {
-        "pk": 56,
-        "company": 31,
-        "title": "Secondary Address",
-        "primary": true,
-        "line1": "368 Todd Flat Apt. 519",
-        "line2": "",
-        "postal_code": "78447",
-        "postal_city": "West Darren",
-        "province": "Louisiana",
-        "country": "United States of America",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 55,
+            "company": 31,
+            "title": "Primary Address",
+            "primary": false,
+            "line1": "48054 Elizabeth Rest Suite 146",
+            "line2": "",
+            "postal_code": "48355",
+            "postal_city": "East Mary",
+            "province": "Alaska",
+            "country": "Sudan",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 56,
+            "company": 31,
+            "title": "Secondary Address",
+            "primary": true,
+            "line1": "368 Todd Flat Apt. 519",
+            "line2": "",
+            "postal_code": "78447",
+            "postal_city": "West Darren",
+            "province": "Louisiana",
+            "country": "United States of America",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }

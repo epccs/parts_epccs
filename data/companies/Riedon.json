@@ -1,5 +1,4 @@
 {
-    "pk": 20,
     "name": "Riedon",
     "description": "",
     "website": "",
@@ -14,23 +13,52 @@
     "is_customer": false,
     "is_manufacturer": true,
     "is_supplier": false,
-    "parts_supplied": 0,
-    "parts_manufactured": 1,
-    "address_count": 3,
-    "primary_address": {
-        "pk": 11,
-        "company": 20,
-        "title": "HQ",
-        "primary": true,
-        "line1": "Bethel Loop 36",
-        "line2": "",
-        "postal_code": "8801",
-        "postal_city": "Lindcove",
-        "province": "",
-        "country": "Costa Rica",
-        "shipping_notes": "",
-        "internal_shipping_notes": "",
-        "link": ""
-    },
-    "tax_id": ""
+    "tax_id": "",
+    "addresses": [
+        {
+            "pk": 11,
+            "company": 20,
+            "title": "HQ",
+            "primary": true,
+            "line1": "Bethel Loop 36",
+            "line2": "",
+            "postal_code": "8801",
+            "postal_city": "Lindcove",
+            "province": "",
+            "country": "Costa Rica",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 21,
+            "company": 20,
+            "title": "HQ",
+            "primary": false,
+            "line1": "Strauss Street 43",
+            "line2": "",
+            "postal_code": "10636",
+            "postal_city": "Dotsero",
+            "province": "",
+            "country": "Tajikistan",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        },
+        {
+            "pk": 29,
+            "company": 20,
+            "title": "HQ",
+            "primary": false,
+            "line1": "Dictum Court 26",
+            "line2": "",
+            "postal_code": "369",
+            "postal_city": "Foxworth",
+            "province": "Minnesota",
+            "country": "Norfolk Island",
+            "shipping_notes": "",
+            "internal_shipping_notes": "",
+            "link": ""
+        }
+    ]
 }
