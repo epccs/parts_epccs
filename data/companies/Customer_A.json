@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 33,
-            "company": 30,
             "title": "East Branch",
             "primary": false,
             "line1": "Monitor Street 33",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 25,
-            "company": 30,
             "title": "HQ",
             "primary": false,
             "line1": "Hastings Street 26",
@@ -46,8 +42,6 @@
             "link": ""
         },
         {
-            "pk": 41,
-            "company": 30,
             "title": "HQ",
             "primary": false,
             "line1": "Butler Street 32",
@@ -61,8 +55,6 @@
             "link": ""
         },
         {
-            "pk": 23,
-            "company": 30,
             "title": "Old factory",
             "primary": true,
             "line1": "Plymouth Street 93",
@@ -76,8 +68,6 @@
             "link": ""
         },
         {
-            "pk": 47,
-            "company": 30,
             "title": "Old factory",
             "primary": false,
             "line1": "Dean Street 59",

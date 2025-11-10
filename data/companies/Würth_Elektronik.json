@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 71,
-            "company": 25,
             "title": "Primary Address",
             "primary": false,
             "line1": "788 Brown Drives Suite 791",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 72,
-            "company": 25,
             "title": "Secondary Address",
             "primary": true,
             "line1": "3741 Miller Circles Apt. 762",

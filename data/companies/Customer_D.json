@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 31,
-            "company": 34,
             "title": "Branch1",
             "primary": true,
             "line1": "Catherine Street 12",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 37,
-            "company": 34,
             "title": "North Branch",
             "primary": false,
             "line1": "Heath Place 19",

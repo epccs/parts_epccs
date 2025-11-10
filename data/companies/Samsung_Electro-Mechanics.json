@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 18,
-            "company": 22,
             "title": "North Branch",
             "primary": true,
             "line1": "Everit Street 31",

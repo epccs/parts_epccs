@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 59,
-            "company": 39,
             "title": "Primary Address",
             "primary": false,
             "line1": "191 Garcia Tunnel",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 60,
-            "company": 39,
             "title": "Secondary Address",
             "primary": true,
             "line1": "77673 Bishop Turnpike",

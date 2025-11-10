@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 43,
-            "company": 4,
             "title": "Branch1",
             "primary": true,
             "line1": "Rogers Avenue 7",

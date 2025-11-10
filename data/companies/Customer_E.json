@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 8,
-            "company": 35,
             "title": "HQ",
             "primary": true,
             "line1": "Hope Street 45",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 46,
-            "company": 35,
             "title": "North Branch",
             "primary": false,
             "line1": "Schenck Court 49",

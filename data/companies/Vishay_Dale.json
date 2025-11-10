@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 69,
-            "company": 12,
             "title": "Primary Address",
             "primary": false,
             "line1": "08681 Johnson Crossroad Apt. 033",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 70,
-            "company": 12,
             "title": "Secondary Address",
             "primary": true,
             "line1": "7608 Ryan Prairie",

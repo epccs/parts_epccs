@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 6,
-            "company": 41,
             "title": "HQ",
             "primary": true,
             "line1": "Wogan Terrace 79",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 38,
-            "company": 41,
             "title": "HQ",
             "primary": false,
             "line1": "Lawn Court 67",
@@ -46,8 +42,6 @@
             "link": ""
         },
         {
-            "pk": 14,
-            "company": 41,
             "title": "North Branch",
             "primary": false,
             "line1": "Prospect Place 76",
@@ -61,8 +55,6 @@
             "link": ""
         },
         {
-            "pk": 49,
-            "company": 41,
             "title": "North Branch",
             "primary": false,
             "line1": "Empire Boulevard 26",

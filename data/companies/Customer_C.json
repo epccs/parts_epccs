@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 1,
-            "company": 33,
             "title": "South Branch",
             "primary": true,
             "line1": "Beverly Road 67",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 44,
-            "company": 33,
             "title": "South Branch",
             "primary": false,
             "line1": "Melba Court 12",

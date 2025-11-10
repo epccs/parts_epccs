@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 26,
-            "company": 7,
             "title": "HQ",
             "primary": false,
             "line1": "Clarkson Avenue 25",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 19,
-            "company": 7,
             "title": "South Branch",
             "primary": true,
             "line1": "Polar Street 77",

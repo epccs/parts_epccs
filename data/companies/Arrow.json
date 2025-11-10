@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 51,
-            "company": 3,
             "title": "Primary Address",
             "primary": false,
             "line1": "9253 Brown Fort",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 52,
-            "company": 3,
             "title": "Secondary Address",
             "primary": true,
             "line1": "70680 Shannon Rapid Apt. 570",

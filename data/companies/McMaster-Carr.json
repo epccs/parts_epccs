@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 16,
-            "company": 38,
             "title": "Branch1",
             "primary": true,
             "line1": "Schroeders Avenue 56",

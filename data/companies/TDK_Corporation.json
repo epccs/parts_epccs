@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 65,
-            "company": 26,
             "title": "Primary Address",
             "primary": false,
             "line1": "USS Roberson",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 66,
-            "company": 26,
             "title": "Secondary Address",
             "primary": true,
             "line1": "7282 Ashley Radial Apt. 869",

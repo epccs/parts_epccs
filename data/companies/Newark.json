@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 22,
-            "company": 40,
             "title": "Old factory",
             "primary": true,
             "line1": "Dekoven Court 3",

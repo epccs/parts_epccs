@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 3,
-            "company": 23,
             "title": "West Branch",
             "primary": true,
             "line1": "Surf Avenue 9",

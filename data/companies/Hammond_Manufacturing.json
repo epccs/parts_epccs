@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 55,
-            "company": 31,
             "title": "Primary Address",
             "primary": false,
             "line1": "48054 Elizabeth Rest Suite 146",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 56,
-            "company": 31,
             "title": "Secondary Address",
             "primary": true,
             "line1": "368 Todd Flat Apt. 519",

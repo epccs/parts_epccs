@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 53,
-            "company": 1,
             "title": "Primary Address",
             "primary": false,
             "line1": "2038 Carla Tunnel",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 54,
-            "company": 1,
             "title": "Secondary Address",
             "primary": true,
             "line1": "04964 Cox View Suite 815",

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-companies2json.py
-# version: 2025-11-09-v5  # Updated for full address export
+# version: 2025-11-10-v1
 # --------------------------------------------------------------
 # Export InvenTree companies + all addresses to data/companies/*.json
 # * CLI glob patterns (e.g. "Customer_?", "DigiKey")
@@ -113,6 +113,10 @@ def save_company_to_file(company):
     # Fetch and add all addresses if address_count > 0
     if company.get("address_count", 0) > 0:
         addresses = fetch_addresses(company["pk"])
+        # Remove pk and company from each address
+        for addr in addresses:
+            addr.pop("pk", None)
+            addr.pop("company", None)
         company_mod["addresses"] = addresses
     else:
         company_mod["addresses"] = []

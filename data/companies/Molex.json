@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 61,
-            "company": 37,
             "title": "Primary Address",
             "primary": false,
             "line1": "642 Cooper Point",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 62,
-            "company": 37,
             "title": "Secondary Address",
             "primary": true,
             "line1": "919 Donovan Hill Apt. 811",

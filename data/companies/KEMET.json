@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 57,
-            "company": 28,
             "title": "Primary Address",
             "primary": false,
             "line1": "282 Thomas Courts",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 58,
-            "company": 28,
             "title": "Secondary Address",
             "primary": true,
             "line1": "735 Scott Port Apt. 604",

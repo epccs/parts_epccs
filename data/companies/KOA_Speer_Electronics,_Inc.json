@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 2,
-            "company": 15,
             "title": "Branch1",
             "primary": true,
             "line1": "Norfolk Street 33",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 27,
-            "company": 15,
             "title": "Old factory",
             "primary": false,
             "line1": "Gates Avenue 52",

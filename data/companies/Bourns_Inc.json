@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 15,
-            "company": 13,
             "title": "East Branch",
             "primary": false,
             "line1": "Lott Street 40",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 12,
-            "company": 13,
             "title": "Old factory",
             "primary": true,
             "line1": "Pacific Street 18",
@@ -46,8 +42,6 @@
             "link": ""
         },
         {
-            "pk": 28,
-            "company": 13,
             "title": "Old factory",
             "primary": false,
             "line1": "Eldert Street 86",

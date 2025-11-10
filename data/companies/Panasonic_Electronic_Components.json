@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 30,
-            "company": 6,
             "title": "HQ",
             "primary": true,
             "line1": "Belvidere Street 51",

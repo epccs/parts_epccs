@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 32,
-            "company": 43,
             "title": "Old factory",
             "primary": true,
             "line1": "McKibben Street 77",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 40,
-            "company": 43,
             "title": "Old factory",
             "primary": false,
             "line1": "Coffey Street 41",

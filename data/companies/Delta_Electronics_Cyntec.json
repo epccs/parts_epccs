@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 50,
-            "company": 19,
             "title": "South Branch",
             "primary": true,
             "line1": "Metropolitan Avenue 44",

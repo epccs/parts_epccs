@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 13,
-            "company": 32,
             "title": "Branch1",
             "primary": false,
             "line1": "Bleecker Street 29",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 10,
-            "company": 32,
             "title": "East Branch",
             "primary": true,
             "line1": "Sharon Street 80",
@@ -46,8 +42,6 @@
             "link": ""
         },
         {
-            "pk": 45,
-            "company": 32,
             "title": "East Branch",
             "primary": false,
             "line1": "Nichols Avenue 88",

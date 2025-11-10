@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 35,
-            "company": 42,
             "title": "Branch1",
             "primary": true,
             "line1": "Preston Court 80",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 36,
-            "company": 42,
             "title": "Branch1",
             "primary": false,
             "line1": "Malta Street 56",

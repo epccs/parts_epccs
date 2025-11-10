@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 42,
-            "company": 5,
             "title": "Branch1",
             "primary": true,
             "line1": "Kings Place 31",

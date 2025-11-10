@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 63,
-            "company": 27,
             "title": "Primary Address",
             "primary": false,
             "line1": "31892 Hess Extensions",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 64,
-            "company": 27,
             "title": "Secondary Address",
             "primary": true,
             "line1": "477 Michael Heights Suite 185",

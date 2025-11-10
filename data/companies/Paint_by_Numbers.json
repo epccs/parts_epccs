@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 5,
-            "company": 36,
             "title": "HQ",
             "primary": true,
             "line1": "Orient Avenue 59",

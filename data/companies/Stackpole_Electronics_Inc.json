@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 4,
-            "company": 14,
             "title": "South Branch",
             "primary": true,
             "line1": "Tompkins Place 29",

@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 34,
-            "company": 44,
             "title": "East Branch",
             "primary": false,
             "line1": "Indiana Place 56",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 48,
-            "company": 44,
             "title": "HQ",
             "primary": false,
             "line1": "Banner Avenue 41",
@@ -46,8 +42,6 @@
             "link": ""
         },
         {
-            "pk": 20,
-            "company": 44,
             "title": "Old factory",
             "primary": true,
             "line1": "Fountain Avenue 74",

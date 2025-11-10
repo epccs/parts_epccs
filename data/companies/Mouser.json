@@ -16,8 +16,6 @@
     "tax_id": "",
     "addresses": [
         {
-            "pk": 39,
-            "company": 2,
             "title": "North Branch",
             "primary": false,
             "line1": "Hopkins Street 66",
@@ -31,8 +29,6 @@
             "link": ""
         },
         {
-            "pk": 17,
-            "company": 2,
             "title": "Old factory",
             "primary": true,
             "line1": "Ashford Street 71",
