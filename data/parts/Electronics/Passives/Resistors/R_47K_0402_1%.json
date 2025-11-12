@@ -5049,7 +5049,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Panasonic Electronic Components",
+            "manufacturer_name": "Panasonic_Electronic_Components",
             "MPN": "ERA-2AEB473X",
             "mp_description": null,
             "mp_link": null
@@ -20106,7 +20106,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "TE Connectivity Passive Product",
+            "manufacturer_name": "TE_Connectivity_Passive_Product",
             "MPN": "CRGCQ0402F47K",
             "mp_description": null,
             "mp_link": null

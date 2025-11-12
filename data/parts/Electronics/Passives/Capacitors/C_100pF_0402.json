@@ -5049,7 +5049,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "AVX Corporation",
+            "manufacturer_name": "AVX_Corporation",
             "MPN": "04025C101KAT2A",
             "mp_description": null,
             "mp_link": null
@@ -10068,7 +10068,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "AVX Corporation",
+            "manufacturer_name": "AVX_Corporation",
             "MPN": "0402YC101KAT2A",
             "mp_description": null,
             "mp_link": null

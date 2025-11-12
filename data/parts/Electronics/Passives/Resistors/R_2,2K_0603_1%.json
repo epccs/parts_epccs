@@ -5049,7 +5049,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Panasonic Electronic Components",
+            "manufacturer_name": "Panasonic_Electronic_Components",
             "MPN": "ERA-3AEB222V",
             "mp_description": null,
             "mp_link": null
@@ -10068,7 +10068,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Stackpole Electronics Inc",
+            "manufacturer_name": "Stackpole_Electronics_Inc",
             "MPN": "RMCF0201JT2K20",
             "mp_description": null,
             "mp_link": null
@@ -15087,7 +15087,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Stackpole Electronics Inc",
+            "manufacturer_name": "Stackpole_Electronics_Inc",
             "MPN": "RMCF0201FT2K20",
             "mp_description": null,
             "mp_link": null
@@ -25125,7 +25125,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Panasonic Electronic Components",
+            "manufacturer_name": "Panasonic_Electronic_Components",
             "MPN": "ERJ-1GNJ222C",
             "mp_description": null,
             "mp_link": null

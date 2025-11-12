@@ -5049,7 +5049,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Rohm Semiconductor",
+            "manufacturer_name": "Rohm_Semiconductor",
             "MPN": "ESR03EZPF1001",
             "mp_description": null,
             "mp_link": null
@@ -20106,7 +20106,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Vishay Dale",
+            "manufacturer_name": "Vishay_Dale",
             "MPN": "CRCW02011K00FKED",
             "mp_description": null,
             "mp_link": null
@@ -25125,7 +25125,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Panasonic Electronic Components",
+            "manufacturer_name": "Panasonic_Electronic_Components",
             "MPN": "ERA-3AEB102V",
             "mp_description": null,
             "mp_link": null

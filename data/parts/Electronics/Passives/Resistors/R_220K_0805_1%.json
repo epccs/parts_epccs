@@ -5049,7 +5049,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "TE Connectivity Passive Product",
+            "manufacturer_name": "TE_Connectivity_Passive_Product",
             "MPN": "CRG0805F220K",
             "mp_description": null,
             "mp_link": null
@@ -10068,7 +10068,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "TE Connectivity Passive Product",
+            "manufacturer_name": "TE_Connectivity_Passive_Product",
             "MPN": "CRGCQ0805F220K",
             "mp_description": null,
             "mp_link": null
@@ -20106,7 +20106,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Rohm Semiconductor",
+            "manufacturer_name": "Rohm_Semiconductor",
             "MPN": "KTR10EZPF2203",
             "mp_description": null,
             "mp_link": null

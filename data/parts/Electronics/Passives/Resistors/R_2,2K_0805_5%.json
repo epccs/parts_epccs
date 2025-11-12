@@ -5049,7 +5049,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Panasonic Electronic Components",
+            "manufacturer_name": "Panasonic_Electronic_Components",
             "MPN": "ERA-6AEB222V",
             "mp_description": null,
             "mp_link": null
@@ -10068,7 +10068,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Rohm Semiconductor",
+            "manufacturer_name": "Rohm_Semiconductor",
             "MPN": "ESR10EZPJ222",
             "mp_description": null,
             "mp_link": null
@@ -20106,7 +20106,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Rohm Semiconductor",
+            "manufacturer_name": "Rohm_Semiconductor",
             "MPN": "KTR10EZPF2201",
             "mp_description": null,
             "mp_link": null
@@ -25125,7 +25125,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Panasonic Electronic Components",
+            "manufacturer_name": "Panasonic_Electronic_Components",
             "MPN": "ERA-6AEB4222V",
             "mp_description": null,
             "mp_link": null

@@ -5049,7 +5049,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Stackpole Electronics Inc",
+            "manufacturer_name": "Stackpole_Electronics_Inc",
             "MPN": "RNCP0805FTD1K00",
             "mp_description": null,
             "mp_link": null
@@ -25125,7 +25125,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Vishay Dale",
+            "manufacturer_name": "Vishay_Dale",
             "MPN": "TNPW08051K00BEEA",
             "mp_description": null,
             "mp_link": null

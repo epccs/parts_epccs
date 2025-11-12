@@ -5049,7 +5049,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Texas Instruments",
+            "manufacturer_name": "Texas_Instruments",
             "MPN": "MAX232IDR",
             "mp_description": "MAX232IDR",
             "mp_link": ""

@@ -5049,7 +5049,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Vishay Dale",
+            "manufacturer_name": "Vishay_Dale",
             "MPN": "TNPW040220K0BEED",
             "mp_description": null,
             "mp_link": null
@@ -10068,7 +10068,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "TE Connectivity Passive Product",
+            "manufacturer_name": "TE_Connectivity_Passive_Product",
             "MPN": "CRGCQ0402F220K",
             "mp_description": null,
             "mp_link": null
@@ -15087,7 +15087,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Vishay Dale",
+            "manufacturer_name": "Vishay_Dale",
             "MPN": "TNPW040220K3BEED",
             "mp_description": null,
             "mp_link": null
@@ -20106,7 +20106,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Bourns Inc.",
+            "manufacturer_name": "Bourns_Inc",
             "MPN": "CR0402-FX-2203GLF",
             "mp_description": null,
             "mp_link": null

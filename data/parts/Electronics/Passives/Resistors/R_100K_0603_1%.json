@@ -5049,7 +5049,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Vishay Dale",
+            "manufacturer_name": "Vishay_Dale",
             "MPN": "RCA0603100KFKEAHP",
             "mp_description": null,
             "mp_link": null
@@ -10068,7 +10068,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Bourns Inc.",
+            "manufacturer_name": "Bourns_Inc",
             "MPN": "CRT0603-BY-1003ELF",
             "mp_description": null,
             "mp_link": null

@@ -5049,7 +5049,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "TDK Corporation",
+            "manufacturer_name": "TDK_Corporation",
             "MPN": "CGJ X7R E1 KIT",
             "mp_description": null,
             "mp_link": null
@@ -10068,7 +10068,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Murata Electronics",
+            "manufacturer_name": "Murata_Electronics",
             "MPN": "GRM15-KIT-X5R-X7R-DE",
             "mp_description": null,
             "mp_link": null

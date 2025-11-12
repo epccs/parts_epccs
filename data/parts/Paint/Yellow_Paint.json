@@ -36,7 +36,7 @@
     "tags": [],
     "suppliers": [
         {
-            "supplier_name": "Paint by Numbers",
+            "supplier_name": "Paint_by_Numbers",
             "SKU": "PNT.YELLOW.1L",
             "description": "",
             "link": "",
@@ -5051,7 +5051,7 @@
             ]
         },
         {
-            "supplier_name": "Paint by Numbers",
+            "supplier_name": "Paint_by_Numbers",
             "SKU": "PNT.YELLOW.10L",
             "description": "",
             "link": "",
@@ -10066,7 +10066,7 @@
             ]
         },
         {
-            "supplier_name": "Paint by Numbers",
+            "supplier_name": "Paint_by_Numbers",
             "SKU": "PNT.YELLOW.25L",
             "description": "",
             "link": "",

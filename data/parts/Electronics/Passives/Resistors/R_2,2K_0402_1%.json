@@ -10068,7 +10068,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Rohm Semiconductor",
+            "manufacturer_name": "Rohm_Semiconductor",
             "MPN": "SFR01MZPF2201",
             "mp_description": null,
             "mp_link": null
@@ -15087,7 +15087,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Panasonic Electronic Components",
+            "manufacturer_name": "Panasonic_Electronic_Components",
             "MPN": "ERA-2AEB4222X",
             "mp_description": null,
             "mp_link": null
@@ -25125,7 +25125,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Vishay Dale",
+            "manufacturer_name": "Vishay_Dale",
             "MPN": "TNPW04022K20BEED",
             "mp_description": null,
             "mp_link": null

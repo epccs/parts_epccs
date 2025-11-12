@@ -5049,7 +5049,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Samsung Electro-Mechanics",
+            "manufacturer_name": "Samsung_Electro-Mechanics",
             "MPN": "CL10B104KB8NNNL",
             "mp_description": null,
             "mp_link": null
@@ -10068,7 +10068,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "Samsung Electro-Mechanics",
+            "manufacturer_name": "Samsung_Electro-Mechanics",
             "MPN": "CL10B104MB8NNNC",
             "mp_description": null,
             "mp_link": null

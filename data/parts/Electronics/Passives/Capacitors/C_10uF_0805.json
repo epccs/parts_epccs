@@ -5049,7 +5049,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "TDK Corporation",
+            "manufacturer_name": "TDK_Corporation",
             "MPN": "CGA4J1X7R0J106K125AC",
             "mp_description": null,
             "mp_link": null
@@ -10068,7 +10068,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "TDK Corporation",
+            "manufacturer_name": "TDK_Corporation",
             "MPN": "C2012X7R1A106M125AC",
             "mp_description": null,
             "mp_link": null

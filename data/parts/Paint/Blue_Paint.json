@@ -36,7 +36,7 @@
     "tags": [],
     "suppliers": [
         {
-            "supplier_name": "Paint by Numbers",
+            "supplier_name": "Paint_by_Numbers",
             "SKU": "PAINT.BLUE",
             "description": "",
             "link": "",
@@ -5051,7 +5051,7 @@
             ]
         },
         {
-            "supplier_name": "Paint by Numbers",
+            "supplier_name": "Paint_by_Numbers",
             "SKU": "PNT.BLUE.SAMPLE",
             "description": "Sample pot of blue paint",
             "link": "",

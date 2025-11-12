@@ -5049,7 +5049,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "W\u00fcrth Elektronik",
+            "manufacturer_name": "W\u00fcrth_Elektronik",
             "MPN": "885012207080",
             "mp_description": null,
             "mp_link": null
@@ -10068,7 +10068,7 @@
                     "price_currency": "USD"
                 }
             ],
-            "manufacturer_name": "W\u00fcrth Elektronik",
+            "manufacturer_name": "W\u00fcrth_Elektronik",
             "MPN": "885342207001",
             "mp_description": null,
             "mp_link": null
