@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json2inv-parts.py
-# version: 2025-11-07-v1
+# version: 2025-11-11-v2
 # --------------------------------------------------------------
 # Import parts from data/parts -> InvenTree.
 # * Folder structure -> category hierarchy
@@ -24,11 +24,14 @@
 # ¦ +-- category.json
 # +-- category.json
 # --------------------------------------------------------------
+# grok share for this <https://grok.com/share/c2hhcmQtMw%3D%3D_5045a8e5-416e-45c4-a4ca-9af11b3b5482>
+
 import requests
 import json
 import os
 import glob
 import argparse
+import sys
 from collections import defaultdict
 # ----------------------------------------------------------------------
 # API endpoints
@@ -46,10 +49,15 @@ if BASE_URL:
     BASE_URL_ATTACHMENTS = f"{BASE_URL}/api/part/attachment/"
     BASE_URL_PARAMETERS = f"{BASE_URL}/api/part/parameter/"
     BASE_URL_RELATED = f"{BASE_URL}/api/part/related/"
+    BASE_URL_COMPANY = f"{BASE_URL}/api/company/"
+    BASE_URL_SUPPLIER_PARTS = f"{BASE_URL}/api/company/part/"
+    BASE_URL_MANUFACTURER_PART = f"{BASE_URL}/api/company/part/manufacturer/"
+    BASE_URL_PRICE_BREAK = f"{BASE_URL}/api/company/price-break/"
 else:
     BASE_URL_PARTS = BASE_URL_CATEGORIES = BASE_URL_BOM = None
     BASE_URL_STOCK = BASE_URL_BUILD = BASE_URL_SALES = BASE_URL_ATTACHMENTS = None
     BASE_URL_PARAMETERS = BASE_URL_RELATED = None
+    BASE_URL_COMPANY = BASE_URL_SUPPLIER_PARTS = BASE_URL_MANUFACTURER_PART = BASE_URL_PRICE_BREAK = None
 TOKEN = os.getenv("INVENTREE_TOKEN")
 HEADERS = {
     "Authorization": f"Token {TOKEN}",
@@ -246,15 +254,95 @@ def import_part(part_path, force_ipn=False, force=False, clean=False):
     elif existing:
         print(f"DEBUG: Part '{name}' rev '{revision}' exists – skipping")
         return
-    # Create
+    # Create part
     try:
         r = requests.post(BASE_URL_PARTS, headers=HEADERS, json=payload)
         if r.status_code != 201:
             raise Exception(f"Create failed: {r.text}")
         new = r.json()
-        print(f"DEBUG: Created '{new['name']}' rev '{new.get('revision', '')}' (PK {new['pk']})")
+        new_pk = new['pk']
+        print(f"DEBUG: Created '{new['name']}' rev '{new.get('revision', '')}' (PK {new_pk})")
     except Exception as e:
         print(f"ERROR: {e}")
+        return
+    # Import suppliers
+    suppliers = data.get("suppliers", [])
+    for supplier in suppliers:
+        supplier_name = supplier.get("supplier_name")
+        if not supplier_name:
+            print(f"ERROR: Missing supplier name for part {name}")
+            sys.exit(1)
+        # Check supplier exists
+        sup_params = {"name": supplier_name, "is_supplier": True}
+        sup_r = requests.get(BASE_URL_COMPANY, headers=HEADERS, params=sup_params)
+        if sup_r.status_code != 200:
+            print(f"ERROR: Failed to search for supplier {supplier_name}")
+            sys.exit(1)
+        sup_data = sup_r.json()
+        sup_results = sup_data.get("results", [])
+        if not sup_results:
+            print(f"ERROR: Supplier '{supplier_name}' not found in the system")
+            sys.exit(1)
+        supplier_pk = sup_results[0]["pk"]
+        # Check manufacturer if present
+        mp_pk = None
+        if "manufacturer_name" in supplier:
+            man_name = supplier["manufacturer_name"]
+            if not man_name:
+                print(f"ERROR: Missing manufacturer name for supplier {supplier_name} in part {name}")
+                sys.exit(1)
+            man_params = {"name": man_name, "is_manufacturer": True}
+            man_r = requests.get(BASE_URL_COMPANY, headers=HEADERS, params=man_params)
+            if man_r.status_code != 200:
+                print(f"ERROR: Failed to search for manufacturer {man_name}")
+                sys.exit(1)
+            man_data = man_r.json()
+            man_results = man_data.get("results", [])
+            if not man_results:
+                print(f"ERROR: Manufacturer '{man_name}' not found in the system")
+                sys.exit(1)
+            man_pk = man_results[0]["pk"]
+            # Create ManufacturerPart
+            mp_payload = {
+                "part": new_pk,
+                "manufacturer": man_pk,
+                "MPN": supplier.get("MPN", ""),
+                "description": supplier.get("mp_description", ""),
+                "link": supplier.get("mp_link", "")
+            }
+            mp_r = requests.post(BASE_URL_MANUFACTURER_PART, headers=HEADERS, json=mp_payload)
+            if mp_r.status_code != 201:
+                print(f"ERROR: Failed to create ManufacturerPart for {man_name}: {mp_r.text}")
+                sys.exit(1)
+            mp_pk = mp_r.json()["pk"]
+        # Create SupplierPart
+        sp_payload = {
+            "part": new_pk,
+            "supplier": supplier_pk,
+            "manufacturer_part": mp_pk,
+            "SKU": supplier.get("SKU", ""),
+            "description": supplier.get("description", ""),
+            "link": supplier.get("link", ""),
+            "note": supplier.get("note", ""),
+            "packaging": supplier.get("packaging", "")
+        }
+        sp_r = requests.post(BASE_URL_SUPPLIER_PARTS, headers=HEADERS, json=sp_payload)
+        if sp_r.status_code != 201:
+            print(f"ERROR: Failed to create SupplierPart for {supplier_name}: {sp_r.text}")
+            sys.exit(1)
+        sp_pk = sp_r.json()["pk"]
+        # Create price breaks
+        for pb in supplier.get("price_breaks", []):
+            pb_payload = {
+                "supplier_part": sp_pk,
+                "quantity": pb.get("quantity", 0),
+                "price": pb.get("price", 0.0),
+                "price_currency": pb.get("price_currency", "")
+            }
+            pb_r = requests.post(BASE_URL_PRICE_BREAK, headers=HEADERS, json=pb_payload)
+            if pb_r.status_code != 201:
+                print(f"ERROR: Failed to create price break: {pb_r.text}")
+                sys.exit(1)
 # ----------------------------------------------------------------------
 # Main
 # ----------------------------------------------------------------------

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: rm-inv-parts.py
-# version: 2025-11-07-v1
+# version: 2025-11-11-v2
 # --------------------------------------------------------------
 # Delete parts (and optionally their dependencies) based on JSON files.
 # * Uses GLOBAL search by name + IPN (ignores JSON category)
@@ -10,6 +10,7 @@
 # Example usage:
 # python3 ./api/rm-inv-parts.py "Paint/Yellow_Paint" --remove-json --clean-dependencies
 # python3 ./api/rm-inv-parts.py "Electronics/Passives/Capacitors/C_*_0402" --clean-dependencies
+
 import requests
 import json
 import os
@@ -31,11 +32,15 @@ if os.getenv("INVENTREE_URL"):
     BASE_URL_ATTACHMENTS = f"{BASE_URL}/api/part/attachment/"
     BASE_URL_PARAMETERS = f"{BASE_URL}/api/part/parameter/"
     BASE_URL_RELATED = f"{BASE_URL}/api/part/related/"
+    BASE_URL_SUPPLIER_PARTS = f"{BASE_URL}/api/company/part/"
+    BASE_URL_MANUFACTURER_PART = f"{BASE_URL}/api/company/part/manufacturer/"
+    BASE_URL_PRICE_BREAK = f"{BASE_URL}/api/company/price-break/"
 else:
     BASE_URL = None
     BASE_URL_PARTS = BASE_URL_BOM = BASE_URL_TEST = None
     BASE_URL_STOCK = BASE_URL_BUILD = BASE_URL_SALES = BASE_URL_ATTACHMENTS = None
     BASE_URL_PARAMETERS = BASE_URL_RELATED = None
+    BASE_URL_SUPPLIER_PARTS = BASE_URL_MANUFACTURER_PART = BASE_URL_PRICE_BREAK = None
 TOKEN = os.getenv("INVENTREE_TOKEN")
 HEADERS = {
     "Authorization": f"Token {TOKEN}",
@@ -69,28 +74,28 @@ def find_parts_by_name_revision_ipn(name, revision, ipn):
 # Dependency handling
 # ----------------------------------------------------------------------
 def check_dependencies(part_pk):
-    deps = {
-        "stock": [], "bom": [], "test": [], "build": [], "sales": [],
-        "attachments": [], "parameters": [], "related": []
-    }
-    for endpoint, key in [
-        (BASE_URL_STOCK, "stock"),
-        (BASE_URL_BOM, "bom"),
-        (BASE_URL_TEST, "test"),
-        (BASE_URL_BUILD, "build"),
-        (BASE_URL_SALES, "sales"),
-        (BASE_URL_ATTACHMENTS, "attachments"),
-        (BASE_URL_PARAMETERS, "parameters"),
-        (BASE_URL_RELATED, "related"),
-    ]:
+    deps = {}
+    endpoints = [
+        (BASE_URL_STOCK, "stock", {"part": part_pk}),
+        (BASE_URL_BOM, "bom", {"sub_part": part_pk}),  # For components: where used
+        (BASE_URL_TEST, "test", {"part": part_pk}),
+        (BASE_URL_BUILD, "build", {"part": part_pk}),
+        (BASE_URL_SALES, "sales", {"part": part_pk}),
+        (BASE_URL_ATTACHMENTS, "attachments", {"part": part_pk}),
+        (BASE_URL_PARAMETERS, "parameters", {"part": part_pk}),
+        (BASE_URL_RELATED, "related", {"part": part_pk}),
+        (BASE_URL_PRICE_BREAK, "price_break", {"part": part_pk}),
+        (BASE_URL_SUPPLIER_PARTS, "supplier_part", {"part": part_pk}),
+        (BASE_URL_MANUFACTURER_PART, "manufacturer_part", {"part": part_pk}),
+    ]
+    for endpoint, key, params in endpoints:
         try:
-            r = requests.get(f"{endpoint}?part={part_pk}", headers=HEADERS)
+            r = requests.get(endpoint, headers=HEADERS, params=params)
             print(f"DEBUG: Dep {key} -> {r.status_code}")
             if r.status_code == 200:
                 js = r.json()
-                cnt = js.get("count", len(js)) if isinstance(js, dict) else len(js)
-                if cnt:
-                    deps[key] = js.get("results", js)
+                items = js.get("results", js) if isinstance(js, dict) else js
+                deps[key] = items
         except requests.RequestException as e:
             print(f"DEBUG: Dep {key} network error: {e}")
     return deps
@@ -112,26 +117,38 @@ def delete_dependencies(part_name, part_pk, clean):
     if input(f"Type 'CONFIRM' to PERMANENTLY delete: ") != "CONFIRM":
         print("DEBUG: Cancelled (second)")
         return False
-    for key, items in deps.items():
-        for it in items:
-            pk = it.get("pk")
-            url = {
-                "stock": f"{BASE_URL_STOCK}{pk}/",
-                "bom": f"{BASE_URL_BOM}{pk}/",
-                "test": f"{BASE_URL_TEST}{pk}/",
-                "build": f"{BASE_URL_BUILD}{pk}/",
-                "sales": f"{BASE_URL_SALES}{pk}/",
-                "attachments": f"{BASE_URL_ATTACHMENTS}{pk}/",
-                "parameters": f"{BASE_URL_PARAMETERS}{pk}/",
-                "related": f"{BASE_URL_RELATED}{pk}/",
-            }[key]
-            try:
-                r = requests.delete(url, headers=HEADERS)
-                print(f"DEBUG: Delete {key} {pk} -> {r.status_code}")
-                if r.status_code != 204:
-                    raise Exception(f"Delete failed: {r.text}")
-            except requests.RequestException as e:
-                raise Exception(f"Network error deleting {key} {pk}: {e}")
+    # Delete in order to respect foreign keys
+    deletion_order = [
+        "price_break", "stock", "bom", "test", "build", "sales",
+        "attachments", "parameters", "related", "supplier_part",
+        "manufacturer_part"
+    ]
+    urls = {
+        "stock": f"{BASE_URL_STOCK}{{pk}}/",
+        "bom": f"{BASE_URL_BOM}{{pk}}/",
+        "test": f"{BASE_URL_TEST}{{pk}}/",
+        "build": f"{BASE_URL_BUILD}{{pk}}/",
+        "sales": f"{BASE_URL_SALES}{{pk}}/",
+        "attachments": f"{BASE_URL_ATTACHMENTS}{{pk}}/",
+        "parameters": f"{BASE_URL_PARAMETERS}{{pk}}/",
+        "related": f"{BASE_URL_RELATED}{{pk}}/",
+        "price_break": f"{BASE_URL_PRICE_BREAK}{{pk}}/",
+        "supplier_part": f"{BASE_URL_SUPPLIER_PARTS}{{pk}}/",
+        "manufacturer_part": f"{BASE_URL_MANUFACTURER_PART}{{pk}}/",
+    }
+    for key in deletion_order:
+        if key in deps:
+            items = deps[key]
+            for it in items:
+                pk = it.get("pk")
+                url = urls[key].format(pk=pk)
+                try:
+                    r = requests.delete(url, headers=HEADERS)
+                    print(f"DEBUG: Delete {key} {pk} -> {r.status_code}")
+                    if r.status_code != 204:
+                        raise Exception(f"Delete failed: {r.text}")
+                except requests.RequestException as e:
+                    raise Exception(f"Network error deleting {key} {pk}: {e}")
     return True
 def delete_part(part_name, part_pk, clean_deps):
     print(f"DEBUG: Deleting part '{part_name}' (PK {part_pk})")

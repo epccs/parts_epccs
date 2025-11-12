@@ -2,8 +2,6 @@
     "active": true,
     "assembly": false,
     "barcode_hash": "",
-    "category": 3,
-    "category_name": "Fasteners",
     "component": true,
     "creation_date": "2022-06-03",
     "creation_user": null,
@@ -20,7 +18,6 @@
     "locked": false,
     "minimum_stock": 0.0,
     "name": "M6x10_RHS-STA",
-    "pk": 717,
     "purchaseable": true,
     "revision": "",
     "revision_of": null,
@@ -33,25 +30,5025 @@
     "units": "",
     "variant_of": null,
     "virtual": false,
-    "pricing_min": 0.729808,
-    "pricing_max": 0.729808,
-    "pricing_updated": "2025-10-08 00:14",
     "responsible": null,
-    "allocated_to_build_orders": 0.0,
-    "allocated_to_sales_orders": 0.0,
-    "building": 0.0,
-    "scheduled_to_build": 0.0,
     "category_default_location": null,
-    "in_stock": 907.0,
-    "ordering": 0.0,
-    "required_for_build_orders": 0,
-    "required_for_sales_orders": 0,
-    "stock_item_count": 1,
-    "suppliers": 1,
-    "total_in_stock": 907.0,
-    "external_stock": 0.0,
-    "unallocated_stock": 907.0,
-    "variant_stock": 0.0,
     "copy_category_parameters": true,
-    "tags": []
+    "tags": [],
+    "suppliers": [
+        {
+            "supplier_name": "McMaster-Carr",
+            "SKU": "MMC-M610-STA-RHS",
+            "description": null,
+            "link": null,
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 3.5,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1.0,
+                    "price": 1000.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1.0,
+                    "price": 250.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1.0,
+                    "price": 1025.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1.0,
+                    "price": 3.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1.0,
+                    "price": 275.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1.0,
+                    "price": 255.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1.0,
+                    "price": 3.5,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1.0,
+                    "price": 2.56,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2312,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2996,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3995,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4727,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3636,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4736,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3239,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2625,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5022,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5261,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2311,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2513,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4388,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.37,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2836,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3487,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4904,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.365,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3864,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.342,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2864,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3163,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4548,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.498,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4344,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2058,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.331,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4548,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3916,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2016,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2056,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4812,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5362,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2068,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.467,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4214,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.429,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4308,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3443,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5205,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3403,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3916,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3715,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4562,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5283,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4754,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4382,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5451,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4406,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3773,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.256,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2686,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3898,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5281,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3367,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5268,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3706,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4985,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4296,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4032,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3073,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.305,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5439,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2561,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2276,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3356,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3791,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4618,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4051,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2813,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4511,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3423,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4008,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2277,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.288,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3423,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2034,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5359,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5324,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3762,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5133,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4723,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4438,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2546,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.268,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2244,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5089,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4916,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3488,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4327,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3845,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5357,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2764,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3864,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5486,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4193,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3036,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.346,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2946,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3629,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3914,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3573,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5431,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3536,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4984,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5496,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5284,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2639,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3205,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5452,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2133,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.307,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2997,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.548,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.435,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3186,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4503,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4641,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4763,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2624,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4634,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2085,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.272,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.293,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2199,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2545,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4051,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4572,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3429,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4957,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3739,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5268,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3231,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4188,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4382,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4391,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4906,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4149,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2649,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2995,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2033,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3214,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2061,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3743,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5107,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5187,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4453,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4315,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3695,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2876,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2142,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.372,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4269,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3837,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4543,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4709,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2024,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2343,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.508,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3292,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2002,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4399,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2812,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.52,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.236,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5148,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5431,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3572,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.393,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.412,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.411,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5488,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4519,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4139,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3718,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3094,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4619,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2477,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4081,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2131,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5389,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.52,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2427,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.382,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.437,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3608,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5001,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2676,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3915,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2186,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4901,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4791,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2754,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2634,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2093,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5013,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4574,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2953,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2293,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5323,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3658,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4887,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2564,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2063,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3167,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5284,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2885,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2258,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2554,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2005,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2338,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3238,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3338,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3235,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4347,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4233,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4866,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3838,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5155,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3539,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4181,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4329,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3595,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4104,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3378,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5046,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.208,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2933,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4881,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4007,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4937,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4156,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5251,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2727,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4659,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2199,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4263,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2152,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3722,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4076,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2133,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4918,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.421,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2522,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4034,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2881,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4908,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4546,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4306,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4004,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2872,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5496,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2663,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2718,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5366,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2548,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4509,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2591,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.247,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5117,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4302,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.398,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3896,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3109,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3712,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4611,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2764,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4141,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3222,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3756,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2242,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4611,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2734,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5223,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2816,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4088,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5226,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5358,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3427,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5456,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4387,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3651,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3979,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2729,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5318,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2069,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2791,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4867,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2439,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5013,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3812,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3259,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3617,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5334,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4618,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3742,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4754,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4059,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5175,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5457,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4043,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2012,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4659,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3281,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2531,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2617,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3998,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3671,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4646,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3646,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4359,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3568,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2453,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3822,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5309,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4378,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2223,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5282,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3348,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5348,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2481,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4493,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5472,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5456,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3166,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3181,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4318,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2147,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.486,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3035,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3007,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4787,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5035,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4547,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3392,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4949,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2368,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4478,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4094,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4801,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4227,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2885,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3924,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4564,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2239,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3469,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2014,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4381,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5452,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2846,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4899,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4399,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4241,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5054,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2302,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3325,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5114,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5015,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2492,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2868,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2215,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4333,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4311,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4414,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3842,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3262,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4082,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3651,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3284,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4892,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5279,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4505,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.518,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3658,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2308,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4579,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3745,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2508,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2863,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3883,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.423,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3745,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2856,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2996,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2669,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.397,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2004,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5398,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5026,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4623,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3999,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5199,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2908,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3261,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3332,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3504,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4264,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3639,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3447,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4326,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2344,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.405,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5076,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4177,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2426,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3777,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2024,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3898,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2672,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3595,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.234,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5097,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5188,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2777,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4567,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3983,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3166,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4381,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2396,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2873,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.533,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2482,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4515,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4976,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3622,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2915,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4117,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.263,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5277,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4882,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2387,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4899,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3856,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3332,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2656,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3763,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3962,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5402,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2486,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.515,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2371,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2022,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2691,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4762,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4734,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4551,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2888,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5059,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.286,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3428,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2392,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5347,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5199,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3832,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3075,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3954,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4162,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3963,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2594,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3446,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3271,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4665,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2433,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2469,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3777,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4315,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2473,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5432,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3376,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5082,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4461,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4227,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3874,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2562,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5051,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2206,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3407,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3082,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4143,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4465,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3605,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5275,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5194,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.5423,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3253,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4228,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2979,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2008,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2309,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4005,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.4924,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2225,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2918,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3207,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.3248,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2445,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.057,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0756,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1185,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0387,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1152,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.081,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1548,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2463,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1128,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2385,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2052,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1542,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1599,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2016,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0894,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1044,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0459,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0309,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1434,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1614,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2418,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2406,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1425,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0975,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0513,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2196,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2259,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1438,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1137,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0741,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1197,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1008,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0681,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1422,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2193,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0756,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1464,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1365,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1647,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1393,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1122,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1647,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1575,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.143,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0459,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.165,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2268,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0947,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1929,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2106,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1623,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0708,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2511,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0504,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1125,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2049,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1044,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1872,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2499,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.158,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0735,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1614,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.039,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0735,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0765,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0609,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0882,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1101,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2088,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2247,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0333,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.051,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0444,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0828,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2427,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2433,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1269,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0426,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0612,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.072,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.207,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1197,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0543,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0921,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0891,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1716,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2532,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0978,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1509,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0762,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0924,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1128,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1065,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2466,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0597,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0309,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.093,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.102,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2505,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0732,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.084,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.123,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1272,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2088,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0936,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1362,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1944,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1665,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1179,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2076,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1245,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0366,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1338,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1215,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.21,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1482,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1857,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1857,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2211,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1869,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0945,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1542,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0711,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2043,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.066,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1788,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0306,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.054,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1974,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0303,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2457,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1005,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1251,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2025,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0423,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0456,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.216,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2424,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0876,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2352,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1722,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2223,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0831,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2466,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1332,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1383,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.087,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.153,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0336,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2208,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0426,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2121,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0936,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1023,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2322,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0828,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1965,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1803,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2292,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1365,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0927,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.132,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2073,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1848,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1917,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1524,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2196,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0771,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0621,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0816,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1122,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0444,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0399,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1299,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0786,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0834,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1539,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1716,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1467,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0483,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1818,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1545,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1725,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2196,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0765,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1266,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2052,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2538,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2271,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1443,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0459,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0765,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0801,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0768,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1482,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.231,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1863,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1806,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2211,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0654,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0501,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1677,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0771,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1071,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1728,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2187,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2229,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1083,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2181,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2475,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.168,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.129,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1941,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0885,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0432,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2157,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1116,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2421,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0645,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1782,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1902,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0477,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1821,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0468,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1278,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1512,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2511,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1542,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1017,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1407,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2199,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1392,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1437,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1335,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1467,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1377,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2175,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1809,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2085,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0837,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1884,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1668,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1086,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2001,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0792,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1866,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1005,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1257,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.189,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1755,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1167,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1623,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1569,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1218,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.078,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0483,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0993,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2358,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1386,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1755,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2487,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2544,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2526,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1323,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1965,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0525,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1545,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1023,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1299,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1689,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0813,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1449,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2295,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0942,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1053,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1281,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0912,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0744,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1689,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1455,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2268,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1554,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0681,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1461,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2391,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1965,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2202,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1815,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1551,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1551,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1299,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2541,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0702,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2181,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1887,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1641,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2136,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1296,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2007,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0771,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1626,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.231,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1071,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.207,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0387,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1491,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.168,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.213,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1641,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0519,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1824,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1017,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0417,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0363,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1431,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0357,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0621,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2277,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1527,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1968,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0699,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1557,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0816,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1734,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1779,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1038,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1074,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1734,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0489,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1776,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2262,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1284,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2184,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1386,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1824,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.078,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1386,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1284,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.18,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1566,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2373,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0876,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0348,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1155,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.21,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2394,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1167,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0696,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0342,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1452,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1347,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1092,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1377,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2262,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.192,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1635,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1833,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.162,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1215,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0393,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0345,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2208,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1779,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1125,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1182,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2199,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1248,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0801,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.12,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1404,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1551,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1812,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.21,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1485,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0408,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2115,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0597,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2172,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1233,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1143,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0405,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0768,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1125,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1287,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0987,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1302,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0648,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0861,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.057,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1311,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2106,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1959,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1449,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1629,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2214,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2064,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0699,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2037,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.105,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1728,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2049,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1179,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1668,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2145,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1056,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1134,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0843,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2406,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.138,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1845,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2103,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2469,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1767,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0699,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0597,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0831,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1413,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1353,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0369,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.066,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1956,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1062,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2094,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1545,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0834,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.156,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1752,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2124,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1602,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1317,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2043,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1521,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1824,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1113,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.045,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2394,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0816,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2145,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1977,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1464,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1452,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0474,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1209,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2523,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0996,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0957,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0999,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0666,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0489,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2502,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0438,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2265,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2019,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2469,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1767,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1539,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0717,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1473,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1692,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2472,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2238,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2292,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2148,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1206,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0576,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1386,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.114,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1287,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1779,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1722,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.165,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1092,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.186,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0993,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0612,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0867,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1629,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1678,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0741,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2115,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.15,
+                    "price_currency": "AUD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2481,
+                    "price_currency": "CNY"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2145,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1317,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1896,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0994,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1308,
+                    "price_currency": "CAD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.2133,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1698,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0408,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.0405,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.1875,
+                    "price_currency": "USD"
+                }
+            ]
+        }
+    ]
 }
