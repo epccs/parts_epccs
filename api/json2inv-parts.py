@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json2inv-parts.py
-# version: 2025-11-12-v2
+# version: 2025-11-12-v3
 # --------------------------------------------------------------
 # Import parts from data/parts -> InvenTree.
 # * Folder structure -> category hierarchy
@@ -346,7 +346,8 @@ def import_part(part_path, force_ipn=False, force=False, clean=False):
         # Create price breaks
         for pb in supplier.get("price_breaks", []):
             pb_payload = {
-                "supplier_part": sp_pk,
+                "part": new_pk,
+                "supplier": supplier_pk,
                 "quantity": pb.get("quantity", 0),
                 "price": pb.get("price", 0.0),
                 "price_currency": pb.get("price_currency", "")
