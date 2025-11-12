@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json2inv-parts.py
-# version: 2025-11-11-v2
+# version: 2025-11-12-v2
 # --------------------------------------------------------------
 # Import parts from data/parts -> InvenTree.
 # * Folder structure -> category hierarchy
@@ -24,7 +24,6 @@
 # ¦ +-- category.json
 # +-- category.json
 # --------------------------------------------------------------
-# grok share for this <https://grok.com/share/c2hhcmQtMw%3D%3D_5045a8e5-416e-45c4-a4ca-9af11b3b5482>
 
 import requests
 import json
@@ -32,7 +31,18 @@ import os
 import glob
 import argparse
 import sys
+import re
 from collections import defaultdict
+# ----------------------------------------------------------------------
+# Sanitize company name for filename & JSON
+# ----------------------------------------------------------------------
+def sanitize_company_name(name):
+    """Replace spaces with _, remove dots, and strip invalid filename chars."""
+    print(f"DEBUG: Sanitizing company name: {name}")
+    sanitized = name.replace(' ', '_').replace('.', '')
+    sanitized = re.sub(r'[<>:"/\\|?*]', '_', sanitized.strip())
+    print(f"DEBUG: Sanitized -> {sanitized}")
+    return sanitized
 # ----------------------------------------------------------------------
 # API endpoints
 # ----------------------------------------------------------------------
@@ -268,10 +278,11 @@ def import_part(part_path, force_ipn=False, force=False, clean=False):
     # Import suppliers
     suppliers = data.get("suppliers", [])
     for supplier in suppliers:
-        supplier_name = supplier.get("supplier_name")
-        if not supplier_name:
+        raw_supplier_name = supplier.get("supplier_name")
+        if not raw_supplier_name:
             print(f"ERROR: Missing supplier name for part {name}")
             sys.exit(1)
+        supplier_name = sanitize_company_name(raw_supplier_name)
         # Check supplier exists
         sup_params = {"name": supplier_name, "is_supplier": True}
         sup_r = requests.get(BASE_URL_COMPANY, headers=HEADERS, params=sup_params)
@@ -279,7 +290,7 @@ def import_part(part_path, force_ipn=False, force=False, clean=False):
             print(f"ERROR: Failed to search for supplier {supplier_name}")
             sys.exit(1)
         sup_data = sup_r.json()
-        sup_results = sup_data.get("results", [])
+        sup_results = sup_data.get("results", []) if isinstance(sup_data, dict) else sup_data
         if not sup_results:
             print(f"ERROR: Supplier '{supplier_name}' not found in the system")
             sys.exit(1)
@@ -287,17 +298,18 @@ def import_part(part_path, force_ipn=False, force=False, clean=False):
         # Check manufacturer if present
         mp_pk = None
         if "manufacturer_name" in supplier:
-            man_name = supplier["manufacturer_name"]
-            if not man_name:
+            raw_man_name = supplier["manufacturer_name"]
+            if not raw_man_name:
                 print(f"ERROR: Missing manufacturer name for supplier {supplier_name} in part {name}")
                 sys.exit(1)
+            man_name = sanitize_company_name(raw_man_name)
             man_params = {"name": man_name, "is_manufacturer": True}
             man_r = requests.get(BASE_URL_COMPANY, headers=HEADERS, params=man_params)
             if man_r.status_code != 200:
                 print(f"ERROR: Failed to search for manufacturer {man_name}")
                 sys.exit(1)
             man_data = man_r.json()
-            man_results = man_data.get("results", [])
+            man_results = man_data.get("results", []) if isinstance(man_data, dict) else man_data
             if not man_results:
                 print(f"ERROR: Manufacturer '{man_name}' not found in the system")
                 sys.exit(1)

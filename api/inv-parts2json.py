@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-parts2json.py
-# version: 2025-11-11-v2
+# version: 2025-11-12-v1
 # --------------------------------------------------------------
 # Export **real parts only** (no assemblies, no templates)
 # -> data/parts/
@@ -68,6 +68,11 @@ def sanitize_revision(rev):
     rev = str(rev).strip()
     rev = re.sub(r'[<>:"/\\|?*]', '_', rev)
     return rev
+def sanitize_company_name(name):
+    """Replace spaces with _, remove dots, and strip invalid filename chars."""
+    sanitized = name.replace(' ', '_').replace('.', '')
+    sanitized = re.sub(r'[<>:"/\\|?*]', '_', sanitized.strip())
+    return sanitized
 # ----------------------------------------------------------------------
 # Fetch data (handles pagination)
 # ----------------------------------------------------------------------
@@ -230,7 +235,7 @@ def main():
         suppliers_list = []
         for sp in supplier_parts:
             sp_details = {
-                "supplier_name": sp.get('supplier_detail', {}).get('name', ''),
+                "supplier_name": sanitize_company_name(sp.get('supplier_detail', {}).get('name', '')),
                 "SKU": sp.get('SKU', ''),
                 "description": sp.get('description', ''),
                 "link": sp.get('link', ''),
@@ -250,7 +255,7 @@ def main():
                 mp = fetch_data(mp_url)
                 if mp:
                     mp = mp[0]
-                    sp_details['manufacturer_name'] = mp.get('manufacturer_detail', {}).get('name', '')
+                    sp_details['manufacturer_name'] = sanitize_company_name(mp.get('manufacturer_detail', {}).get('name', ''))
                     sp_details['MPN'] = mp.get('MPN', '')
                     sp_details['mp_description'] = mp.get('description', '')
                     sp_details['mp_link'] = mp.get('link', '')
