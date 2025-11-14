@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-parts_to_json.py
-# version: 2025-11-14-v1
+# version: 2025-11-14-v2
 # --------------------------------------------------------------
 # Pull from inventree **real parts only** (no assemblies, no templates)
 # -> data/parts/
@@ -150,7 +150,7 @@ def write_category_files(root_dir, pk_to_path, parent_to_subs):
 # ----------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(
-        description="Export **real parts only** (no assemblies/templates) to data/parts/"
+        description="Pull **real parts only** (no assemblies/templates) to data/parts/"
     )
     parser.add_argument(
         "patterns", nargs="*",
@@ -187,7 +187,7 @@ def main():
             patterns.append(re.compile(regex, re.IGNORECASE))
         print(f"DEBUG: Filtering with {len(patterns)} patterns")
     # ------------------------------------------------------------------
-    # 4. Fetch & export **real parts only**
+    # 4. Fetch & pull **real parts only**
     # ------------------------------------------------------------------
     print("DEBUG: Fetching parts...")
     parts = fetch_data(BASE_URL_PARTS)
@@ -233,46 +233,47 @@ def main():
         ]
         for key in unwanted:
             part_mod.pop(key, None)
-        # Fetch and add supplier details
-        supplier_parts = fetch_data(BASE_URL_SUPPLIER_PARTS, params={"part": part['pk']})
+        # Fetch and add supplier details only if purchaseable
         suppliers_list = []
-        for sp in supplier_parts:
-            sp_details = {
-                "supplier_name": sanitize_company_name(sp.get('supplier_detail', {}).get('name', '')),
-                "SKU": sp.get('SKU', ''),
-                "description": sp.get('description', ''),
-                "link": sp.get('link', ''),
-                "note": sp.get('note', ''),
-                "packaging": sp.get('packaging', ''),
-                "price_breaks": []
-            }
-            price_breaks = fetch_data(BASE_URL_PRICE_BREAK, params={"supplier_part": sp['pk']})
-            pb_by_quantity = defaultdict(list)
-            for pb in price_breaks:
-                q = pb.get('quantity', 0)
-                pb_by_quantity[q].append(pb)
-            for q, pbs in pb_by_quantity.items():
-                if len(pbs) > 1:
-                    print(f"Found {len(pbs) - 1} duplicates for quantity {q} in SupplierPart for part '{name}' supplier '{sp_details['supplier_name']}'")
-                # Select the most recent based on 'updated' field
-                selected = max(pbs, key=lambda x: x.get('updated', ''))
-                sp_details['price_breaks'].append({
-                    "quantity": q,
-                    "price": selected.get('price', 0.0),
-                    "price_currency": selected.get('price_currency', '')
-                })
-            # Sort price breaks by quantity ascending
-            sp_details['price_breaks'].sort(key=lambda x: x['quantity'])
-            if sp.get('manufacturer_part'):
-                mp_url = f"{BASE_URL_MANUFACTURER_PART}{sp['manufacturer_part']}/"
-                mp = fetch_data(mp_url)
-                if mp:
-                    mp = mp[0]
-                    sp_details['manufacturer_name'] = sanitize_company_name(mp.get('manufacturer_detail', {}).get('name', ''))
-                    sp_details['MPN'] = mp.get('MPN', '')
-                    sp_details['mp_description'] = mp.get('description', '')
-                    sp_details['mp_link'] = mp.get('link', '')
-            suppliers_list.append(sp_details)
+        if part.get("purchaseable", False):
+            supplier_parts = fetch_data(BASE_URL_SUPPLIER_PARTS, params={"part": part['pk']})
+            for sp in supplier_parts:
+                sp_details = {
+                    "supplier_name": sanitize_company_name(sp.get('supplier_detail', {}).get('name', '')),
+                    "SKU": sp.get('SKU', ''),
+                    "description": sp.get('description', ''),
+                    "link": sp.get('link', ''),
+                    "note": sp.get('note', ''),
+                    "packaging": sp.get('packaging', ''),
+                    "price_breaks": []
+                }
+                price_breaks = fetch_data(BASE_URL_PRICE_BREAK, params={"supplier_part": sp['pk']})
+                pb_by_quantity = defaultdict(list)
+                for pb in price_breaks:
+                    q = pb.get('quantity', 0)
+                    pb_by_quantity[q].append(pb)
+                for q, pbs in pb_by_quantity.items():
+                    if len(pbs) > 1:
+                        print(f"Found {len(pbs) - 1} duplicates for quantity {q} in SupplierPart for part '{name}' supplier '{sp_details['supplier_name']}'")
+                    # Select the most recent based on 'updated' field
+                    selected = max(pbs, key=lambda x: x.get('updated', ''))
+                    sp_details['price_breaks'].append({
+                        "quantity": q,
+                        "price": selected.get('price', 0.0),
+                        "price_currency": selected.get('price_currency', '')
+                    })
+                # Sort price breaks by quantity ascending
+                sp_details['price_breaks'].sort(key=lambda x: x['quantity'])
+                if sp.get('manufacturer_part'):
+                    mp_url = f"{BASE_URL_MANUFACTURER_PART}{sp['manufacturer_part']}/"
+                    mp = fetch_data(mp_url)
+                    if mp:
+                        mp = mp[0]
+                        sp_details['manufacturer_name'] = sanitize_company_name(mp.get('manufacturer_detail', {}).get('name', ''))
+                        sp_details['MPN'] = mp.get('MPN', '')
+                        sp_details['mp_description'] = mp.get('description', '')
+                        sp_details['mp_link'] = mp.get('link', '')
+                suppliers_list.append(sp_details)
         part_mod['suppliers'] = suppliers_list
         # Save
         part_file = os.path.join(dir_path, f"{base_name}.json")
