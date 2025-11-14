@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-templates_to_json.py
-# version: 2025-11-14-v1
+# version: 2025-11-14-v2
 # --------------------------------------------------------------
 # Pull from inventree **template parts** + **single-level BOM** to:
 # data/templates/<category>/Part_Name[.revision].json
@@ -263,6 +263,8 @@ def main():
             continue
         dir_parts = [sanitize_category_name(p) for p in pathstring.split("/")]
         dir_path = os.path.join(root_dir, *dir_parts)
+        # Fetch suppliers only if purchaseable
+        suppliers = fetch_suppliers(pk, name) if part.get("purchaseable", False) else []
         # Save clean part JSON with suppliers
         part_clean = {
             "name": san_name,
@@ -282,7 +284,7 @@ def main():
             "category": cat_pk,
             "image": "",
             "thumbnail": "",
-            "suppliers": fetch_suppliers(pk, name)
+            "suppliers": suppliers
         }
         save_to_file(part_clean, os.path.join(dir_path, f"{base_name}.json"))
         # Save single-level BOM **only if not empty**
