@@ -14,9 +14,9 @@
 #
 # --------------------------------------------------------------
 # example usage:
-# python3 ./api/inv-parts2json.py
-# python3 ./api/inv-parts2json.py "C_*_0402"
-# python3 ./api/inv-parts2json.py "C_*_0?0?"
+# python3 ./api/inv-parts_to_json.py
+# python3 ./api/inv-parts_to_json.py "C_*_0402"
+# python3 ./api/inv-parts_to_json.py "C_*_0?0?"
 # --------------------------------------------------------------
 # File Structure of dev data after running with "*_Top":
 # data/parts/
@@ -278,6 +278,6 @@ def main():
         part_file = os.path.join(dir_path, f"{base_name}.json")
         save_to_file(part_mod, part_file)
         exported += 1
-    print(f"SUMMARY: Exported {exported} real parts")
+    print(f"SUMMARY: Pulled {exported} real parts")
 if __name__ == "__main__":
     main()
