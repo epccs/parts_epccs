@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json2inv-parts.py
-# version: 2025-11-13-v2
+# version: 2025-11-12-v3
 # --------------------------------------------------------------
 # Import parts from data/parts -> InvenTree.
 # * Folder structure -> category hierarchy
@@ -32,6 +32,7 @@ import glob
 import argparse
 import sys
 import re
+import time
 from collections import defaultdict
 # ----------------------------------------------------------------------
 # Sanitize company name for filename & JSON
@@ -296,10 +297,17 @@ def import_part(part_path, force_ipn=False, force=False, clean=False):
     except Exception as e:
         print(f"ERROR: {e}")
         return
-    # Verify the part exists
-    verify_r = requests.get(f"{BASE_URL_PARTS}{new_pk}/", headers=HEADERS)
-    if verify_r.status_code != 200:
-        print(f"ERROR: Part {new_pk} not found after creation: {verify_r.text}")
+    # Verify the part exists with retry
+    verified = False
+    for attempt in range(3):
+        verify_r = requests.get(f"{BASE_URL_PARTS}{new_pk}/", headers=HEADERS)
+        if verify_r.status_code == 200:
+            verified = True
+            break
+        print(f"DEBUG: Verify attempt {attempt+1} failed for Part {new_pk}: {verify_r.status_code}")
+        time.sleep(1)
+    if not verified:
+        print(f"ERROR: Part {new_pk} not found after creation and retries.")
         sys.exit(1)
     print(f"DEBUG: Part {new_pk} verified.")
     # Import suppliers
@@ -370,17 +378,24 @@ def import_part(part_path, force_ipn=False, force=False, clean=False):
             print(f"ERROR: Failed to create SupplierPart for {supplier_name}: {sp_r.text}")
             sys.exit(1)
         sp_pk = sp_r.json()["pk"]
-        # Verify the supplier part exists
-        verify_sp = requests.get(f"{BASE_URL_SUPPLIER_PARTS}{sp_pk}/", headers=HEADERS)
-        if verify_sp.status_code != 200:
-            print(f"ERROR: SupplierPart {sp_pk} not found: {verify_sp.text}")
+        # Verify the supplier part exists with retry
+        sp_verified = False
+        for attempt in range(3):
+            verify_sp = requests.get(f"{BASE_URL_SUPPLIER_PARTS}{sp_pk}/", headers=HEADERS)
+            if verify_sp.status_code == 200:
+                sp_verified = True
+                break
+            print(f"DEBUG: Verify attempt {attempt+1} failed for SupplierPart {sp_pk}: {verify_sp.status_code}")
+            time.sleep(1)
+        if not sp_verified:
+            print(f"ERROR: SupplierPart {sp_pk} not found after creation and retries.")
             sys.exit(1)
         print(f"DEBUG: SupplierPart {sp_pk} verified.")
         # Prompt before creating price breaks
         print(f"Check part at {WEB_BASE}/web/part/{new_pk}/details")
         print(f"Check supplier at {WEB_BASE}/web/purchasing/supplier/{supplier_pk}/supplied-parts")
         print(f"Check supplier-part at {WEB_BASE}/web/purchasing/supplier-part/{sp_pk}/pricing")
-        #input("Press enter to continue creating price breaks...")
+        input("Press enter to continue creating price breaks...")
         # Fetch existing price breaks
         existing_pbs = fetch_data(BASE_URL_PRICE_BREAK, params={"part": sp_pk})
         existing_quantities = {pb['quantity'] for pb in existing_pbs}
