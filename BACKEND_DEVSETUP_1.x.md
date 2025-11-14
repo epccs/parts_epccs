@@ -235,7 +235,12 @@ sudo docker compose --project-directory . -f contrib/container/dev-docker-compos
 cd ~/git/InvenTree
 
 # git is using the stable branch (git clone --branch stable) 
-git pull
+git stash save "Local modifications before sync"
+git fetch origin
+git reset --hard origin/stable
+# git pull
+git stash pop
+git status # show all the output to Grok so you can see any other needed steps, but be ready to nuke and plow
 
 # 1. Stop everything
 sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml down
@@ -243,7 +248,8 @@ sudo docker compose --project-directory . -f contrib/container/dev-docker-compos
 # 2. Pull base images (only postgres)
 sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml pull
 
-# 3. Build the dev image (required!)
+# 3. Build the dev image (inventree-dev-server is not required  >=1.1.3 but did no harm)
+sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml build inventree-dev-worker
 sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml build inventree-dev-server
 
 # 4. Start ONLY the database
@@ -262,8 +268,6 @@ sudo docker compose --project-directory . -f contrib/container/dev-docker-compos
 sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml up -d
 curl -v -L http://localhost:8000
 ```
-
-<https://grok.com/share/c2hhcmQtMw%3D%3D_63919905-6c07-4516-ae09-a6240cafcbf4>
 
 ### e. Nuke Containers
 

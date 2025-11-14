@@ -8,9 +8,9 @@ This repository documents various aspects of Learning InvenTree an Inventory Man
 
 InvenTree setup instructions.
 
-[./BACKEND_SETUP_1.0.x.md](BACKEND_SETUP_1.0.x.md)
+[./BACKEND_SETUP_1.0.x.md](BACKEND_SETUP_1.x.md)
 
-[./BACKEND_DEVSETUP_1.0.x.md](BACKEND_DEVSETUP_1.0.x.md)
+[./BACKEND_DEVSETUP_1.0.x.md](BACKEND_DEVSETUP_1.x.md)
 
 ## data
 

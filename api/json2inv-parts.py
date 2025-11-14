@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json2inv-parts.py
-# version: 2025-11-12-v4
+# version: 2025-11-13-v2
 # --------------------------------------------------------------
 # Import parts from data/parts -> InvenTree.
 # * Folder structure -> category hierarchy
@@ -63,6 +63,7 @@ if BASE_URL:
     BASE_URL_SUPPLIER_PARTS = f"{BASE_URL}/api/company/part/"
     BASE_URL_MANUFACTURER_PART = f"{BASE_URL}/api/company/part/manufacturer/"
     BASE_URL_PRICE_BREAK = f"{BASE_URL}/api/company/price-break/"
+    WEB_BASE = BASE_URL.rsplit('/api', 1)[0]
 else:
     BASE_URL_PARTS = BASE_URL_CATEGORIES = BASE_URL_BOM = None
     BASE_URL_STOCK = BASE_URL_BUILD = BASE_URL_SALES = BASE_URL_ATTACHMENTS = None
@@ -74,6 +75,26 @@ HEADERS = {
     "Content-Type": "application/json",
     "Accept": "application/json",
 }
+# ----------------------------------------------------------------------
+# Fetch data (handles pagination)
+# ----------------------------------------------------------------------
+def fetch_data(url, params=None):
+    items = []
+    while url:
+        r = requests.get(url, headers=HEADERS, params=params or {})
+        if r.status_code != 200:
+            raise Exception(f"API error {r.status_code}: {r.text}")
+        data = r.json()
+        if isinstance(data, dict) and "results" in data:
+            items.extend(data["results"])
+            url = data.get("next")
+        elif isinstance(data, dict):
+            items.append(data)
+            url = None
+        else:
+            items.extend(data)
+            url = None
+    return items
 # ----------------------------------------------------------------------
 # Category existence
 # ----------------------------------------------------------------------
@@ -275,6 +296,12 @@ def import_part(part_path, force_ipn=False, force=False, clean=False):
     except Exception as e:
         print(f"ERROR: {e}")
         return
+    # Verify the part exists
+    verify_r = requests.get(f"{BASE_URL_PARTS}{new_pk}/", headers=HEADERS)
+    if verify_r.status_code != 200:
+        print(f"ERROR: Part {new_pk} not found after creation: {verify_r.text}")
+        sys.exit(1)
+    print(f"DEBUG: Part {new_pk} verified.")
     # Import suppliers
     suppliers = data.get("suppliers", [])
     for supplier in suppliers:
@@ -343,14 +370,40 @@ def import_part(part_path, force_ipn=False, force=False, clean=False):
             print(f"ERROR: Failed to create SupplierPart for {supplier_name}: {sp_r.text}")
             sys.exit(1)
         sp_pk = sp_r.json()["pk"]
-        # Create price breaks
+        # Verify the supplier part exists
+        verify_sp = requests.get(f"{BASE_URL_SUPPLIER_PARTS}{sp_pk}/", headers=HEADERS)
+        if verify_sp.status_code != 200:
+            print(f"ERROR: SupplierPart {sp_pk} not found: {verify_sp.text}")
+            sys.exit(1)
+        print(f"DEBUG: SupplierPart {sp_pk} verified.")
+        # Prompt before creating price breaks
+        print(f"Check part at {WEB_BASE}/web/part/{new_pk}/details")
+        print(f"Check supplier at {WEB_BASE}/web/purchasing/supplier/{supplier_pk}/supplied-parts")
+        print(f"Check supplier-part at {WEB_BASE}/web/purchasing/supplier-part/{sp_pk}/pricing")
+        #input("Press enter to continue creating price breaks...")
+        # Fetch existing price breaks
+        existing_pbs = fetch_data(BASE_URL_PRICE_BREAK, params={"part": sp_pk})
+        existing_quantities = {pb['quantity'] for pb in existing_pbs}
+        # De-duplicate input price breaks
+        unique_pbs = {}
         for pb in supplier.get("price_breaks", []):
+            q = pb.get("quantity", 0)
+            if q not in unique_pbs:
+                unique_pbs[q] = pb
+            else:
+                print(f"DEBUG: Duplicate quantity {q} in input data for SupplierPart {sp_pk}, keeping first.")
+        # Create price breaks, skipping existing
+        for q, pb in unique_pbs.items():
+            if q in existing_quantities:
+                print(f"DEBUG: Skipping existing quantity {q} for SupplierPart {sp_pk}")
+                continue
             pb_payload = {
-                "supplier_part": sp_pk,
-                "quantity": pb.get("quantity", 0),
+                "part": sp_pk,
+                "quantity": q,
                 "price": pb.get("price", 0.0),
                 "price_currency": pb.get("price_currency", "")
             }
+            print(f"Making API call to {BASE_URL_PRICE_BREAK} with payload:\n{json.dumps(pb_payload, indent=4)}")
             pb_r = requests.post(BASE_URL_PRICE_BREAK, headers=HEADERS, json=pb_payload)
             if pb_r.status_code != 201:
                 print(f"ERROR: Failed to create price break: {pb_r.text}")
