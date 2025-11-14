@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-# file name: inv-parts2json.py
-# version: 2025-11-12-v1
+# file name: inv-parts_to_json.py
+# version: 2025-11-14-v1
 # --------------------------------------------------------------
-# Export **real parts only** (no assemblies, no templates)
+# Pull from inventree **real parts only** (no assemblies, no templates)
 # -> data/parts/
 #
 # * CLI glob patterns (e.g. "C_*_0402", "C_*_0?0?")
 # * Skips: assembly=True, is_template=True
 # * Creates category folders + category.json
 # * **Revision in filename** if present
-# * No args ? export all real parts
+# * No args -> pull from inventree all real parts
+# * aggregate duplicate price breaks during pull since the InvTree API does not allow duplicate price breaks to be pushed.
 #
 # --------------------------------------------------------------
 # example usage:
@@ -26,11 +27,13 @@
 # ¦ +-- category.json
 # +-- category.json
 # --------------------------------------------------------------
+
 import requests
 import json
 import os
 import re
 import argparse
+from collections import defaultdict
 # ----------------------------------------------------------------------
 # API endpoints & auth
 # ----------------------------------------------------------------------
@@ -244,12 +247,22 @@ def main():
                 "price_breaks": []
             }
             price_breaks = fetch_data(BASE_URL_PRICE_BREAK, params={"supplier_part": sp['pk']})
+            pb_by_quantity = defaultdict(list)
             for pb in price_breaks:
+                q = pb.get('quantity', 0)
+                pb_by_quantity[q].append(pb)
+            for q, pbs in pb_by_quantity.items():
+                if len(pbs) > 1:
+                    print(f"Found {len(pbs) - 1} duplicates for quantity {q} in SupplierPart for part '{name}' supplier '{sp_details['supplier_name']}'")
+                # Select the most recent based on 'updated' field
+                selected = max(pbs, key=lambda x: x.get('updated', ''))
                 sp_details['price_breaks'].append({
-                    "quantity": pb.get('quantity', 0),
-                    "price": pb.get('price', 0.0),
-                    "price_currency": pb.get('price_currency', '')
+                    "quantity": q,
+                    "price": selected.get('price', 0.0),
+                    "price_currency": selected.get('price_currency', '')
                 })
+            # Sort price breaks by quantity ascending
+            sp_details['price_breaks'].sort(key=lambda x: x['quantity'])
             if sp.get('manufacturer_part'):
                 mp_url = f"{BASE_URL_MANUFACTURER_PART}{sp['manufacturer_part']}/"
                 mp = fetch_data(mp_url)
