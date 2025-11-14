@@ -395,7 +395,7 @@ def import_part(part_path, force_ipn=False, force=False, clean=False):
         print(f"Check part at {WEB_BASE}/web/part/{new_pk}/details")
         print(f"Check supplier at {WEB_BASE}/web/purchasing/supplier/{supplier_pk}/supplied-parts")
         print(f"Check supplier-part at {WEB_BASE}/web/purchasing/supplier-part/{sp_pk}/pricing")
-        input("Press enter to continue creating price breaks...")
+        #input("Press enter to continue creating price breaks...")
         # Fetch existing price breaks
         existing_pbs = fetch_data(BASE_URL_PRICE_BREAK, params={"part": sp_pk})
         existing_quantities = {pb['quantity'] for pb in existing_pbs}

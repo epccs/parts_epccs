@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # file name: rm-inv-parts.py
-# version: 2025-11-11-v2
+# version: 2025-11-13-v1
 # --------------------------------------------------------------
 # Delete parts (and optionally their dependencies) based on JSON files.
 # * Uses GLOBAL search by name + IPN (ignores JSON category)
 # * --clean-dependencies -> two confirmations
 # * Sets part to inactive before deletion
+# * Aligned with json2inv-parts.py for dependency handling (price breaks, etc.)
 # --------------------------------------------------------------
 # Example usage:
 # python3 ./api/rm-inv-parts.py "Paint/Yellow_Paint" --remove-json --clean-dependencies
@@ -77,7 +78,7 @@ def check_dependencies(part_pk):
     deps = {}
     endpoints = [
         (BASE_URL_STOCK, "stock", {"part": part_pk}),
-        (BASE_URL_BOM, "bom", {"sub_part": part_pk}),  # For components: where used
+        (BASE_URL_BOM, "bom", {"sub_part": part_pk}), # For components: where used
         (BASE_URL_TEST, "test", {"part": part_pk}),
         (BASE_URL_BUILD, "build", {"part": part_pk}),
         (BASE_URL_SALES, "sales", {"part": part_pk}),
