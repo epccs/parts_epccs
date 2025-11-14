@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json2inv-template.py
-# version: 2025-11-06-v6
+# version: 2025-11-13-v1
 # --------------------------------------------------------------
 # Import **template** parts + single-level BOM from data/templates/ -> InvenTree
 #
@@ -11,6 +11,7 @@
 # * --force -> delete existing template (name + revision)
 # * --clean-dependencies -> delete BOM/stock/etc. (with confirmation)
 # * .bom.json imported **only if exists**
+# * imports suppliers/manufacturers/price breaks like parts
 #
 # example usage:
 # python3 ./api/json2inv-template.py "Furniture/Tables/*_Table.json"
@@ -48,6 +49,10 @@ if BASE_URL:
     BASE_URL_ATTACHMENTS = f"{BASE_URL}/api/part/attachment/"
     BASE_URL_PARAMETERS = f"{BASE_URL}/api/part/parameter/"
     BASE_URL_RELATED = f"{BASE_URL}/api/part/related/"
+    BASE_URL_COMPANY = f"{BASE_URL}/api/company/"
+    BASE_URL_SUPPLIER_PARTS = f"{BASE_URL}/api/company/part/"
+    BASE_URL_MANUFACTURER_PART = f"{BASE_URL}/api/company/part/manufacturer/"
+    BASE_URL_PRICE_BREAK = f"{BASE_URL}/api/company/price-break/"
 else:
     raise RuntimeError("INVENTREE_URL not set")
 TOKEN = os.getenv("INVENTREE_TOKEN")
@@ -58,6 +63,13 @@ HEADERS = {
     "Content-Type": "application/json",
     "Accept": "application/json",
 }
+# ----------------------------------------------------------------------
+# Sanitize company name
+# ----------------------------------------------------------------------
+def sanitize_company_name(name):
+    sanitized = name.replace(' ', '_').replace('.', '')
+    sanitized = re.sub(r'[<>:"/\\|?*]', '_', sanitized.strip())
+    return sanitized
 # ----------------------------------------------------------------------
 # Category helpers
 # ----------------------------------------------------------------------
@@ -176,7 +188,7 @@ def parse_filename(filepath):
         name_part, revision = name_part.rsplit(".", 1)
     return name_part, revision
 # ----------------------------------------------------------------------
-# Import one template part + BOM
+# Import one template part + BOM + suppliers
 # ----------------------------------------------------------------------
 def import_template_part(part_path: str, force_ipn: bool, force: bool, clean: bool):
     print(f"DEBUG: Importing template: {part_path}")
@@ -235,6 +247,83 @@ def import_template_part(part_path: str, force_ipn: bool, force: bool, clean: bo
         print(f"Part created at: {BASE_URL}/web/part/{part_pk}/details")
     except Exception as e:
         raise RuntimeError(f"Failed to create template: {e}")
+    # IMPORT SUPPLIERS/MANUFACTURERS/PRICE BREAKS
+    suppliers = data.get("suppliers", [])
+    for supplier in suppliers:
+        supplier_name = supplier.get("supplier_name")
+        if not supplier_name:
+            print(f"ERROR: Missing supplier name for template {name}")
+            continue
+        # Check supplier exists
+        sup_params = {"name": supplier_name, "is_supplier": True}
+        sup_r = requests.get(BASE_URL_COMPANY, headers=HEADERS, params=sup_params)
+        if sup_r.status_code != 200:
+            print(f"ERROR: Failed to search for supplier {supplier_name}")
+            continue
+        sup_data = sup_r.json()
+        sup_results = sup_data.get("results", []) if isinstance(sup_data, dict) else sup_data
+        if not sup_results:
+            print(f"ERROR: Supplier '{supplier_name}' not found in the system")
+            continue
+        supplier_pk = sup_results[0]["pk"]
+        # Check manufacturer if present
+        mp_pk = None
+        if "manufacturer_name" in supplier:
+            man_name = supplier["manufacturer_name"]
+            if not man_name:
+                print(f"ERROR: Missing manufacturer name for supplier {supplier_name} in template {name}")
+                continue
+            man_params = {"name": man_name, "is_manufacturer": True}
+            man_r = requests.get(BASE_URL_COMPANY, headers=HEADERS, params=man_params)
+            if man_r.status_code != 200:
+                print(f"ERROR: Failed to search for manufacturer {man_name}")
+                continue
+            man_data = man_r.json()
+            man_results = man_data.get("results", []) if isinstance(man_data, dict) else man_data
+            if not man_results:
+                print(f"ERROR: Manufacturer '{man_name}' not found in the system")
+                continue
+            man_pk = man_results[0]["pk"]
+            # Create ManufacturerPart
+            mp_payload = {
+                "part": part_pk,
+                "manufacturer": man_pk,
+                "MPN": supplier.get("MPN", ""),
+                "description": supplier.get("mp_description", ""),
+                "link": supplier.get("mp_link", "")
+            }
+            mp_r = requests.post(BASE_URL_MANUFACTURER_PART, headers=HEADERS, json=mp_payload)
+            if mp_r.status_code != 201:
+                print(f"ERROR: Failed to create ManufacturerPart for {man_name}: {mp_r.text}")
+                continue
+            mp_pk = mp_r.json()["pk"]
+        # Create SupplierPart
+        sp_payload = {
+            "part": part_pk,
+            "supplier": supplier_pk,
+            "manufacturer_part": mp_pk,
+            "SKU": supplier.get("SKU", ""),
+            "description": supplier.get("description", ""),
+            "link": supplier.get("link", ""),
+            "note": supplier.get("note", ""),
+            "packaging": supplier.get("packaging", "")
+        }
+        sp_r = requests.post(BASE_URL_SUPPLIER_PARTS, headers=HEADERS, json=sp_payload)
+        if sp_r.status_code != 201:
+            print(f"ERROR: Failed to create SupplierPart for {supplier_name}: {sp_r.text}")
+            continue
+        sp_pk = sp_r.json()["pk"]
+        # Create price breaks
+        for pb in supplier.get("price_breaks", []):
+            pb_payload = {
+                "part": sp_pk,
+                "quantity": pb.get("quantity", 0),
+                "price": pb.get("price", 0.0),
+                "price_currency": pb.get("price_currency", "")
+            }
+            pb_r = requests.post(BASE_URL_PRICE_BREAK, headers=HEADERS, json=pb_payload)
+            if pb_r.status_code != 201:
+                print(f"ERROR: Failed to create price break: {pb_r.text}")
     # IMPORT BOM (only if exists)
     bom_path = Path(part_path).with_name(f"{name}{f'.{revision}' if revision else ''}.bom.json")
     if bom_path.is_file():

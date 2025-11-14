@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-template2json.py
-# version: 2025-11-06-v4
+# version: 2025-11-13-v1
 # --------------------------------------------------------------
 # Export InvenTree **template parts** + **single-level BOM** to:
 # data/templates/<category>/Part_Name[.revision].json
@@ -11,6 +11,7 @@
 # * Sanitized pathstring in category.json
 # * No .bom.json if no BOM items
 # * Compatible with json2inv-templates.py
+# * exports suppliers/manufacturers/price breaks like parts
 #
 # example usage:
 # python3 ./api/inv-template2json.py
@@ -41,8 +42,12 @@ if BASE_URL:
     BASE_URL_PARTS = f"{BASE_URL}/api/part/"
     BASE_URL_CATEGORIES = f"{BASE_URL}/api/part/category/"
     BASE_URL_BOM = f"{BASE_URL}/api/bom/"
+    BASE_URL_SUPPLIER_PARTS = f"{BASE_URL}/api/company/part/"
+    BASE_URL_MANUFACTURER_PART = f"{BASE_URL}/api/company/part/manufacturer/"
+    BASE_URL_PRICE_BREAK = f"{BASE_URL}/api/company/price-break/"
 else:
     BASE_URL_PARTS = BASE_URL_CATEGORIES = BASE_URL_BOM = None
+    BASE_URL_SUPPLIER_PARTS = BASE_URL_MANUFACTURER_PART = BASE_URL_PRICE_BREAK = None
 TOKEN = os.getenv("INVENTREE_TOKEN")
 HEADERS = {
     "Authorization": f"Token {TOKEN}",
@@ -67,6 +72,10 @@ def sanitize_revision(rev):
     rev = str(rev).strip()
     rev = re.sub(r'[<>:"/\\|?*]', '_', rev)
     return rev
+def sanitize_company_name(name):
+    sanitized = name.replace(' ', '_').replace('.', '')
+    sanitized = re.sub(r'[<>:"/\\|?*]', '_', sanitized.strip())
+    return sanitized
 # ----------------------------------------------------------------------
 # Fetch with pagination
 # ----------------------------------------------------------------------
@@ -155,6 +164,40 @@ def fetch_bom(part_pk):
         tree.append(node)
     return tree
 # ----------------------------------------------------------------------
+# Fetch and add supplier details
+# ----------------------------------------------------------------------
+def fetch_suppliers(part_pk):
+    supplier_parts = fetch_data(BASE_URL_SUPPLIER_PARTS, params={"part": part_pk})
+    suppliers_list = []
+    for sp in supplier_parts:
+        sp_details = {
+            "supplier_name": sanitize_company_name(sp.get('supplier_detail', {}).get('name', '')),
+            "SKU": sp.get('SKU', ''),
+            "description": sp.get('description', ''),
+            "link": sp.get('link', ''),
+            "note": sp.get('note', ''),
+            "packaging": sp.get('packaging', ''),
+            "price_breaks": []
+        }
+        price_breaks = fetch_data(BASE_URL_PRICE_BREAK, params={"supplier_part": sp['pk']})
+        for pb in price_breaks:
+            sp_details['price_breaks'].append({
+                "quantity": pb.get('quantity', 0),
+                "price": pb.get('price', 0.0),
+                "price_currency": pb.get('price_currency', '')
+            })
+        if sp.get('manufacturer_part'):
+            mp_url = f"{BASE_URL_MANUFACTURER_PART}{sp['manufacturer_part']}/"
+            mp = fetch_data(mp_url)
+            if mp:
+                mp = mp[0]
+                sp_details['manufacturer_name'] = sanitize_company_name(mp.get('manufacturer_detail', {}).get('name', ''))
+                sp_details['MPN'] = mp.get('MPN', '')
+                sp_details['mp_description'] = mp.get('description', '')
+                sp_details['mp_link'] = mp.get('link', '')
+        suppliers_list.append(sp_details)
+    return suppliers_list
+# ----------------------------------------------------------------------
 # Main
 # ----------------------------------------------------------------------
 def main():
@@ -210,7 +253,7 @@ def main():
             continue
         dir_parts = [sanitize_category_name(p) for p in pathstring.split("/")]
         dir_path = os.path.join(root_dir, *dir_parts)
-        # Save clean part JSON
+        # Save clean part JSON with suppliers
         part_clean = {
             "name": san_name,
             "revision": revision,
@@ -228,7 +271,8 @@ def main():
             "is_template": True,
             "category": cat_pk,
             "image": "",
-            "thumbnail": ""
+            "thumbnail": "",
+            "suppliers": fetch_suppliers(pk)
         }
         save_to_file(part_clean, os.path.join(dir_path, f"{base_name}.json"))
         # Save single-level BOM **only if not empty**

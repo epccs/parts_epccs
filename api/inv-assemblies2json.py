@@ -1,27 +1,26 @@
 #!/usr/bin/env python3
 # file name: inv-assemblies2json.py
-# version: 2025-11-05-v1
+# version: 2025-11-13-v1
 # --------------------------------------------------------------
-# Export **assemblies with BOMs** (single-level) → data/assemblies/
+# Export **assemblies with BOMs** (single-level) -> data/assemblies/
 #
 # * CLI glob patterns (e.g. "Widget_*", "*_Board")
 # * Saves: Part_Name[.revision].json + Part_Name[.revision].bom.json
 # * BOM: only direct sub-parts
 # * Skips: non-assembly parts, templates
 # * Handles missing/null revision safely
+# * Now exports suppliers/manufacturers/price breaks like parts
 #
 # example usage:
-#   python3 ./api/inv-assemblies2json.py
-#   python3 ./api/inv-assemblies2json.py "Widget_*"
+# python3 ./api/inv-assemblies2json.py
+# python3 ./api/inv-assemblies2json.py "Widget_*"
 # --------------------------------------------------------------
-# see near bottom https://grok.com/share/c2hhcmQtMw%3D%3D_c721971e-5566-4a30-8129-040e6e84599f
 
 import requests
 import json
 import os
 import re
 import argparse
-
 # ----------------------------------------------------------------------
 # API & Auth
 # ----------------------------------------------------------------------
@@ -31,16 +30,18 @@ if BASE_URL:
     BASE_URL_PARTS = f"{BASE_URL}/api/part/"
     BASE_URL_CATEGORIES = f"{BASE_URL}/api/part/category/"
     BASE_URL_BOM = f"{BASE_URL}/api/bom/"
+    BASE_URL_SUPPLIER_PARTS = f"{BASE_URL}/api/company/part/"
+    BASE_URL_MANUFACTURER_PART = f"{BASE_URL}/api/company/part/manufacturer/"
+    BASE_URL_PRICE_BREAK = f"{BASE_URL}/api/company/price-break/"
 else:
     BASE_URL_PARTS = BASE_URL_CATEGORIES = BASE_URL_BOM = None
-
+    BASE_URL_SUPPLIER_PARTS = BASE_URL_MANUFACTURER_PART = BASE_URL_PRICE_BREAK = None
 TOKEN = os.getenv("INVENTREE_TOKEN")
 HEADERS = {
     "Authorization": f"Token {TOKEN}",
     "Accept": "application/json",
     "Content-Type": "application/json"
 }
-
 # ----------------------------------------------------------------------
 # Sanitizers
 # ----------------------------------------------------------------------
@@ -48,12 +49,10 @@ def sanitize_category_name(name):
     sanitized = name.replace(' ', '_').replace('.', '')
     sanitized = re.sub(r'[<>:"/\\|?*]', '_', sanitized.strip())
     return sanitized
-
 def sanitize_part_name(name):
     sanitized = name.replace(' ', '_').replace('.', ',')
     sanitized = re.sub(r'[<>:"/\\|?*]', '_', sanitized.strip())
     return sanitized
-
 def sanitize_revision(rev):
     """Sanitize revision string for filename."""
     if not rev:
@@ -61,7 +60,10 @@ def sanitize_revision(rev):
     rev = str(rev).strip()
     rev = re.sub(r'[<>:"/\\|?*]', '_', rev)
     return rev
-
+def sanitize_company_name(name):
+    sanitized = name.replace(' ', '_').replace('.', '')
+    sanitized = re.sub(r'[<>:"/\\|?*]', '_', sanitized.strip())
+    return sanitized
 # ----------------------------------------------------------------------
 # Fetch with pagination
 # ----------------------------------------------------------------------
@@ -79,7 +81,6 @@ def fetch_data(url, params=None):
             items.extend(data)
             url = None
     return items
-
 # ----------------------------------------------------------------------
 # Save helper
 # ----------------------------------------------------------------------
@@ -88,7 +89,6 @@ def save_to_file(data, filepath):
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
         f.write("\n")
-
 # ----------------------------------------------------------------------
 # Category maps
 # ----------------------------------------------------------------------
@@ -102,23 +102,18 @@ def build_category_maps(categories):
         parent = str(cat.get("parent")) if cat.get("parent") is not None else "None"
         if not (pk and name and raw_path):
             continue
-
         # Sanitize each part of the path
         path_parts = raw_path.split("/")
         san_parts = [sanitize_category_name(p) for p in path_parts]
         san_path = "/".join(san_parts)
-
         san_name = sanitize_category_name(name)
         cat_mod = cat.copy()
         cat_mod["name"] = san_name
-        cat_mod["pathstring"] = san_path 
+        cat_mod["pathstring"] = san_path
         cat_mod["image"] = ""
-
         pk_to_path[pk] = san_path
         parent_to_subs.setdefault(parent, []).append(cat_mod)
-
     return pk_to_path, parent_to_subs
-
 def write_category_files(root_dir, pk_to_path, parent_to_subs):
     top = parent_to_subs.get("None", [])
     if top:
@@ -132,7 +127,6 @@ def write_category_files(root_dir, pk_to_path, parent_to_subs):
         dir_parts = [sanitize_category_name(p) for p in parent_path.split("/")]
         dir_path = os.path.join(root_dir, *dir_parts)
         save_to_file(subs, os.path.join(dir_path, "category.json"))
-
 # ----------------------------------------------------------------------
 # Single-level BOM fetcher
 # ----------------------------------------------------------------------
@@ -158,7 +152,40 @@ def fetch_single_level_bom(part_pk):
         }
         bom.append(node)
     return bom
-
+# ----------------------------------------------------------------------
+# Fetch and add supplier details
+# ----------------------------------------------------------------------
+def fetch_suppliers(part_pk):
+    supplier_parts = fetch_data(BASE_URL_SUPPLIER_PARTS, params={"part": part_pk})
+    suppliers_list = []
+    for sp in supplier_parts:
+        sp_details = {
+            "supplier_name": sanitize_company_name(sp.get('supplier_detail', {}).get('name', '')),
+            "SKU": sp.get('SKU', ''),
+            "description": sp.get('description', ''),
+            "link": sp.get('link', ''),
+            "note": sp.get('note', ''),
+            "packaging": sp.get('packaging', ''),
+            "price_breaks": []
+        }
+        price_breaks = fetch_data(BASE_URL_PRICE_BREAK, params={"supplier_part": sp['pk']})
+        for pb in price_breaks:
+            sp_details['price_breaks'].append({
+                "quantity": pb.get('quantity', 0),
+                "price": pb.get('price', 0.0),
+                "price_currency": pb.get('price_currency', '')
+            })
+        if sp.get('manufacturer_part'):
+            mp_url = f"{BASE_URL_MANUFACTURER_PART}{sp['manufacturer_part']}/"
+            mp = fetch_data(mp_url)
+            if mp:
+                mp = mp[0]
+                sp_details['manufacturer_name'] = sanitize_company_name(mp.get('manufacturer_detail', {}).get('name', ''))
+                sp_details['MPN'] = mp.get('MPN', '')
+                sp_details['mp_description'] = mp.get('description', '')
+                sp_details['mp_link'] = mp.get('link', '')
+        suppliers_list.append(sp_details)
+    return suppliers_list
 # ----------------------------------------------------------------------
 # Main
 # ----------------------------------------------------------------------
@@ -171,20 +198,16 @@ def main():
         help="Glob patterns for sanitized assembly names (e.g. '*_Board'). Default: all."
     )
     args = parser.parse_args()
-
     if not TOKEN or not BASE_URL:
         raise Exception("INVENTREE_TOKEN and INVENTREE_URL must be set")
-
     root_dir = "data/assemblies"
     os.makedirs(root_dir, exist_ok=True)
-
     # 1. Categories
     print("DEBUG: Fetching categories...")
     categories = fetch_data(BASE_URL_CATEGORIES)
     pk_to_path, parent_to_subs = build_category_maps(categories)
     print("DEBUG: Writing category.json files...")
     write_category_files(root_dir, pk_to_path, parent_to_subs)
-
     # 2. Compile patterns
     patterns = []
     if args.patterns:
@@ -195,45 +218,36 @@ def main():
             regex = "^" + re.escape(pat).replace("\\*", ".*").replace("\\?", ".") + "$"
             patterns.append(re.compile(regex, re.IGNORECASE))
         print(f"DEBUG: Filtering with {len(patterns)} patterns")
-
     # 3. Fetch assemblies
     print("DEBUG: Fetching assemblies...")
     assemblies = fetch_data(BASE_URL_PARTS, params={"assembly": "true", "limit": 100})
     exported = 0
-
     for part in assemblies:
         pk = part.get("pk")
         name = part.get("name")
-        raw_revision = part.get("revision")  # Can be null or missing
+        raw_revision = part.get("revision") # Can be null or missing
         cat_pk = part.get("category")
         if not (pk and name):
             continue
-
         # Skip templates
         if part.get("is_template"):
             print(f"DEBUG: Skipping template assembly: {name}")
             continue
-
         san_name = sanitize_part_name(name)
-
         # Pattern filter
         if patterns and not any(p.search(san_name) for p in patterns):
             continue
-
         pathstring = pk_to_path.get(cat_pk) if cat_pk else None
         if not pathstring:
             print(f"WARNING: Assembly '{name}' has no category, skipping.")
             continue
-
         dir_parts = [sanitize_category_name(p) for p in pathstring.split("/")]
         dir_path = os.path.join(root_dir, *dir_parts)
-
         # Handle revision safely
         revision = sanitize_revision(raw_revision)
         rev_suffix = f".{revision}" if revision else ""
         base_name = f"{san_name}{rev_suffix}"
-
-        # Save clean part JSON
+        # Save clean part JSON with suppliers
         part_clean = {
             "pk": pk,
             "name": san_name,
@@ -243,18 +257,16 @@ def main():
             "assembly": True,
             "category": cat_pk,
             "image": "",
-            "thumbnail": ""
+            "thumbnail": "",
+            "suppliers": fetch_suppliers(pk)
         }
         save_to_file(part_clean, os.path.join(dir_path, f"{base_name}.json"))
-
         # Save single-level BOM
         print(f"DEBUG: Exporting BOM for: {base_name}")
         bom = fetch_single_level_bom(pk)
         bom_path = os.path.join(dir_path, f"{base_name}.bom.json")
         save_to_file(bom, bom_path)
         exported += 1
-
     print(f"SUMMARY: Exported {exported} assemblies + single-level BOMs to {root_dir}/")
-
 if __name__ == "__main__":
     main()
