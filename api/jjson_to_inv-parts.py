@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# file name: json2inv-parts.py
-# version: 2025-11-12-v3
+# file name: json_to_inv-parts.py
+# version: 2025-11-15-v1
 # --------------------------------------------------------------
-# Import parts from data/parts -> InvenTree.
+# Push to inventree parts from data/parts
 # * Folder structure -> category hierarchy
 # * Supports revision in filename: Part_Name.revision.json
 # * --force-ipn -> generate IPN from name when missing
@@ -10,10 +10,10 @@
 # * --clean-dependencies -> delete dependencies (BOM, stock, etc.)
 # --------------------------------------------------------------
 # Example usage:
-# python3 ./api/json2inv-parts.py "Electronics/Passives/Capacitors/C_*" --force-ipn --force --clean-dependencies
-# python3 ./api/json2inv-parts.py "Paint/Yellow_Paint" --force-ipn
-# python3 ./api/json2inv-parts.py # Imports all parts
-# python3 ./api/json2inv-parts.py "**/*" --force-ipn --force
+# python3 ./api/json_to_inv-parts.py "Electronics/Passives/Capacitors/C_*" --force-ipn --force --clean-dependencies
+# python3 ./api/json_to_inv-parts.py "Paint/Yellow_Paint" --force-ipn
+# python3 ./api/json_to_inv-parts.py # Pushes all parts
+# python3 ./api/json_to_inv-parts.py "**/*" --force-ipn --force
 # --------------------------------------------------------------
 # File Structure of dev data after running with "*_Top":
 # data/parts/
@@ -236,10 +236,10 @@ def parse_filename(filepath):
         name_part, revision = name_part.split(".", 1)
     return name_part, revision
 # ----------------------------------------------------------------------
-# Import one part
+# Push one part
 # ----------------------------------------------------------------------
-def import_part(part_path, force_ipn=False, force=False, clean=False):
-    print(f"DEBUG: Importing {part_path}")
+def push_part(part_path, force_ipn=False, force=False, clean=False):
+    print(f"DEBUG: Pushing {part_path}")
     name, revision = parse_filename(part_path)
     if not name:
         print("DEBUG: Invalid filename – skipping")
@@ -310,7 +310,7 @@ def import_part(part_path, force_ipn=False, force=False, clean=False):
         print(f"ERROR: Part {new_pk} not found after creation and retries.")
         sys.exit(1)
     print(f"DEBUG: Part {new_pk} verified.")
-    # Import suppliers
+    # Push suppliers
     suppliers = data.get("suppliers", [])
     for supplier in suppliers:
         raw_supplier_name = supplier.get("supplier_name")
@@ -428,7 +428,7 @@ def import_part(part_path, force_ipn=False, force=False, clean=False):
 # ----------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(
-        description="Import parts from data/parts -> InvenTree (with revision support)"
+        description="Push parts from data/parts to InvenTree (with revision support)"
     )
     parser.add_argument(
         "patterns", nargs="*",
@@ -437,7 +437,7 @@ def main():
     parser.add_argument("--force-ipn", action="store_true",
                         help="Generate IPN from name when missing")
     parser.add_argument("--force", action="store_true",
-                        help="Delete existing part (name+revision) before import")
+                        help="Delete existing part (name+revision) before push")
     parser.add_argument("--clean-dependencies", action="store_true",
                         help="Delete dependencies (requires two confirmations)")
     args = parser.parse_args()
@@ -479,10 +479,10 @@ def main():
         revs = [r for _, r in flist]
         if len(revs) > 1 and "" in revs:
             files_str = ", ".join([os.path.basename(f) for f, _ in flist])
-            raise Exception(f"Error for {key}: both no-revision and revisioned files exist: {files_str}")
+            print(f"WARNING for {key}: both no-revision and revisioned files exist: {files_str}. Processing anyway.")
     print(f"DEBUG: {len(files)} part files to process")
     for key, flist in key_to_files.items():
         for f, rev in flist:
-            import_part(f, args.force_ipn, args.force, args.clean_dependencies)
+            push_part(f, args.force_ipn, args.force, args.clean_dependencies)
 if __name__ == "__main__":
     main()
