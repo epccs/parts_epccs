@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-assemblies_to_json.py
-# version: 2025-11-16-v1
+# version: 2025-11-16-v2
 # --------------------------------------------------------------
 # Pull from inventree **assemblies with BOMs** (single-level) -> data/assemblies/
 #
@@ -256,6 +256,14 @@ def main():
         revision = sanitize_revision(raw_revision)
         rev_suffix = f".{revision}" if revision else ""
         base_name = f"{san_name}{rev_suffix}"
+        # Fetch suppliers only if purchaseable
+        suppliers = fetch_suppliers(pk, name) if part.get("purchaseable", False) else []
+        # Handle variant_of
+        variant_of_name = None
+        if part.get("variant_of"):
+            variant_r = requests.get(f"{BASE_URL_PARTS}{part['variant_of']}/", headers=HEADERS)
+            if variant_r.status_code == 200:
+                variant_of_name = variant_r.json().get("name")
         # Save clean part JSON with suppliers
         part_clean = {
             "name": san_name,
@@ -264,11 +272,10 @@ def main():
             "description": part.get("description", ""),
             "assembly": True,
             "salable": part.get("salable", False),
-            "variant_of": part.get("variant_of", None),
-            "category": cat_pk,
+            "variant_of_name": variant_of_name,
             "image": "",
             "thumbnail": "",
-            "suppliers": fetch_suppliers(pk, name) if part.get("purchaseable", False) else []
+            "suppliers": suppliers
         }
         save_to_file(part_clean, os.path.join(dir_path, f"{base_name}.json"))
         # Save single-level BOM
