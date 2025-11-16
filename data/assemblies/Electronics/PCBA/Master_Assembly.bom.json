@@ -3,7 +3,6 @@
         "quantity": 2.0,
         "note": "",
         "sub_part": {
-            "pk": 77,
             "name": "Widget_Assembly",
             "IPN": "WID-TEMPLATE",
             "description": "An assembled widget"
@@ -13,7 +12,6 @@
         "quantity": 1.0,
         "note": "Enclosure",
         "sub_part": {
-            "pk": 83,
             "name": "1551AGY",
             "IPN": "",
             "description": "Plastic enclosure, grey"
@@ -23,7 +21,6 @@
         "quantity": 3.0,
         "note": "Doohicket",
         "sub_part": {
-            "pk": 87,
             "name": "Doohickey",
             "IPN": "D.123",
             "description": "Assembled electronics module which performs some unknown function"
@@ -33,7 +30,6 @@
         "quantity": 1.0,
         "note": "",
         "sub_part": {
-            "pk": 88,
             "name": "Widget_Board_(assembled)",
             "IPN": "002.01-PCBA",
             "description": "Assembled PCB for converting electricity into magic smoke"
@@ -43,7 +39,6 @@
         "quantity": 1.0,
         "note": "",
         "sub_part": {
-            "pk": 111,
             "name": "Test_Board_2",
             "IPN": "TB2",
             "description": "Board with a lot of SMT parts on it, but slightly different"
@@ -53,7 +48,6 @@
         "quantity": 1.0,
         "note": "",
         "sub_part": {
-            "pk": 112,
             "name": "Test_Board_3",
             "IPN": "TB3",
             "description": "Board with a lot of SMT parts on it, but even more slightly different"
@@ -63,7 +57,6 @@
         "quantity": 2.0,
         "note": "",
         "sub_part": {
-            "pk": 895,
             "name": "Silicon_Wire_10AWG_Red",
             "IPN": "",
             "description": "Silicon wire, 10AWG, red"
@@ -73,7 +66,6 @@
         "quantity": 13.0,
         "note": "",
         "sub_part": {
-            "pk": 895,
             "name": "Silicon_Wire_10AWG_Red",
             "IPN": "",
             "description": "Silicon wire, 10AWG, red"
@@ -83,7 +75,6 @@
         "quantity": 25.0,
         "note": "",
         "sub_part": {
-            "pk": 899,
             "name": "Silicon_Wire_12AWG_Black",
             "IPN": "",
             "description": "Silicon wire, 12AWG, black"
@@ -93,7 +84,6 @@
         "quantity": 1.0,
         "note": "",
         "sub_part": {
-            "pk": 110,
             "name": "Test_Board_1",
             "IPN": "TB1",
             "description": "Board with a lot of SMT parts on it"

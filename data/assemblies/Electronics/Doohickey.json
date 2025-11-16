@@ -1,10 +1,11 @@
 {
-    "pk": 87,
     "name": "Doohickey",
     "revision": "",
     "IPN": "D.123",
     "description": "Assembled electronics module which performs some unknown function",
     "assembly": true,
+    "salable": false,
+    "variant_of": null,
     "category": 1,
     "image": "",
     "thumbnail": "",

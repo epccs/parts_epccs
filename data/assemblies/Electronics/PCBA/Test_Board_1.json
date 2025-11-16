@@ -1,10 +1,11 @@
 {
-    "pk": 110,
     "name": "Test_Board_1",
     "revision": "",
     "IPN": "TB1",
     "description": "Board with a lot of SMT parts on it",
     "assembly": true,
+    "salable": true,
+    "variant_of": 902,
     "category": 16,
     "image": "",
     "thumbnail": "",

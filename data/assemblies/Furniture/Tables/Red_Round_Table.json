@@ -1,10 +1,11 @@
 {
-    "pk": 99,
     "name": "Red_Round_Table",
     "revision": "",
     "IPN": "",
     "description": "A round table - with red paint",
     "assembly": true,
+    "salable": true,
+    "variant_of": 94,
     "category": 18,
     "image": "",
     "thumbnail": "",

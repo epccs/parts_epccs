@@ -3,7 +3,6 @@
         "quantity": 5.0,
         "note": "",
         "sub_part": {
-            "pk": 66,
             "name": "M3x8_Torx",
             "IPN": null,
             "description": "Torx head screw, M3 thread, 8.0mm"
@@ -13,7 +12,6 @@
         "quantity": 3.0,
         "note": "",
         "sub_part": {
-            "pk": 72,
             "name": "Red_Widget",
             "IPN": "widget.red",
             "description": "A red widget"
@@ -23,7 +21,6 @@
         "quantity": 5.0,
         "note": "",
         "sub_part": {
-            "pk": 74,
             "name": "Blue_Widget",
             "IPN": "widget.blue",
             "description": "A blue widget"
@@ -33,7 +30,6 @@
         "quantity": 3.0,
         "note": "",
         "sub_part": {
-            "pk": 75,
             "name": "Pink_Widget",
             "IPN": "widget.pink",
             "description": "A pink widget"
@@ -43,7 +39,6 @@
         "quantity": 4.0,
         "note": "",
         "sub_part": {
-            "pk": 75,
             "name": "Pink_Widget",
             "IPN": "widget.pink",
             "description": "A pink widget"

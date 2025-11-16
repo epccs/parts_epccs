@@ -3,7 +3,6 @@
         "quantity": 4.0,
         "note": "",
         "sub_part": {
-            "pk": 66,
             "name": "M3x8_Torx",
             "IPN": null,
             "description": "Torx head screw, M3 thread, 8.0mm"
@@ -13,7 +12,6 @@
         "quantity": 1.0,
         "note": "",
         "sub_part": {
-            "pk": 67,
             "name": "M3x10_Torx",
             "IPN": null,
             "description": "Torx head screw, M3 thread, 10.0mm"
@@ -23,7 +21,6 @@
         "quantity": 1.0,
         "note": "",
         "sub_part": {
-            "pk": 82,
             "name": "1551ABK",
             "IPN": "",
             "description": "Small plastic enclosure, black"
@@ -33,7 +30,6 @@
         "quantity": 1.0,
         "note": "Assembled board",
         "sub_part": {
-            "pk": 88,
             "name": "Widget_Board_(assembled)",
             "IPN": "002.01-PCBA",
             "description": "Assembled PCB for converting electricity into magic smoke"
