@@ -5,7 +5,7 @@
     "description": "An assembled widget which is a variant of a template",
     "assembly": true,
     "salable": true,
-    "variant_of_name": "Widget Assembly",
+    "variant_of_name": "Widget_Assembly",
     "image": "",
     "thumbnail": "",
     "suppliers": []

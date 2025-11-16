@@ -5,7 +5,7 @@
     "description": "Full set of red kitchen furniture",
     "assembly": true,
     "salable": true,
-    "variant_of_name": "Furniture Set",
+    "variant_of_name": "Furniture_Set",
     "image": "",
     "thumbnail": "",
     "suppliers": []

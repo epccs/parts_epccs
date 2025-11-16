@@ -5,7 +5,7 @@
     "description": "Board with a lot of SMT parts on it, but even more slightly different",
     "assembly": true,
     "salable": true,
-    "variant_of_name": "Test Board",
+    "variant_of_name": "Test_Board",
     "image": "",
     "thumbnail": "",
     "suppliers": []
