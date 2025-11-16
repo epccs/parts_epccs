@@ -6,14 +6,14 @@
 #
 # * Supports: Part_Name[.revision].json + Part_Name[.revision].bom.json
 # * CLI options: --force-ipn, --force, --clean-dependencies
-# * Skips duplicates by (name + revision)
 # * Compatible with inv-assemblies_to_json.py
 # * Now pushes suppliers/manufacturers/price breaks like parts
 #
 # example usage:
-# python3 ./api/json_to_inv-assemblies.py
-# python3 ./api/json_to_inv-assemblies.py "/Mechanical/Widgets/Widget_*"
-# python3 ./api/json_to_inv-assemblies.py --force --clean-dependencies
+# python3 ./api/json_to_inv-assemblies.py "Mechanical/Widgets/Widget_*" --force-ipn --force --clean-dependencies
+# python3 ./api/json_to_inv-assemblies.py "Paint/Yellow_Paint" --force-ipn
+# python3 ./api/json_to_inv-assemblies.py # Pushes all assemblies
+# python3 ./api/json_to_inv-assemblies.py "**/*" --force-ipn --force
 # --------------------------------------------------------------
 
 import requests
@@ -414,6 +414,67 @@ def push_assembly(part_path, force_ipn=False, force=False, clean=False):
             if pb_r.status_code != 201:
                 print(f"ERROR: Failed to create price break: {pb_r.text}")
                 sys.exit(1)
+    # Push BOM (only if exists)
+    bom_path = part_path.replace(".json", ".bom.json")
+    if os.path.exists(bom_path):
+        print(f"DEBUG: Pushing BOM from {bom_path}")
+        push_bom(new_pk, bom_path)
+    else:
+        print(f"DEBUG: No .bom.json for {name} - skipping BOM")
+# ----------------------------------------------------------------------
+# Single-level BOM push with retry
+# ----------------------------------------------------------------------
+def push_bom(parent_pk: int, bom_path: str, level: int = 0):
+    indent = " " * level
+    try:
+        with open(bom_path, "r", encoding="utf-8") as f:
+            tree = json.load(f)
+    except Exception as e:
+        print(f"{indent}ERROR: Failed to read BOM: {e}")
+        return
+    for node in tree:
+        qty = node.get("quantity", 1)
+        note = node.get("note", "")
+        sub = node["sub_part"]
+        sub_name = sub["name"]
+        sub_ipn = sub.get("IPN", "")
+        sub_parts = check_part_exists(sub_name, "", sub_ipn)
+        if not sub_parts:
+            print(f"{indent}WARNING: Sub-part '{sub_name}' not found – skipping")
+            continue
+        sub_pk = sub_parts[0]["pk"]
+        payload = {
+            "part": parent_pk,
+            "sub_part": sub_pk,
+            "quantity": qty,
+            "note": note,
+        }
+        def try_post_bom(attempt=1):
+            existing = requests.get(
+                BASE_URL_BOM, headers=HEADERS,
+                params={"part": parent_pk, "sub_part": sub_pk}
+            ).json()
+            existing = existing.get("results", existing) if isinstance(existing, dict) else existing
+            if existing:
+                bom_pk = existing[0]["pk"]
+                r = requests.patch(f"{BASE_URL_BOM}{bom_pk}/", headers=HEADERS, json=payload)
+                action = "UPDATED"
+            else:
+                r = requests.post(BASE_URL_BOM, headers=HEADERS, json=payload)
+                action = "CREATED"
+            if r.status_code in (200, 201):
+                print(f"{indent}{action} BOM: {qty} × {sub_name}")
+                return True
+            else:
+                err = r.json()
+                if "part" in err and "object does not exist" in str(err["part"]):
+                    if attempt < 3:
+                        print(f"{indent}Retrying BOM line (attempt {attempt + 1})...")
+                        input("Press enter to retry...")
+                        return try_post_bom(attempt + 1)
+                print(f"{indent}ERROR: BOM line failed: {r.text}")
+                return False
+        try_post_bom()
 # ----------------------------------------------------------------------
 # Main
 # ----------------------------------------------------------------------
