@@ -5,8 +5,7 @@
     "description": "Full set of blue kitchen furniture",
     "assembly": true,
     "salable": true,
-    "variant_of": 908,
-    "category": 17,
+    "variant_of_name": "Furniture Set",
     "image": "",
     "thumbnail": "",
     "suppliers": []

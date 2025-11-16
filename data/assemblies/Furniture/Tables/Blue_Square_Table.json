@@ -5,8 +5,7 @@
     "description": "A square table - with blue paint",
     "assembly": true,
     "salable": true,
-    "variant_of": 102,
-    "category": 18,
+    "variant_of_name": "Square Table",
     "image": "",
     "thumbnail": "",
     "suppliers": []

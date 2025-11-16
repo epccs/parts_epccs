@@ -5,8 +5,7 @@
     "description": "A round table - with green paint",
     "assembly": true,
     "salable": true,
-    "variant_of": 94,
-    "category": 18,
+    "variant_of_name": "Round Table",
     "image": "",
     "thumbnail": "",
     "suppliers": []

@@ -5,8 +5,7 @@
     "description": "A chair - with green paint",
     "assembly": true,
     "salable": true,
-    "variant_of": 106,
-    "category": 19,
+    "variant_of_name": "Chair",
     "image": "",
     "thumbnail": "",
     "suppliers": []

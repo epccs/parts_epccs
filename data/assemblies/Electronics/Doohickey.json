@@ -5,8 +5,7 @@
     "description": "Assembled electronics module which performs some unknown function",
     "assembly": true,
     "salable": false,
-    "variant_of": null,
-    "category": 1,
+    "variant_of_name": null,
     "image": "",
     "thumbnail": "",
     "suppliers": []

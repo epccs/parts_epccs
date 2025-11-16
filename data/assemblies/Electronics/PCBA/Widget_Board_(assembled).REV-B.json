@@ -5,8 +5,7 @@
     "description": "Assembled PCB for converting electricity into magic smoke",
     "assembly": true,
     "salable": false,
-    "variant_of": null,
-    "category": 16,
+    "variant_of_name": null,
     "image": "",
     "thumbnail": "",
     "suppliers": [
