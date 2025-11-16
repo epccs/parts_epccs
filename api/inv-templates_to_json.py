@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-templates_to_json.py
-# version: 2025-11-14-v2
+# version: 2025-11-16-v1
 # --------------------------------------------------------------
 # Pull from inventree **template parts** + **single-level BOM** to:
 # data/templates/<category>/Part_Name[.revision].json
@@ -157,7 +157,6 @@ def fetch_bom(part_pk):
             "quantity": item.get("quantity"),
             "note": item.get("note", ""),
             "sub_part": {
-                "pk": sub_pk,
                 "name": sub_name,
                 "IPN": sub_ipn,
                 "description": sub_part.get("description", "")
@@ -202,7 +201,7 @@ def fetch_suppliers(part_pk, part_name):
             if mp:
                 mp = mp[0]
                 sp_details['manufacturer_name'] = sanitize_company_name(mp.get('manufacturer_detail', {}).get('name', ''))
-                sp_details['MPN'] = mp.get('MPN', ''),
+                sp_details['MPN'] = mp.get('MPN', '')
                 sp_details['mp_description'] = mp.get('description', '')
                 sp_details['mp_link'] = mp.get('link', '')
         suppliers_list.append(sp_details)
@@ -265,6 +264,13 @@ def main():
         dir_path = os.path.join(root_dir, *dir_parts)
         # Fetch suppliers only if purchaseable
         suppliers = fetch_suppliers(pk, name) if part.get("purchaseable", False) else []
+        # Handle variant_of
+        variant_of_name = None
+        if part.get("variant_of"):
+            variant_r = requests.get(f"{BASE_URL_PARTS}{part['variant_of']}/", headers=HEADERS)
+            if variant_r.status_code == 200:
+                variant_json = variant_r.json()
+                variant_of_name = sanitize_part_name(variant_json.get("name"))
         # Save clean part JSON with suppliers
         part_clean = {
             "name": san_name,
@@ -281,7 +287,7 @@ def main():
             "salable": part.get("salable", False),
             "virtual": part.get("virtual", False),
             "is_template": True,
-            "category": cat_pk,
+            "variant_of_name": variant_of_name,
             "image": "",
             "thumbnail": "",
             "suppliers": suppliers
