@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-assemblies_to_json.py
-# version: 2025-11-16-v2
+# version: 2025-11-16-v4
 # --------------------------------------------------------------
 # Pull from inventree **assemblies with BOMs** (single-level) -> data/assemblies/
 #
@@ -263,7 +263,8 @@ def main():
         if part.get("variant_of"):
             variant_r = requests.get(f"{BASE_URL_PARTS}{part['variant_of']}/", headers=HEADERS)
             if variant_r.status_code == 200:
-                variant_of_name = variant_r.json().get("name")
+                variant_json = variant_r.json()
+                variant_of_name = sanitize_part_name(variant_json.get("name"))
         # Save clean part JSON with suppliers
         part_clean = {
             "name": san_name,
