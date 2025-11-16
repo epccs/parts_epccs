@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-assemblies.py
-# version: 2025-11-15-v1
+# version: 2025-11-16-v1
 # --------------------------------------------------------------
 # Push to inventree assemblies + BOMs from data/assemblies/
 #
@@ -267,6 +267,14 @@ def push_assembly(part_path, force_ipn=False, force=False, clean=False):
     folder = os.path.dirname(part_path)
     cat_pk = create_category_hierarchy(folder)
     payload["category"] = cat_pk
+    # Handle variant_of_name
+    variant_of_name = data.get("variant_of_name")
+    if variant_of_name:
+        variant_existing = check_part_exists(variant_of_name, "")
+        if variant_existing:
+            payload["variant_of"] = variant_existing[0]["pk"]
+        else:
+            print(f"WARNING: Variant parent '{variant_of_name}' not found – skipping variant_of")
     print(f"DEBUG: Payload -> {payload}")
     # Check existence (name + revision + IPN)
     existing = check_part_exists(name, revision, ipn)
