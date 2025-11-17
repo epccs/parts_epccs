@@ -1,0 +1,141 @@
+{
+    "name": "Silicon_Wire_10AWG_White",
+    "revision": "",
+    "IPN": "",
+    "description": "Silicon wire, 10AWG, white",
+    "keywords": "",
+    "units": "m",
+    "minimum_stock": 0.0,
+    "assembly": false,
+    "component": true,
+    "trackable": false,
+    "purchaseable": true,
+    "salable": false,
+    "virtual": false,
+    "is_template": false,
+    "variant_of_name": null,
+    "image": "",
+    "thumbnail": "",
+    "suppliers": [
+        {
+            "supplier_name": "Wirey",
+            "SKU": "WIRE.WHT.10AWG",
+            "description": "White 10AWG silicone wire",
+            "link": "",
+            "note": "Sold in mm units",
+            "packaging": "",
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ]
+        },
+        {
+            "supplier_name": "Wirey",
+            "SKU": "WIRE.WHT.10AWG.100M",
+            "description": "White 10AWG silicone wire",
+            "link": "",
+            "note": "Sold in 300 metre spool",
+            "packaging": "",
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ]
+        },
+        {
+            "supplier_name": "Wirey",
+            "SKU": "WIRE.WHT.10AWG.500M",
+            "description": "White 10AWG silicone wire",
+            "link": "",
+            "note": "Sold in 500m spool",
+            "packaging": "",
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ]
+        },
+        {
+            "supplier_name": "Wire-E-Coyote",
+            "SKU": "WE-10AWG-WT",
+            "description": "",
+            "link": "",
+            "note": "",
+            "packaging": "",
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ]
+        }
+    ]
+}

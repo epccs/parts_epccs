@@ -1,0 +1,341 @@
+{
+    "name": "R_47K_0603_1%",
+    "revision": "",
+    "IPN": null,
+    "description": "47K resistor in 0603 SMD package",
+    "keywords": "resistor smd 0603",
+    "units": "",
+    "minimum_stock": 0.0,
+    "assembly": false,
+    "component": true,
+    "trackable": false,
+    "purchaseable": true,
+    "salable": false,
+    "virtual": false,
+    "is_template": false,
+    "variant_of_name": null,
+    "image": "",
+    "thumbnail": "",
+    "suppliers": [
+        {
+            "supplier_name": "DigiKey",
+            "SKU": "P123333TR-ND",
+            "description": "RES SMD 47K OHM 5% 1/20W 0201",
+            "link": "https://www.digikey.com/product-detail/en/panasonic-electronic-components/ERJ-1GNJ473C/P123333TR-ND/2035827",
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ],
+            "manufacturer_name": "Panasonic_Electronic_Components",
+            "MPN": "ERJ-1GNJ473C",
+            "mp_description": null,
+            "mp_link": null
+        },
+        {
+            "supplier_name": "DigiKey",
+            "SKU": "311-47KMTR-ND",
+            "description": "RES SMD 47K OHM 1% 1/20W 0201",
+            "link": "https://www.digikey.com/product-detail/en/yageo/RC0201FR-0747KL/311-47KMTR-ND/3202409",
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ],
+            "manufacturer_name": "Yageo",
+            "MPN": "RC0201FR-0747KL",
+            "mp_description": null,
+            "mp_link": null
+        },
+        {
+            "supplier_name": "DigiKey",
+            "SKU": "YAG2692TR-ND",
+            "description": "RES SMD 47.5K OHM 1% 1/20W 0201",
+            "link": "https://www.digikey.com/product-detail/en/yageo/RC0201FR-0747K5L/YAG2692TR-ND/5280552",
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ],
+            "manufacturer_name": "Yageo",
+            "MPN": "RC0201FR-0747K5L",
+            "mp_description": null,
+            "mp_link": null
+        },
+        {
+            "supplier_name": "DigiKey",
+            "SKU": "YAG2409TR-ND",
+            "description": "RES SMD 147K OHM 1% 1/20W 0201",
+            "link": "https://www.digikey.com/product-detail/en/yageo/RC0201FR-07147KL/YAG2409TR-ND/5280269",
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ],
+            "manufacturer_name": "Yageo",
+            "MPN": "RC0201FR-07147KL",
+            "mp_description": null,
+            "mp_link": null
+        },
+        {
+            "supplier_name": "DigiKey",
+            "SKU": "P123032TR-ND",
+            "description": "RES SMD 47K OHM 1% 1/20W 0201",
+            "link": "https://www.digikey.com/product-detail/en/panasonic-electronic-components/ERJ-1GNF4702C/P123032TR-ND/2036302",
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ],
+            "manufacturer_name": "Panasonic_Electronic_Components",
+            "MPN": "ERJ-1GNF4702C",
+            "mp_description": null,
+            "mp_link": null
+        },
+        {
+            "supplier_name": "Mouser",
+            "SKU": "MOU-86584-NBN",
+            "description": null,
+            "link": null,
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ]
+        },
+        {
+            "supplier_name": "Arrow",
+            "SKU": "ARR-15573-ZWD",
+            "description": null,
+            "link": null,
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ]
+        },
+        {
+            "supplier_name": "LCSC",
+            "SKU": "LCS-35442-ZAG",
+            "description": null,
+            "link": null,
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ]
+        },
+        {
+            "supplier_name": "Newark",
+            "SKU": "NEW-14856-QOQ",
+            "description": null,
+            "link": null,
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ]
+        },
+        {
+            "supplier_name": "Future",
+            "SKU": "FUT-21935-IAT",
+            "description": null,
+            "link": null,
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ]
+        }
+    ]
+}

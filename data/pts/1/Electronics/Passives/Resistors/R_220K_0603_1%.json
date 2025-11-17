@@ -1,0 +1,341 @@
+{
+    "name": "R_220K_0603_1%",
+    "revision": "",
+    "IPN": null,
+    "description": "220K resistor in 0603 SMD package",
+    "keywords": "resistor smd 0603",
+    "units": "",
+    "minimum_stock": 0.0,
+    "assembly": false,
+    "component": true,
+    "trackable": false,
+    "purchaseable": true,
+    "salable": false,
+    "virtual": false,
+    "is_template": false,
+    "variant_of_name": null,
+    "image": "",
+    "thumbnail": "",
+    "suppliers": [
+        {
+            "supplier_name": "DigiKey",
+            "SKU": "P123279TR-ND",
+            "description": "RES SMD 220K OHM 5% 1/20W 0201",
+            "link": "https://www.digikey.com/product-detail/en/panasonic-electronic-components/ERJ-1GNJ224C/P123279TR-ND/2035843",
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ],
+            "manufacturer_name": "Panasonic_Electronic_Components",
+            "MPN": "ERJ-1GNJ224C",
+            "mp_description": null,
+            "mp_link": null
+        },
+        {
+            "supplier_name": "DigiKey",
+            "SKU": "A129716TR-ND",
+            "description": "CRGCQ 0603 220K 1%",
+            "link": "https://www.digikey.com/product-detail/en/te-connectivity-passive-product/CRGCQ0603F220K/A129716TR-ND/8576318",
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ],
+            "manufacturer_name": "TE_Connectivity_Passive_Product",
+            "MPN": "CRGCQ0603F220K",
+            "mp_description": null,
+            "mp_link": null
+        },
+        {
+            "supplier_name": "DigiKey",
+            "SKU": "YAG2277TR-ND",
+            "description": "RES SMD 220K OHM 1% 1/20W 0201",
+            "link": "https://www.digikey.com/product-detail/en/yageo/RC0201FR-07220KL/YAG2277TR-ND/3202393",
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ],
+            "manufacturer_name": "Yageo",
+            "MPN": "RC0201FR-07220KL",
+            "mp_description": null,
+            "mp_link": null
+        },
+        {
+            "supplier_name": "DigiKey",
+            "SKU": "P122834TR-ND",
+            "description": "RES SMD 220K OHM 1% 1/20W 0201",
+            "link": "https://www.digikey.com/product-detail/en/panasonic-electronic-components/ERJ-1GNF2203C/P122834TR-ND/2036376",
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ],
+            "manufacturer_name": "Panasonic_Electronic_Components",
+            "MPN": "ERJ-1GNF2203C",
+            "mp_description": null,
+            "mp_link": null
+        },
+        {
+            "supplier_name": "DigiKey",
+            "SKU": "P220KDBTR-ND",
+            "description": "RES SMD 220K OHM 0.1% 1/10W 0603",
+            "link": "https://www.digikey.com/product-detail/en/panasonic-electronic-components/ERA-3AEB224V/P220KDBTR-ND/1465910",
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ],
+            "manufacturer_name": "Panasonic_Electronic_Components",
+            "MPN": "ERA-3AEB224V",
+            "mp_description": null,
+            "mp_link": null
+        },
+        {
+            "supplier_name": "Mouser",
+            "SKU": "MOU-33048-RPK",
+            "description": null,
+            "link": null,
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ]
+        },
+        {
+            "supplier_name": "Arrow",
+            "SKU": "ARR-28750-JKF",
+            "description": null,
+            "link": null,
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ]
+        },
+        {
+            "supplier_name": "LCSC",
+            "SKU": "LCS-38479-WEP",
+            "description": null,
+            "link": null,
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ]
+        },
+        {
+            "supplier_name": "Newark",
+            "SKU": "NEW-41117-EHW",
+            "description": null,
+            "link": null,
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ]
+        },
+        {
+            "supplier_name": "Future",
+            "SKU": "FUT-43242-FAW",
+            "description": null,
+            "link": null,
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ]
+        }
+    ]
+}

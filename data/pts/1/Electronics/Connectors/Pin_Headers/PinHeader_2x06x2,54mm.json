@@ -1,0 +1,20 @@
+{
+    "name": "PinHeader_2x06x2,54mm",
+    "revision": "",
+    "IPN": null,
+    "description": "Male pin header connector, 2 rows, 6 positions, 2.54mm pitch, vertical",
+    "keywords": "pin header connector",
+    "units": "",
+    "minimum_stock": 0.0,
+    "assembly": false,
+    "component": true,
+    "trackable": false,
+    "purchaseable": true,
+    "salable": false,
+    "virtual": false,
+    "is_template": false,
+    "variant_of_name": null,
+    "image": "",
+    "thumbnail": "",
+    "suppliers": []
+}

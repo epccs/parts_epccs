@@ -1,0 +1,20 @@
+{
+    "name": "Master_Assembly",
+    "revision": "",
+    "IPN": "MAST",
+    "description": "High level assembly of subassemblies",
+    "keywords": "",
+    "units": "",
+    "minimum_stock": 0.0,
+    "assembly": true,
+    "component": false,
+    "trackable": true,
+    "purchaseable": false,
+    "salable": true,
+    "virtual": false,
+    "is_template": false,
+    "variant_of_name": null,
+    "image": "",
+    "thumbnail": "",
+    "suppliers": []
+}

@@ -1,0 +1,341 @@
+{
+    "name": "R_2,2K_0805_5%",
+    "revision": "",
+    "IPN": "",
+    "description": "2.2K resistor in 0805 SMD package",
+    "keywords": "resistor smd 0805",
+    "units": "",
+    "minimum_stock": 0.0,
+    "assembly": false,
+    "component": true,
+    "trackable": false,
+    "purchaseable": true,
+    "salable": false,
+    "virtual": false,
+    "is_template": false,
+    "variant_of_name": null,
+    "image": "",
+    "thumbnail": "",
+    "suppliers": [
+        {
+            "supplier_name": "DigiKey",
+            "SKU": "P2.2KDATR-ND",
+            "description": "RES 2.2K OHM 0.1% 1/8W 0805",
+            "link": "https://www.digikey.com/product-detail/en/panasonic-electronic-components/ERA-6AEB222V/P2.2KDATR-ND/1465757",
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ],
+            "manufacturer_name": "Panasonic_Electronic_Components",
+            "MPN": "ERA-6AEB222V",
+            "mp_description": null,
+            "mp_link": null
+        },
+        {
+            "supplier_name": "DigiKey",
+            "SKU": "RHM2.2KKTR-ND",
+            "description": "RES SMD 2.2K OHM 5% 0.4W 0805",
+            "link": "https://www.digikey.com/product-detail/en/rohm-semiconductor/ESR10EZPJ222/RHM2.2KKTR-ND/1762786",
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ],
+            "manufacturer_name": "Rohm_Semiconductor",
+            "MPN": "ESR10EZPJ222",
+            "mp_description": null,
+            "mp_link": null
+        },
+        {
+            "supplier_name": "DigiKey",
+            "SKU": "RR12P2.2KDTR-ND",
+            "description": "RES SMD 2.2K OHM 0.5% 1/10W 0805",
+            "link": "https://www.digikey.com/product-detail/en/susumu/RR1220P-222-D/RR12P2.2KDTR-ND/432299",
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ],
+            "manufacturer_name": "Susumu",
+            "MPN": "RR1220P-222-D",
+            "mp_description": null,
+            "mp_link": null
+        },
+        {
+            "supplier_name": "DigiKey",
+            "SKU": "RHM2.2KAHTR-ND",
+            "description": "RES SMD 2.2K OHM 1% 1/8W 0805",
+            "link": "https://www.digikey.com/product-detail/en/rohm-semiconductor/KTR10EZPF2201/RHM2.2KAHTR-ND/4051876",
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ],
+            "manufacturer_name": "Rohm_Semiconductor",
+            "MPN": "KTR10EZPF2201",
+            "mp_description": null,
+            "mp_link": null
+        },
+        {
+            "supplier_name": "DigiKey",
+            "SKU": "P42.2KDATR-ND",
+            "description": "RES 42.2K OHM 0.1% 1/8W 0805",
+            "link": "https://www.digikey.com/product-detail/en/panasonic-electronic-components/ERA-6AEB4222V/P42.2KDATR-ND/2025809",
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ],
+            "manufacturer_name": "Panasonic_Electronic_Components",
+            "MPN": "ERA-6AEB4222V",
+            "mp_description": null,
+            "mp_link": null
+        },
+        {
+            "supplier_name": "Mouser",
+            "SKU": "MOU-19731-MAN",
+            "description": null,
+            "link": null,
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ]
+        },
+        {
+            "supplier_name": "Arrow",
+            "SKU": "ARR-64137-PTE",
+            "description": null,
+            "link": null,
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ]
+        },
+        {
+            "supplier_name": "LCSC",
+            "SKU": "LCS-43631-CAD",
+            "description": null,
+            "link": null,
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ]
+        },
+        {
+            "supplier_name": "Newark",
+            "SKU": "NEW-48435-WEK",
+            "description": null,
+            "link": null,
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ]
+        },
+        {
+            "supplier_name": "Future",
+            "SKU": "FUT-34044-AMX",
+            "description": null,
+            "link": null,
+            "note": null,
+            "packaging": null,
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ]
+        }
+    ]
+}

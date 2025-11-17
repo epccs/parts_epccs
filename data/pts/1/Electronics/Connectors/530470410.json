@@ -1,0 +1,20 @@
+{
+    "name": "530470410",
+    "revision": "",
+    "IPN": "",
+    "description": "1.25mm Pitch, PicoBlade PCB Header, Single Row, Vertical, Through Hole, Tin Plating, Friction Lock, 4 Circuits, Tray, 2.30mm PC Tail Length",
+    "keywords": "",
+    "units": "",
+    "minimum_stock": 0.0,
+    "assembly": false,
+    "component": true,
+    "trackable": false,
+    "purchaseable": true,
+    "salable": false,
+    "virtual": false,
+    "is_template": false,
+    "variant_of_name": null,
+    "image": "",
+    "thumbnail": "",
+    "suppliers": []
+}

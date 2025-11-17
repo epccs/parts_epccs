@@ -1,0 +1,55 @@
+{
+    "name": "530470210",
+    "revision": "",
+    "IPN": "",
+    "description": "1.25mm Pitch, PicoBlade PCB Header, Single Row, Vertical, Through Hole, Tin Plating, Friction Lock, 2 Circuits, Tray, 2.30mm PC Tail Length",
+    "keywords": "",
+    "units": "",
+    "minimum_stock": 0.0,
+    "assembly": false,
+    "component": true,
+    "trackable": false,
+    "purchaseable": true,
+    "salable": false,
+    "virtual": false,
+    "is_template": false,
+    "variant_of_name": null,
+    "image": "",
+    "thumbnail": "",
+    "suppliers": [
+        {
+            "supplier_name": "DigiKey",
+            "SKU": "WM1731-ND",
+            "description": "",
+            "link": "https://www.digikey.com.au/en/products/detail/molex/0530470210/242853?s=N4IgTCBcDaIKwGYAMAWA7EsBGJIC6AvkA",
+            "note": "",
+            "packaging": "",
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ],
+            "manufacturer_name": "Molex",
+            "MPN": "0530470210",
+            "mp_description": "",
+            "mp_link": ""
+        }
+    ]
+}

@@ -1,0 +1,55 @@
+{
+    "name": "1551ABK",
+    "revision": "",
+    "IPN": "",
+    "description": "Small plastic enclosure, black",
+    "keywords": "",
+    "units": "",
+    "minimum_stock": 0.0,
+    "assembly": false,
+    "component": true,
+    "trackable": false,
+    "purchaseable": true,
+    "salable": false,
+    "virtual": false,
+    "is_template": false,
+    "variant_of_name": null,
+    "image": "",
+    "thumbnail": "",
+    "suppliers": [
+        {
+            "supplier_name": "Mouser",
+            "SKU": "1551ABK",
+            "description": "",
+            "link": "",
+            "note": "",
+            "packaging": "",
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ],
+            "manufacturer_name": "Hammond_Manufacturing",
+            "MPN": "1551ABK",
+            "mp_description": null,
+            "mp_link": null
+        }
+    ]
+}

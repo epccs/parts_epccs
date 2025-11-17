@@ -1,0 +1,20 @@
+{
+    "name": "Red_Widget",
+    "revision": "00",
+    "IPN": "widget.red.00",
+    "description": "A red widget with 00 variation",
+    "keywords": "",
+    "units": "",
+    "minimum_stock": 0.0,
+    "assembly": false,
+    "component": true,
+    "trackable": true,
+    "purchaseable": false,
+    "salable": true,
+    "virtual": false,
+    "is_template": true,
+    "variant_of_name": "Red_Widget",
+    "image": "",
+    "thumbnail": "",
+    "suppliers": []
+}

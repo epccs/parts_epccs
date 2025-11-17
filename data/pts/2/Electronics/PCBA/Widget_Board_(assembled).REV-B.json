@@ -1,0 +1,81 @@
+{
+    "name": "Widget_Board_(assembled)",
+    "revision": "REV-B",
+    "IPN": "002.01-PCBA",
+    "description": "Assembled PCB for converting electricity into magic smoke",
+    "keywords": null,
+    "units": "",
+    "minimum_stock": 0.0,
+    "assembly": true,
+    "component": true,
+    "trackable": true,
+    "purchaseable": true,
+    "salable": false,
+    "virtual": false,
+    "is_template": false,
+    "variant_of_name": null,
+    "image": "",
+    "thumbnail": "",
+    "suppliers": [
+        {
+            "supplier_name": "PCBA+",
+            "SKU": "PCBA+002.01-PCBA",
+            "description": "Externally supplied PCB assembly",
+            "link": "",
+            "note": "",
+            "packaging": "",
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ]
+        },
+        {
+            "supplier_name": "Fabby_Boards",
+            "SKU": "FAB+002.01-PCBA",
+            "description": "Externally supplied PCB assembly",
+            "link": "",
+            "note": "",
+            "packaging": "",
+            "price_breaks": [
+                {
+                    "quantity": 1.0,
+                    "price": 985.0,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 20.0,
+                    "price": 2.35,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 100.0,
+                    "price": 0.2662,
+                    "price_currency": "USD"
+                },
+                {
+                    "quantity": 1000.0,
+                    "price": 0.184,
+                    "price_currency": "USD"
+                }
+            ]
+        }
+    ]
+}

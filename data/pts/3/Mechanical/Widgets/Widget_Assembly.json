@@ -1,0 +1,20 @@
+{
+    "name": "Widget_Assembly",
+    "revision": "",
+    "IPN": "WID-TEMPLATE",
+    "description": "An assembled widget",
+    "keywords": "",
+    "units": "",
+    "minimum_stock": 3.0,
+    "assembly": true,
+    "component": true,
+    "trackable": true,
+    "purchaseable": false,
+    "salable": true,
+    "virtual": false,
+    "is_template": true,
+    "variant_of_name": null,
+    "image": "",
+    "thumbnail": "",
+    "suppliers": []
+}

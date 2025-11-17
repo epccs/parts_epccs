@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-pts_to_json.py
-# version: 2025-11-17-v1
+# version: 2025-11-17-v3
 # --------------------------------------------------------------
 # Pull from inventree **all parts** (templates, assemblies, real parts)
 # -> data/pts/<level>/<category_path>/
@@ -16,12 +16,13 @@
 # * Skips parts with no category
 # * Sanitized names/paths
 # * Pulls suppliers/manufacturers/price breaks (aggregates duplicates)
-# * category.json files saved in data/pts/<category_path>/ (shared, no levels)
+# * category.json files saved in data/pts/0/<category_path>/
 #
 # example usage:
 # python3 ./api/inv-pts_to_json.py
 # python3 ./api/inv-pts_to_json.py "*_Table"
 # --------------------------------------------------------------
+
 import requests
 import json
 import os
@@ -84,9 +85,14 @@ def fetch_data(url, params=None):
         if isinstance(data, dict) and "results" in data:
             items.extend(data["results"])
             url = data.get("next")
-        else:
+        elif isinstance(data, dict):
+            items.append(data)
+            url = None
+        elif isinstance(data, list):
             items.extend(data)
             url = None
+        else:
+            raise Exception("Unexpected data type from API")
     return items
 # ----------------------------------------------------------------------
 # Save helper
@@ -121,9 +127,10 @@ def build_category_maps(categories):
         parent_to_subs.setdefault(parent, []).append(cat_mod)
     return pk_to_path, parent_to_subs
 def write_category_files(root_dir, pk_to_path, parent_to_subs):
+    cat_root = os.path.join(root_dir, "0")
     top = parent_to_subs.get("None", [])
     if top:
-        save_to_file(top, os.path.join(root_dir, "category.json"))
+        save_to_file(top, os.path.join(cat_root, "category.json"))
     for parent_pk, subs in parent_to_subs.items():
         if parent_pk == "None" or not subs:
             continue
@@ -131,7 +138,7 @@ def write_category_files(root_dir, pk_to_path, parent_to_subs):
         if not parent_path:
             continue
         dir_parts = [sanitize_category_name(p) for p in parent_path.split("/")]
-        dir_path = os.path.join(root_dir, *dir_parts)
+        dir_path = os.path.join(cat_root, *dir_parts)
         save_to_file(subs, os.path.join(dir_path, "category.json"))
 # ----------------------------------------------------------------------
 # BOM fetcher (returns tree and sub_pks)
@@ -192,9 +199,9 @@ def fetch_suppliers(part_pk, part_name):
         sp_details['price_breaks'].sort(key=lambda x: x['quantity'])
         if sp.get('manufacturer_part'):
             mp_url = f"{BASE_URL_MANUFACTURER_PART}{sp['manufacturer_part']}/"
-            mp = fetch_data(mp_url)
-            if mp:
-                mp = mp[0]
+            mp_resp = fetch_data(mp_url)
+            if mp_resp:
+                mp = mp_resp[0] if isinstance(mp_resp, list) else mp_resp
                 sp_details['manufacturer_name'] = sanitize_company_name(mp.get('manufacturer_detail', {}).get('name', ''))
                 sp_details['MPN'] = mp.get('MPN', '')
                 sp_details['mp_description'] = mp.get('description', '')

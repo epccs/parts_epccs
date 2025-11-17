@@ -1,0 +1,20 @@
+{
+    "name": "Doohickey",
+    "revision": "",
+    "IPN": "D.123",
+    "description": "Assembled electronics module which performs some unknown function",
+    "keywords": "",
+    "units": "",
+    "minimum_stock": 5.0,
+    "assembly": true,
+    "component": true,
+    "trackable": true,
+    "purchaseable": false,
+    "salable": false,
+    "virtual": false,
+    "is_template": false,
+    "variant_of_name": null,
+    "image": "",
+    "thumbnail": "",
+    "suppliers": []
+}

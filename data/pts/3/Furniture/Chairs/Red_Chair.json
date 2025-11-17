@@ -1,0 +1,20 @@
+{
+    "name": "Red_Chair",
+    "revision": "",
+    "IPN": "",
+    "description": "A chair - with red paint",
+    "keywords": "",
+    "units": "",
+    "minimum_stock": 0.0,
+    "assembly": true,
+    "component": true,
+    "trackable": false,
+    "purchaseable": false,
+    "salable": true,
+    "virtual": false,
+    "is_template": false,
+    "variant_of_name": "Chair",
+    "image": "",
+    "thumbnail": "",
+    "suppliers": []
+}

@@ -1,0 +1,20 @@
+{
+    "name": "Blue_Furniture_Set",
+    "revision": "",
+    "IPN": "Blue_Furniture_Set",
+    "description": "Full set of blue kitchen furniture",
+    "keywords": "furniture chair table",
+    "units": null,
+    "minimum_stock": 0.0,
+    "assembly": true,
+    "component": false,
+    "trackable": false,
+    "purchaseable": false,
+    "salable": true,
+    "virtual": false,
+    "is_template": false,
+    "variant_of_name": "Furniture_Set",
+    "image": "",
+    "thumbnail": "",
+    "suppliers": []
+}

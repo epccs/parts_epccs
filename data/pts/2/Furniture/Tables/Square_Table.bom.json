@@ -1,0 +1,29 @@
+[
+    {
+        "quantity": 4.0,
+        "note": "",
+        "sub_part": {
+            "name": "Leg",
+            "IPN": "",
+            "description": "Leg for a chair or a table"
+        }
+    },
+    {
+        "quantity": 1.0,
+        "note": "",
+        "sub_part": {
+            "name": "Square_Top",
+            "IPN": "",
+            "description": "Table top - square"
+        }
+    },
+    {
+        "quantity": 12.0,
+        "note": "",
+        "sub_part": {
+            "name": "Wood_Screw",
+            "IPN": "",
+            "description": "Screw for fixing wood to other wood"
+        }
+    }
+]

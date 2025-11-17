@@ -1,0 +1,20 @@
+{
+    "name": "M2x4_SHCS",
+    "revision": "",
+    "IPN": null,
+    "description": "Socket head cap screw, M2 thread, 4.0mm",
+    "keywords": "screw",
+    "units": null,
+    "minimum_stock": 0.0,
+    "assembly": false,
+    "component": true,
+    "trackable": false,
+    "purchaseable": true,
+    "salable": false,
+    "virtual": false,
+    "is_template": false,
+    "variant_of_name": null,
+    "image": "",
+    "thumbnail": "",
+    "suppliers": []
+}

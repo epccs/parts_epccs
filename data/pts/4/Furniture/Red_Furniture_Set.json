@@ -1,0 +1,20 @@
+{
+    "name": "Red_Furniture_Set",
+    "revision": "",
+    "IPN": "",
+    "description": "Full set of red kitchen furniture",
+    "keywords": "furniture chair table",
+    "units": "",
+    "minimum_stock": 0.0,
+    "assembly": true,
+    "component": false,
+    "trackable": false,
+    "purchaseable": false,
+    "salable": true,
+    "virtual": false,
+    "is_template": false,
+    "variant_of_name": "Furniture_Set",
+    "image": "",
+    "thumbnail": "",
+    "suppliers": []
+}

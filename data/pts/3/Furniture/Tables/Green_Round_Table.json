@@ -1,0 +1,20 @@
+{
+    "name": "Green_Round_Table",
+    "revision": "",
+    "IPN": "",
+    "description": "A round table - with green paint",
+    "keywords": "",
+    "units": "",
+    "minimum_stock": 0.0,
+    "assembly": true,
+    "component": true,
+    "trackable": false,
+    "purchaseable": false,
+    "salable": true,
+    "virtual": true,
+    "is_template": false,
+    "variant_of_name": "Round_Table",
+    "image": "",
+    "thumbnail": "",
+    "suppliers": []
+}

@@ -1,0 +1,20 @@
+{
+    "name": "Widget_Board_(assembled)",
+    "revision": "REV-A",
+    "IPN": "002.01-PCBA",
+    "description": "Assembled PCB for converting electricity into magic smoke",
+    "keywords": "",
+    "units": "",
+    "minimum_stock": 0.0,
+    "assembly": true,
+    "component": true,
+    "trackable": true,
+    "purchaseable": false,
+    "salable": false,
+    "virtual": false,
+    "is_template": false,
+    "variant_of_name": null,
+    "image": "",
+    "thumbnail": "",
+    "suppliers": []
+}
