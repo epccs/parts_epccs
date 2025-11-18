@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-pts.py
-# version: 2025-11-17-v3
+# version: 2025-11-18-v2
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/pts/<level>/ to InvenTree, level by level.
 #
@@ -13,6 +13,7 @@
 # * --clean-dependencies -> delete BOM/stock/etc. (with confirmation)
 # * .bom.json pushed only if exists
 # * pushes suppliers/manufacturers/price breaks if purchaseable
+# * Uses a cache for part lookups to improve performance
 #
 # example usage:
 # python3 ./api/json_to_inv-pts.py "1/Mechanical/Fasteners/Wood_Screw" --force --force-ipn --clean-dependencies
@@ -113,30 +114,19 @@ def check_category_exists(name, parent_pk=None):
     except:
         return []
 # ----------------------------------------------------------------------
-# Part existence (fetch with name filter, then manual exact match)
+# Part existence (using cache)
 # ----------------------------------------------------------------------
-def check_part_exists(name, revision=None, ipn=None):
-    print(f"DEBUG: Searching for part containing name '{name}' rev '{revision}' (IPN={ipn})")
-    params = {"name": name}
-    if ipn:
-        params["IPN"] = ipn
-    try:
-        r = requests.get(BASE_URL_PARTS, headers=HEADERS, params=params)
-        if r.status_code != 200:
-            return []
-        data = r.json()
-        candidates = data.get("results", data) if isinstance(data, dict) else data
-        print(f"DEBUG: Found {len(candidates)} candidates containing name '{name}'")
-        results = []
-        for res in candidates:
-            if res['name'] == name:
-                if (revision is None or res.get('revision') == revision) and (ipn is None or res.get('IPN') == ipn):
-                    results.append(res)
-                    print(f"DEBUG: Exact match PK {res['pk']}: name='{res['name']}', revision='{res.get('revision', '')}', IPN='{res.get('IPN', '')}'")
-        print(f"DEBUG: Found {len(results)} exact matches")
-        return results
-    except:
-        return []
+def check_part_exists(cache, name, revision=None, ipn=None):
+    print(f"DEBUG: Searching cache for part '{name}' rev '{revision}' (IPN={ipn})")
+    candidates = cache.get(name, [])
+    print(f"DEBUG: Found {len(candidates)} candidates with name '{name}'")
+    results = []
+    for res in candidates:
+        if (revision is None or res.get('revision') == revision) and (ipn is None or res.get('IPN') == ipn):
+            results.append(res)
+            print(f"DEBUG: Match PK {res['pk']}: name='{res['name']}', revision='{res.get('revision', '')}', IPN='{res.get('IPN', '')}'")
+    print(f"DEBUG: Found {len(results)} matches")
+    return results
 # ----------------------------------------------------------------------
 # Dependency handling
 # ----------------------------------------------------------------------
@@ -191,7 +181,7 @@ def delete_dependencies(part_name, part_pk, clean):
             except:
                 pass
     return True
-def delete_part(part_name, part_pk, clean_deps):
+def delete_part(cache, part_name, part_pk, clean_deps):
     print(f"DEBUG: Deleting part '{part_name}' (PK {part_pk})")
     if not delete_dependencies(part_name, part_pk, clean_deps):
         raise Exception("Dependencies block deletion")
@@ -205,6 +195,9 @@ def delete_part(part_name, part_pk, clean_deps):
             raise Exception(f"Delete failed: {r.text}")
     except:
         pass
+    # Remove from cache
+    if part_name in cache:
+        cache[part_name] = [p for p in cache[part_name] if p['pk'] != part_pk]
 # ----------------------------------------------------------------------
 # Category hierarchy – folder-based
 # ----------------------------------------------------------------------
@@ -243,7 +236,7 @@ def parse_filename(filepath):
 # ----------------------------------------------------------------------
 # Push one part
 # ----------------------------------------------------------------------
-def push_part(part_path, force_ipn=False, force=False, clean=False, level_dir=None):
+def push_part(part_path, force_ipn=False, force=False, clean=False, level_dir=None, cache=None):
     print(f"DEBUG: Pushing {part_path}")
     name, rev_from_file = parse_filename(part_path)
     if not name:
@@ -286,18 +279,18 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, level_dir=No
     # Handle variant_of_name
     variant_of_name = data.get("variant_of_name")
     if variant_of_name:
-        variant_existing = check_part_exists(variant_of_name)
+        variant_existing = check_part_exists(cache, variant_of_name)
         if variant_existing:
             payload["variant_of"] = variant_existing[0]["pk"]
         else:
             print(f"WARNING: Variant parent '{variant_of_name}' not found – skipping variant_of")
     print(f"DEBUG: Payload -> {payload}")
     # Check existence
-    existing = check_part_exists(name, revision if revision else None, ipn)
+    existing = check_part_exists(cache, name, revision if revision else None, ipn)
     if existing and force:
         for p in existing:
             print(f"DEBUG: --force: deleting existing part PK {p['pk']}")
-            delete_part(p["name"], p["pk"], clean)
+            delete_part(cache, p["name"], p["pk"], clean)
     elif existing:
         print(f"DEBUG: Part '{name}' rev '{revision}' exists – skipping")
         return
@@ -309,6 +302,8 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, level_dir=No
         new = r.json()
         new_pk = new['pk']
         print(f"DEBUG: Created '{new['name']}' rev '{new.get('revision', '')}' (PK {new_pk})")
+        # Add to cache
+        cache[new['name']].append(new)
     except Exception as e:
         print(f"ERROR: {e}")
         return
@@ -440,13 +435,13 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, level_dir=No
     bom_path = base + ".bom.json"
     if os.path.exists(bom_path):
         print(f"DEBUG: Pushing BOM from {bom_path}")
-        push_bom(new_pk, bom_path)
+        push_bom(new_pk, bom_path, cache=cache)
     else:
         print(f"DEBUG: No .bom.json for {name} - skipping BOM")
 # ----------------------------------------------------------------------
 # Single-level BOM push with retry
 # ----------------------------------------------------------------------
-def push_bom(parent_pk: int, bom_path: str, level: int = 0):
+def push_bom(parent_pk: int, bom_path: str, level: int = 0, cache=None):
     indent = " " * level
     try:
         with open(bom_path, "r", encoding="utf-8") as f:
@@ -454,19 +449,23 @@ def push_bom(parent_pk: int, bom_path: str, level: int = 0):
     except Exception as e:
         print(f"{indent}ERROR: Failed to read BOM: {e}")
         return
+    # Fetch all existing BOM lines for the parent once
+    existing_boms = fetch_data(f"{BASE_URL_BOM}?part={parent_pk}")
     for node in tree:
         qty = node.get("quantity", 1)
         note = node.get("note", "")
         sub = node["sub_part"]
         sub_name = sub["name"]
         sub_ipn = sub.get("IPN", "")
-        sub_parts = check_part_exists(sub_name, None, sub_ipn)
+        sub_parts = check_part_exists(cache, sub_name, None, sub_ipn if sub_ipn else None)
         if not sub_parts:
             print(f"{indent}WARNING: Sub-part '{sub_name}' not found – skipping")
             continue
         if len(sub_parts) > 1:
             print(f"{indent}WARNING: Multiple ({len(sub_parts)}) exact matches for sub-part '{sub_name}' – picking first PK {sub_parts[0]['pk']}")
         sub_pk = sub_parts[0]["pk"]
+        # Check for existing BOM line locally
+        existing = [b for b in existing_boms if b['sub_part'] == sub_pk]
         payload = {
             "part": parent_pk,
             "sub_part": sub_pk,
@@ -474,11 +473,6 @@ def push_bom(parent_pk: int, bom_path: str, level: int = 0):
             "note": note,
         }
         def try_post_bom(attempt=1):
-            existing = requests.get(
-                BASE_URL_BOM, headers=HEADERS,
-                params={"part": parent_pk, "sub_part": sub_pk}
-            ).json()
-            existing = existing.get("results", existing) if isinstance(existing, dict) else existing
             if existing:
                 bom_pk = existing[0]["pk"]
                 r = requests.patch(f"{BASE_URL_BOM}{bom_pk}/", headers=HEADERS, json=payload)
@@ -487,7 +481,10 @@ def push_bom(parent_pk: int, bom_path: str, level: int = 0):
                 r = requests.post(BASE_URL_BOM, headers=HEADERS, json=payload)
                 action = "CREATED"
             if r.status_code in (200, 201):
-                print(f"{indent}{action} BOM: {qty} x {sub_name} (sub_pk {sub_pk})")
+                print(f"{indent}{action} BOM: {qty} × {sub_name} (sub_pk {sub_pk})")
+                # Update existing_boms if created new
+                if action == "CREATED":
+                    existing_boms.append(r.json())
                 return True
             else:
                 err = r.json()
@@ -524,6 +521,13 @@ def main():
     root = "data/pts"
     if not os.path.isdir(root):
         raise FileNotFoundError(f"{root} missing")
+    # Fetch all existing parts for cache
+    print("DEBUG: Fetching all existing parts for cache...")
+    all_parts = fetch_data(BASE_URL_PARTS)
+    cache = defaultdict(list)
+    for part in all_parts:
+        cache[part['name']].append(part)
+    print(f"DEBUG: Cached {len(all_parts)} parts")
     # Collect files
     matched_files = []
     if args.patterns:
@@ -563,6 +567,6 @@ def main():
                 print(f"WARNING for level {level} {key}: multiple files: {files_str}. Processing anyway.")
         for key, flist in key_to_files.items():
             for f, rev_from_file in flist:
-                push_part(f, args.force_ipn, args.force, args.clean_dependencies, level_dir)
+                push_part(f, args.force_ipn, args.force, args.clean_dependencies, level_dir, cache)
 if __name__ == "__main__":
     main()
