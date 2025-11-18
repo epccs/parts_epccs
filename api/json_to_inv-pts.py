@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-pts.py
-# version: 2025-11-18-v7
+# version: 2025-11-18-v8
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/pts/<level>/ to InvenTree, level by level.
 #
@@ -303,6 +303,8 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
         try:
             r = requests.post(BASE_URL_PARTS, headers=HEADERS, json=payload)
             if r.status_code != 201:
+                print(f"API call: POST {BASE_URL_PARTS}")
+                print(f"Payload: {json.dumps(payload, indent=4)}")
                 raise Exception(f"Create failed: {r.text}")
             new = r.json()
             new_pk = new['pk']
@@ -369,35 +371,51 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
                     print(f"ERROR: Manufacturer '{man_name}' not found in the system")
                     sys.exit(1)
                 man_pk = man_results[0]["pk"]
-                # Create ManufacturerPart
-                mp_payload = {
+                # Check for existing ManufacturerPart
+                mp_params = {"part": new_pk, "manufacturer": man_pk, "MPN": supplier.get("MPN", "")}
+                mp_existing = fetch_data(BASE_URL_MANUFACTURER_PART, mp_params)
+                if mp_existing:
+                    mp_pk = mp_existing[0]["pk"]
+                else:
+                    # Create ManufacturerPart
+                    mp_payload = {
+                        "part": new_pk,
+                        "manufacturer": man_pk,
+                        "MPN": supplier.get("MPN", ""),
+                        "description": supplier.get("mp_description", ""),
+                        "link": supplier.get("mp_link", "")
+                    }
+                    mp_r = requests.post(BASE_URL_MANUFACTURER_PART, headers=HEADERS, json=mp_payload)
+                    if mp_r.status_code != 201:
+                        print(f"API call: POST {BASE_URL_MANUFACTURER_PART}")
+                        print(f"Payload: {json.dumps(mp_payload, indent=4)}")
+                        print(f"ERROR: Failed to create ManufacturerPart for {man_name}: {mp_r.text}")
+                        sys.exit(1)
+                    mp_pk = mp_r.json()["pk"]
+            # Check for existing SupplierPart
+            sp_params = {"part": new_pk, "supplier": supplier_pk, "SKU": supplier.get("SKU", "")}
+            sp_existing = fetch_data(BASE_URL_SUPPLIER_PARTS, sp_params)
+            if sp_existing:
+                sp_pk = sp_existing[0]["pk"]
+            else:
+                # Create SupplierPart
+                sp_payload = {
                     "part": new_pk,
-                    "manufacturer": man_pk,
-                    "MPN": supplier.get("MPN", ""),
-                    "description": supplier.get("mp_description", ""),
-                    "link": supplier.get("mp_link", "")
+                    "supplier": supplier_pk,
+                    "manufacturer_part": mp_pk,
+                    "SKU": supplier.get("SKU", ""),
+                    "description": supplier.get("description", ""),
+                    "link": supplier.get("link", ""),
+                    "note": supplier.get("note", ""),
+                    "packaging": supplier.get("packaging", "")
                 }
-                mp_r = requests.post(BASE_URL_MANUFACTURER_PART, headers=HEADERS, json=mp_payload)
-                if mp_r.status_code != 201:
-                    print(f"ERROR: Failed to create ManufacturerPart for {man_name}: {mp_r.text}")
+                sp_r = requests.post(BASE_URL_SUPPLIER_PARTS, headers=HEADERS, json=sp_payload)
+                if sp_r.status_code != 201:
+                    print(f"API call: POST {BASE_URL_SUPPLIER_PARTS}")
+                    print(f"Payload: {json.dumps(sp_payload, indent=4)}")
+                    print(f"ERROR: Failed to create SupplierPart for {supplier_name}: {sp_r.text}")
                     sys.exit(1)
-                mp_pk = mp_r.json()["pk"]
-            # Create SupplierPart
-            sp_payload = {
-                "part": new_pk,
-                "supplier": supplier_pk,
-                "manufacturer_part": mp_pk,
-                "SKU": supplier.get("SKU", ""),
-                "description": supplier.get("description", ""),
-                "link": supplier.get("link", ""),
-                "note": supplier.get("note", ""),
-                "packaging": supplier.get("packaging", "")
-            }
-            sp_r = requests.post(BASE_URL_SUPPLIER_PARTS, headers=HEADERS, json=sp_payload)
-            if sp_r.status_code != 201:
-                print(f"ERROR: Failed to create SupplierPart for {supplier_name}: {sp_r.text}")
-                sys.exit(1)
-            sp_pk = sp_r.json()["pk"]
+                sp_pk = sp_r.json()["pk"]
             # Verify the supplier part exists with retry
             sp_verified = False
             for attempt in range(3):
@@ -442,6 +460,8 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
                         }
                         pb_update_r = requests.patch(f"{BASE_URL_PRICE_BREAK}{existing_pb['pk']}/", headers=HEADERS, json=pb_update_payload)
                         if pb_update_r.status_code != 200:
+                            print(f"API call: PATCH {BASE_URL_PRICE_BREAK}{existing_pb['pk']}/")
+                            print(f"Payload: {json.dumps(pb_update_payload, indent=4)}")
                             print(f"ERROR: Failed to update price break: {pb_update_r.text}")
                             sys.exit(1)
                         print(f"DEBUG: Updated quantity {q} for SupplierPart {sp_pk}, new price: {json_price} {json_currency}")
@@ -456,6 +476,8 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
                 }
                 pb_r = requests.post(BASE_URL_PRICE_BREAK, headers=HEADERS, json=pb_payload)
                 if pb_r.status_code != 201:
+                    print(f"API call: POST {BASE_URL_PRICE_BREAK}")
+                    print(f"Payload: {json.dumps(pb_payload, indent=4)}")
                     print(f"ERROR: Failed to create price break: {pb_r.text}")
                     sys.exit(1)
                 print(f"DEBUG: Created quantity {q} for SupplierPart {sp_pk}, price: {json_price} {json_currency}")
