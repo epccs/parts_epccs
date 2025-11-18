@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-pts.py
-# version: 2025-11-18-v8
+# version: 2025-11-18-v9
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/pts/<level>/ to InvenTree, level by level.
 #
@@ -296,8 +296,11 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
     elif existing:
         print(f"DEBUG: Part '{name}' rev '{revision}' exists - using PK {existing[0]['pk']}")
         new_pk = existing[0]['pk']
-        # Optionally update part details if needed
-        # For now, skip updating part, but proceed to suppliers/price
+
+        # CRITICAL: Refresh cache for this specific part because it may have changed
+        fresh_part = requests.get(f"{BASE_URL_PARTS}{new_pk}/", headers=HEADERS).json()
+        cache[name] = [fresh_part]  # overwrite cache entry
+        print(f"DEBUG: Refreshed cache for existing part PK {new_pk}")
     else:
         # Create part
         try:
@@ -469,10 +472,12 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
                         print(f"DEBUG: Skipping matching quantity {q} for SupplierPart {sp_pk}")
                     continue
                 pb_payload = {
-                    "supplier_part": sp_pk,
+                    "part": sp_pk,
+                    # "supplier_part": sp_pk,
                     "quantity": q,
                     "price": json_price,
-                    "price_currency": json_currency
+                    "price_currency": json_currency,
+                    "supplier": supplier_pk
                 }
                 pb_r = requests.post(BASE_URL_PRICE_BREAK, headers=HEADERS, json=pb_payload)
                 if pb_r.status_code != 201:
