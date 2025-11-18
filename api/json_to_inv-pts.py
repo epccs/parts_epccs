@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-pts.py
-# version: 2025-11-18-v4
+# version: 2025-11-18-v5
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/pts/<level>/ to InvenTree, level by level.
 #
@@ -415,22 +415,37 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, level_dir=No
                     unique_pbs[q] = pb
                 else:
                     print(f"DEBUG: Duplicate quantity {q} in input data for SupplierPart {sp_pk}, keeping first.")
-            # Create price breaks, skipping existing
+            # Create or update price breaks
             for q, pb in unique_pbs.items():
+                json_price = pb.get("price", 0.0)
+                json_currency = pb.get("price_currency", "")
                 if q in existing_by_quantity:
                     existing_pb = existing_by_quantity[q]
-                    print(f"DEBUG: Skipping existing quantity {q} for SupplierPart {sp_pk}, existing price: {existing_pb['price']} {existing_pb['price_currency']}")
+                    print(f"DEBUG: Existing quantity {q} for SupplierPart {sp_pk}, existing price: {existing_pb['price']} {existing_pb['price_currency']}")
+                    if existing_pb['price'] != json_price or existing_pb['price_currency'] != json_currency:
+                        pb_update_payload = {
+                            "price": json_price,
+                            "price_currency": json_currency
+                        }
+                        pb_update_r = requests.patch(f"{BASE_URL_PRICE_BREAK}{existing_pb['pk']}/", headers=HEADERS, json=pb_update_payload)
+                        if pb_update_r.status_code != 200:
+                            print(f"ERROR: Failed to update price break: {pb_update_r.text}")
+                            sys.exit(1)
+                        print(f"DEBUG: Updated quantity {q} for SupplierPart {sp_pk}, new price: {json_price} {json_currency}")
+                    else:
+                        print(f"DEBUG: Skipping matching quantity {q} for SupplierPart {sp_pk}")
                     continue
                 pb_payload = {
                     "supplier_part": sp_pk,
                     "quantity": q,
-                    "price": pb.get("price", 0.0),
-                    "price_currency": pb.get("price_currency", "")
+                    "price": json_price,
+                    "price_currency": json_currency
                 }
                 pb_r = requests.post(BASE_URL_PRICE_BREAK, headers=HEADERS, json=pb_payload)
                 if pb_r.status_code != 201:
                     print(f"ERROR: Failed to create price break: {pb_r.text}")
                     sys.exit(1)
+                print(f"DEBUG: Created quantity {q} for SupplierPart {sp_pk}, price: {json_price} {json_currency}")
     # Push BOM if exists
     base = part_path[:-5]
     bom_path = base + ".bom.json"
