@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-pts.py
-# version: 2025-11-18-v2
+# version: 2025-11-18-v3
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/pts/<level>/ to InvenTree, level by level.
 #
@@ -421,7 +421,7 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, level_dir=No
                     print(f"DEBUG: Skipping existing quantity {q} for SupplierPart {sp_pk}")
                     continue
                 pb_payload = {
-                    "supplier_part": sp_pk,
+                    "part": sp_pk,
                     "quantity": q,
                     "price": pb.get("price", 0.0),
                     "price_currency": pb.get("price_currency", "")
