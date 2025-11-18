@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-pts.py
-# version: 2025-11-17-v1
+# version: 2025-11-17-v2
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/pts/<level>/ to InvenTree, level by level.
 #
@@ -21,6 +21,7 @@
 # python3 ./api/json_to_inv-pts.py "2/Furniture/Tables/*_Table" --force --force-ipn --clean-dependencies
 # python3 ./api/json_to_inv-pts.py "**/*" --force --clean-dependencies
 # --------------------------------------------------------------
+
 import requests
 import json
 import os
@@ -112,23 +113,25 @@ def check_category_exists(name, parent_pk=None):
     except:
         return []
 # ----------------------------------------------------------------------
-# Part existence (by name + revision + optional IPN)
+# Part existence (by name + revision + optional IPN, exact match)
 # ----------------------------------------------------------------------
 def check_part_exists(name, revision=None, ipn=None):
     print(f"DEBUG: Global search for part '{name}' rev '{revision}' (IPN={ipn})")
-    params = {"name": name}
+    params = {"name__exact": name}
     if revision:
-        params["revision"] = revision
+        params["revision__exact"] = revision
     if ipn:
-        params["IPN"] = ipn
+        params["IPN__exact"] = ipn
     try:
         r = requests.get(BASE_URL_PARTS, headers=HEADERS, params=params)
         if r.status_code != 200:
             return []
         data = r.json()
         results = data.get("results", data) if isinstance(data, dict) else data
+        print(f"DEBUG: Found {len(results)} matches for exact name '{name}'")
         if results:
-            print(f"DEBUG: Found {len(results)} matches")
+            for res in results:
+                print(f"DEBUG: Match PK {res['pk']}: name='{res['name']}', revision='{res.get('revision', '')}', IPN='{res.get('IPN', '')}'")
         return results
     except:
         return []
@@ -330,7 +333,7 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, level_dir=No
                 sys.exit(1)
             supplier_name = sanitize_company_name(raw_supplier_name)
             # Check supplier exists
-            sup_params = {"name": supplier_name, "is_supplier": True}
+            sup_params = {"name__exact": supplier_name, "is_supplier": True}
             sup_r = requests.get(BASE_URL_COMPANY, headers=HEADERS, params=sup_params)
             if sup_r.status_code != 200:
                 print(f"ERROR: Failed to search for supplier {supplier_name}")
@@ -349,7 +352,7 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, level_dir=No
                     print(f"ERROR: Missing manufacturer name for supplier {supplier_name} in part {name}")
                     sys.exit(1)
                 man_name = sanitize_company_name(raw_man_name)
-                man_params = {"name": man_name, "is_manufacturer": True}
+                man_params = {"name__exact": man_name, "is_manufacturer": True}
                 man_r = requests.get(BASE_URL_COMPANY, headers=HEADERS, params=man_params)
                 if man_r.status_code != 200:
                     print(f"ERROR: Failed to search for manufacturer {man_name}")
@@ -457,6 +460,8 @@ def push_bom(parent_pk: int, bom_path: str, level: int = 0):
         if not sub_parts:
             print(f"{indent}WARNING: Sub-part '{sub_name}' not found – skipping")
             continue
+        if len(sub_parts) > 1:
+            print(f"{indent}WARNING: Multiple ({len(sub_parts)}) exact matches for sub-part '{sub_name}' – picking first PK {sub_parts[0]['pk']}")
         sub_pk = sub_parts[0]["pk"]
         payload = {
             "part": parent_pk,
@@ -478,7 +483,7 @@ def push_bom(parent_pk: int, bom_path: str, level: int = 0):
                 r = requests.post(BASE_URL_BOM, headers=HEADERS, json=payload)
                 action = "CREATED"
             if r.status_code in (200, 201):
-                print(f"{indent}{action} BOM: {qty} × {sub_name}")
+                print(f"{indent}{action} BOM: {qty} x {sub_name} (sub_pk {sub_pk})")
                 return True
             else:
                 err = r.json()
