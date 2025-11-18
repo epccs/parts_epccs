@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-pts.py
-# version: 2025-11-17-v2
+# version: 2025-11-17-v3
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/pts/<level>/ to InvenTree, level by level.
 #
@@ -113,25 +113,27 @@ def check_category_exists(name, parent_pk=None):
     except:
         return []
 # ----------------------------------------------------------------------
-# Part existence (by name + revision + optional IPN, exact match)
+# Part existence (fetch with name filter, then manual exact match)
 # ----------------------------------------------------------------------
 def check_part_exists(name, revision=None, ipn=None):
-    print(f"DEBUG: Global search for part '{name}' rev '{revision}' (IPN={ipn})")
-    params = {"name__exact": name}
-    if revision:
-        params["revision__exact"] = revision
+    print(f"DEBUG: Searching for part containing name '{name}' rev '{revision}' (IPN={ipn})")
+    params = {"name": name}
     if ipn:
-        params["IPN__exact"] = ipn
+        params["IPN"] = ipn
     try:
         r = requests.get(BASE_URL_PARTS, headers=HEADERS, params=params)
         if r.status_code != 200:
             return []
         data = r.json()
-        results = data.get("results", data) if isinstance(data, dict) else data
-        print(f"DEBUG: Found {len(results)} matches for exact name '{name}'")
-        if results:
-            for res in results:
-                print(f"DEBUG: Match PK {res['pk']}: name='{res['name']}', revision='{res.get('revision', '')}', IPN='{res.get('IPN', '')}'")
+        candidates = data.get("results", data) if isinstance(data, dict) else data
+        print(f"DEBUG: Found {len(candidates)} candidates containing name '{name}'")
+        results = []
+        for res in candidates:
+            if res['name'] == name:
+                if (revision is None or res.get('revision') == revision) and (ipn is None or res.get('IPN') == ipn):
+                    results.append(res)
+                    print(f"DEBUG: Exact match PK {res['pk']}: name='{res['name']}', revision='{res.get('revision', '')}', IPN='{res.get('IPN', '')}'")
+        print(f"DEBUG: Found {len(results)} exact matches")
         return results
     except:
         return []
@@ -333,13 +335,14 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, level_dir=No
                 sys.exit(1)
             supplier_name = sanitize_company_name(raw_supplier_name)
             # Check supplier exists
-            sup_params = {"name__exact": supplier_name, "is_supplier": True}
+            sup_params = {"name": supplier_name, "is_supplier": True}
             sup_r = requests.get(BASE_URL_COMPANY, headers=HEADERS, params=sup_params)
             if sup_r.status_code != 200:
                 print(f"ERROR: Failed to search for supplier {supplier_name}")
                 sys.exit(1)
             sup_data = sup_r.json()
             sup_results = sup_data.get("results", []) if isinstance(sup_data, dict) else sup_data
+            sup_results = [s for s in sup_results if s['name'] == supplier_name]
             if not sup_results:
                 print(f"ERROR: Supplier '{supplier_name}' not found in the system")
                 sys.exit(1)
@@ -352,13 +355,14 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, level_dir=No
                     print(f"ERROR: Missing manufacturer name for supplier {supplier_name} in part {name}")
                     sys.exit(1)
                 man_name = sanitize_company_name(raw_man_name)
-                man_params = {"name__exact": man_name, "is_manufacturer": True}
+                man_params = {"name": man_name, "is_manufacturer": True}
                 man_r = requests.get(BASE_URL_COMPANY, headers=HEADERS, params=man_params)
                 if man_r.status_code != 200:
                     print(f"ERROR: Failed to search for manufacturer {man_name}")
                     sys.exit(1)
                 man_data = man_r.json()
                 man_results = man_data.get("results", []) if isinstance(man_data, dict) else man_data
+                man_results = [m for m in man_results if m['name'] == man_name]
                 if not man_results:
                     print(f"ERROR: Manufacturer '{man_name}' not found in the system")
                     sys.exit(1)
