@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-pts.py
-# version: 2025-11-18-v6
+# version: 2025-11-18-v7
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/pts/<level>/ to InvenTree, level by level.
 #
@@ -241,7 +241,7 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
     print(f"DEBUG: Pushing {part_path}")
     name, rev_from_file = parse_filename(part_path)
     if not name:
-        print("DEBUG: Invalid filename – skipping")
+        print("DEBUG: Invalid filename - skipping")
         return
     try:
         with open(part_path, "r", encoding="utf-8") as f:
@@ -284,7 +284,7 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
         if variant_existing:
             payload["variant_of"] = variant_existing[0]["pk"]
         else:
-            print(f"WARNING: Variant parent '{variant_of_name}' not found – skipping variant_of")
+            print(f"WARNING: Variant parent '{variant_of_name}' not found - skipping variant_of")
     print(f"DEBUG: Payload -> {payload}")
     # Check existence
     existing = check_part_exists(cache, name, revision if revision else None, ipn)
@@ -292,35 +292,41 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
         for p in existing:
             print(f"DEBUG: --force: deleting existing part PK {p['pk']}")
             delete_part(cache, p["name"], p["pk"], clean)
+        new_pk = None
     elif existing:
-        print(f"DEBUG: Part '{name}' rev '{revision}' exists – skipping")
-        return
-    # Create part
-    try:
-        r = requests.post(BASE_URL_PARTS, headers=HEADERS, json=payload)
-        if r.status_code != 201:
-            raise Exception(f"Create failed: {r.text}")
-        new = r.json()
-        new_pk = new['pk']
-        print(f"DEBUG: Created '{new['name']}' rev '{new.get('revision', '')}' (PK {new_pk})")
-        # Add to cache
-        cache[new['name']].append(new)
-    except Exception as e:
-        print(f"ERROR: {e}")
-        return
-    # Verify the part exists with retry
-    verified = False
-    for attempt in range(3):
-        verify_r = requests.get(f"{BASE_URL_PARTS}{new_pk}/", headers=HEADERS)
-        if verify_r.status_code == 200:
-            verified = True
-            break
-        print(f"DEBUG: Verify attempt {attempt+1} failed for Part {new_pk}: {verify_r.status_code}")
-        time.sleep(1)
-    if not verified:
-        print(f"ERROR: Part {new_pk} not found after creation and retries.")
-        sys.exit(1)
-    print(f"DEBUG: Part {new_pk} verified.")
+        print(f"DEBUG: Part '{name}' rev '{revision}' exists - using PK {existing[0]['pk']}")
+        new_pk = existing[0]['pk']
+        # Optionally update part details if needed
+        # For now, skip updating part, but proceed to suppliers/price
+    else:
+        # Create part
+        try:
+            r = requests.post(BASE_URL_PARTS, headers=HEADERS, json=payload)
+            if r.status_code != 201:
+                raise Exception(f"Create failed: {r.text}")
+            new = r.json()
+            new_pk = new['pk']
+            print(f"DEBUG: Created '{new['name']}' rev '{new.get('revision', '')}' (PK {new_pk})")
+            # Add to cache
+            cache[new['name']].append(new)
+        except Exception as e:
+            print(f"ERROR: {e}")
+            return
+        # Verify the part exists with retry
+        verified = False
+        for attempt in range(3):
+            verify_r = requests.get(f"{BASE_URL_PARTS}{new_pk}/", headers=HEADERS)
+            if verify_r.status_code == 200:
+                verified = True
+                break
+            print(f"DEBUG: Verify attempt {attempt+1} failed for Part {new_pk}: {verify_r.status_code}")
+            time.sleep(1)
+        if not verified:
+            print(f"ERROR: Part {new_pk} not found after creation and retries.")
+            sys.exit(1)
+        print(f"DEBUG: Part {new_pk} verified.")
+    if new_pk is None:
+        return  # If deleted and not recreated yet, but since we deleted and then create in the else, it should be fine
     # Push suppliers if purchaseable
     if data.get("purchaseable", False):
         suppliers = data.get("suppliers", [])
