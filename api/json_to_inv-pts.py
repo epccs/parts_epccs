@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-pts.py
-# version: 2025-11-18-v3
+# version: 2025-11-18-v4
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/pts/<level>/ to InvenTree, level by level.
 #
@@ -406,7 +406,7 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, level_dir=No
             print(f"DEBUG: SupplierPart {sp_pk} verified.")
             # Fetch existing price breaks
             existing_pbs = fetch_data(BASE_URL_PRICE_BREAK, params={"supplier_part": sp_pk})
-            existing_quantities = {pb['quantity'] for pb in existing_pbs}
+            existing_by_quantity = {pb['quantity']: pb for pb in existing_pbs}
             # De-duplicate input price breaks
             unique_pbs = {}
             for pb in supplier.get("price_breaks", []):
@@ -417,11 +417,12 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, level_dir=No
                     print(f"DEBUG: Duplicate quantity {q} in input data for SupplierPart {sp_pk}, keeping first.")
             # Create price breaks, skipping existing
             for q, pb in unique_pbs.items():
-                if q in existing_quantities:
-                    print(f"DEBUG: Skipping existing quantity {q} for SupplierPart {sp_pk}")
+                if q in existing_by_quantity:
+                    existing_pb = existing_by_quantity[q]
+                    print(f"DEBUG: Skipping existing quantity {q} for SupplierPart {sp_pk}, existing price: {existing_pb['price']} {existing_pb['price_currency']}")
                     continue
                 pb_payload = {
-                    "part": sp_pk,
+                    "supplier_part": sp_pk,
                     "quantity": q,
                     "price": pb.get("price", 0.0),
                     "price_currency": pb.get("price_currency", "")
