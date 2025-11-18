@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-pts.py
-# version: 2025-11-18-v5
+# version: 2025-11-18-v6
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/pts/<level>/ to InvenTree, level by level.
 #
@@ -11,6 +11,7 @@
 # * --force-ipn -> generate IPN from name when missing
 # * --force -> delete existing part (name + revision)
 # * --clean-dependencies -> delete BOM/stock/etc. (with confirmation)
+# * --force-price -> delete existing price breaks before pushing new ones
 # * .bom.json pushed only if exists
 # * pushes suppliers/manufacturers/price breaks if purchaseable
 # * Uses a cache for part lookups to improve performance
@@ -236,7 +237,7 @@ def parse_filename(filepath):
 # ----------------------------------------------------------------------
 # Push one part
 # ----------------------------------------------------------------------
-def push_part(part_path, force_ipn=False, force=False, clean=False, level_dir=None, cache=None):
+def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=False, level_dir=None, cache=None):
     print(f"DEBUG: Pushing {part_path}")
     name, rev_from_file = parse_filename(part_path)
     if not name:
@@ -406,7 +407,13 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, level_dir=No
             print(f"DEBUG: SupplierPart {sp_pk} verified.")
             # Fetch existing price breaks
             existing_pbs = fetch_data(BASE_URL_PRICE_BREAK, params={"supplier_part": sp_pk})
-            existing_by_quantity = {pb['quantity']: pb for pb in existing_pbs}
+            if force_price:
+                for pb in existing_pbs:
+                    requests.delete(f"{BASE_URL_PRICE_BREAK}{pb['pk']}/", headers=HEADERS)
+                print(f"DEBUG: Deleted all existing price breaks for SupplierPart {sp_pk}")
+                existing_by_quantity = {}
+            else:
+                existing_by_quantity = {pb['quantity']: pb for pb in existing_pbs}
             # De-duplicate input price breaks
             unique_pbs = {}
             for pb in supplier.get("price_breaks", []):
@@ -529,6 +536,8 @@ def main():
                         help="Delete existing part (name+revision) before push")
     parser.add_argument("--clean-dependencies", action="store_true",
                         help="Delete dependencies (requires two confirmations)")
+    parser.add_argument("--force-price", action="store_true",
+                        help="Delete existing price breaks before pushing new ones")
     args = parser.parse_args()
     if not TOKEN:
         raise Exception("INVENTREE_TOKEN not set")
@@ -583,6 +592,6 @@ def main():
                 print(f"WARNING for level {level} {key}: multiple files: {files_str}. Processing anyway.")
         for key, flist in key_to_files.items():
             for f, rev_from_file in flist:
-                push_part(f, args.force_ipn, args.force, args.clean_dependencies, level_dir, cache)
+                push_part(f, args.force_ipn, args.force, args.clean_dependencies, args.force_price, level_dir, cache)
 if __name__ == "__main__":
     main()
