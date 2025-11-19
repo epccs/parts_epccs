@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-pts.py
-# version: 2025-11-18-v16
+# version: 2025-11-18-v17
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/pts/<level>/ to InvenTree, level by level.
 #
@@ -212,7 +212,7 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
     if data.get("purchaseable", False):
         for supplier in data.get("suppliers", []):
             supplier_name = sanitize_company_name(supplier["supplier_name"])
-            suppliers = [s for s in fetch_all(BASE_URL_COMPANY, {"name": supplier_name, "is_supplier": True}, api_print) if s["name"] == supplier_name]
+            suppliers = [s for s in fetch_all(BASE_URL_COMPANY + f"?name={supplier_name}&is_supplier=True", api_print=api_print) if s["name"] == supplier_name]
             if not suppliers:
                 print(f"ERROR: Supplier '{supplier_name}' not found")
                 sys.exit(1)
@@ -222,10 +222,10 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
             mp_pk = None
             if "manufacturer_name" in supplier:
                 man_name = sanitize_company_name(supplier["manufacturer_name"])
-                mans = [m for m in fetch_all(BASE_URL_COMPANY, {"name": man_name, "is_manufacturer": True}, api_print) if m["name"] == man_name]
+                mans = [m for m in fetch_all(BASE_URL_COMPANY + f"?name={man_name}&is_manufacturer=True", api_print=api_print) if m["name"] == man_name]
                 if mans:
                     man_pk = mans[0]["pk"]
-                    mp_existing = fetch_all(BASE_URL_MANUFACTURER_PART, {"part": new_pk, "manufacturer": man_pk}, api_print)
+                    mp_existing = fetch_all(BASE_URL_MANUFACTURER_PART + f"?part={new_pk}&manufacturer={man_pk}", api_print=api_print)
                     if mp_existing:
                         mp_pk = mp_existing[0]["pk"]
                     else:
@@ -239,7 +239,7 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
                         mp_pk = api_post(BASE_URL_MANUFACTURER_PART, mp_payload, api_print)["pk"]
 
             # SupplierPart
-            sp_existing = fetch_all(BASE_URL_SUPPLIER_PARTS, {"part": new_pk, "supplier": supplier_pk, "SKU": supplier.get("SKU", "")}, api_print)
+            sp_existing = fetch_all(BASE_URL_SUPPLIER_PARTS + f"?part={new_pk}&supplier={supplier_pk}&SKU={supplier.get('SKU', '')}", api_print=api_print)
             if sp_existing:
                 sp_pk = sp_existing[0]["pk"]
             else:
@@ -346,7 +346,6 @@ def main():
         cache[p["name"]].append(p)
     print(f"DEBUG: Cached {len(all_parts)} parts")
 
-    # Pre-fetch all price breaks once – avoids broken ?supplier_part= filter
     print("DEBUG: Fetching all price breaks...")
     all_price_breaks = fetch_all(BASE_URL_PRICE_BREAK, api_print=args.api_print)
     print(f"DEBUG: Fetched {len(all_price_breaks)} price breaks")
