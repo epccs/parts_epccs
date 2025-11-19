@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-pts.py
-# version: 2025-11-18-v15
+# version: 2025-11-18-v16
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/pts/<level>/ to InvenTree, level by level.
 #
@@ -66,7 +66,8 @@ def fetch_all(url, api_print=False):
             raise Exception(f"API error {r.status_code}: {r.text}")
         data = r.json()
         if api_print and "results" in data:
-            print(f"Response: {json.dumps(data['results'][:5], indent=2)} {'...' if len(data['results']) > 5 else ''}")
+            preview = json.dumps(data["results"][:3], indent=2)
+            print(f"Response (first 3): {preview} {'...' if len(data['results']) > 3 else ''}")
         if isinstance(data, dict) and "results" in data:
             items.extend(data["results"])
             url = data.get("next")
@@ -139,9 +140,6 @@ def parse_filename(filepath):
         return name, rev
     return name_part, None
 
-# ----------------------------------------------------------------------
-# Part cache
-# ----------------------------------------------------------------------
 def check_part_exists(cache, name, revision=None, ipn=None):
     candidates = cache.get(name, [])
     results = []
@@ -220,7 +218,7 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
                 sys.exit(1)
             supplier_pk = suppliers[0]["pk"]
 
-            # ManufacturerPart
+            # ManufacturerPart (optional)
             mp_pk = None
             if "manufacturer_name" in supplier:
                 man_name = sanitize_company_name(supplier["manufacturer_name"])
@@ -272,7 +270,7 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
                         print(f"DEBUG: Skipping unchanged quantity {q}")
                         continue
                     pb_payload = {
-                        "part": sp_pk,  # current quirk – keep until fixed
+                        "part": sp_pk,  # current InvenTree quirk – keep until fixed
                         "price": price,
                         "price_currency": currency
                     }
@@ -280,7 +278,7 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
                     print(f"DEBUG: Updated quantity {q} → {price} {currency}")
                 else:
                     pb_payload = {
-                        "part": sp_pk,  # current quirk
+                        "part": sp_pk,  # current InvenTree quirk
                         "quantity": q,
                         "price": price,
                         "price_currency": currency
