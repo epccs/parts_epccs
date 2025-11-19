@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-pts.py
-# version: 2025-11-18-v13
+# version: 2025-11-18-v14
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/pts/<level>/ to InvenTree, level by level.
 #
@@ -64,7 +64,14 @@ def api_get(url, params=None, api_print=False):
     r = requests.get(url, headers=HEADERS, params=params or {})
     if r.status_code != 200:
         raise Exception(f"API error {r.status_code}: {r.text}")
-    return r.json()
+    data = r.json()
+    if api_print:
+        # Truncate large responses
+        preview = json.dumps(data, indent=2)
+        if len(preview) > 1000:
+            preview = preview[:1000] + "\n... (truncated)"
+        print(f"Response: {preview}")
+    return data
 
 def api_post(url, payload, api_print=False):
     if api_print:
@@ -220,6 +227,7 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
                 sys.exit(1)
             supplier_pk = suppliers[0]["pk"]
 
+            # ManufacturerPart (optional)
             mp_pk = None
             if "manufacturer_name" in supplier:
                 man_name = sanitize_company_name(supplier["manufacturer_name"])
@@ -239,6 +247,7 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
                         }
                         mp_pk = api_post(BASE_URL_MANUFACTURER_PART, mp_payload, api_print)["pk"]
 
+            # SupplierPart
             sp_existing = fetch_data(BASE_URL_SUPPLIER_PARTS, {"part": new_pk, "supplier": supplier_pk, "SKU": supplier.get("SKU", "")}, api_print)
             if sp_existing:
                 sp_pk = sp_existing[0]["pk"]
@@ -255,32 +264,36 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
                 }
                 sp_pk = api_post(BASE_URL_SUPPLIER_PARTS, sp_payload, api_print)["pk"]
 
+            # Price breaks - NOW USING PATCH TO UPDATE EXISTING
             existing_pbs = fetch_data(BASE_URL_PRICE_BREAK, {"supplier_part": sp_pk}, api_print)
-            if force_price:
-                for pb in existing_pbs:
-                    api_delete(f"{BASE_URL_PRICE_BREAK}{pb['pk']}/", api_print)
-                print(f"DEBUG: Deleted all price breaks for SupplierPart {sp_pk}")
-                existing_by_quantity = {}
-            else:
-                existing_by_quantity = {pb["quantity"]: pb for pb in existing_pbs}
+            existing_by_quantity = {pb["quantity"]: pb for pb in existing_pbs}
 
             for pb in supplier.get("price_breaks", []):
                 q = pb.get("quantity", 0)
                 price = pb.get("price", 0.0)
                 currency = pb.get("price_currency", "")
-                if q in existing_by_quantity:
-                    print(f"DEBUG: Skipping existing quantity {q}")
-                    continue
 
-                # CURRENT INVENTREE QUIRK: "part" field must contain SupplierPart PK
-                pb_payload = {
-                    "part": sp_pk,                    # ← quirk – should be "supplier_part" in future
-                    "quantity": q,
-                    "price": price,
-                    "price_currency": currency
-                }
-                api_post(BASE_URL_PRICE_BREAK, pb_payload, api_print)
-                print(f"DEBUG: Created quantity {q} price {price} {currency}")
+                if q in existing_by_quantity:
+                    existing_pb = existing_by_quantity[q]
+                    if existing_pb["price"] == price and existing_pb["price_currency"] == currency:
+                        print(f"DEBUG: Skipping unchanged quantity {q}")
+                        continue
+                    pb_payload = {
+                        "part": sp_pk,  # current InvenTree quirk
+                        "price": price,
+                        "price_currency": currency
+                    }
+                    api_patch(f"{BASE_URL_PRICE_BREAK}{existing_pb['pk']}/", pb_payload, api_print)
+                    print(f"DEBUG: Updated quantity {q} price {price} {currency}")
+                else:
+                    pb_payload = {
+                        "part": sp_pk,  # current InvenTree quirk
+                        "quantity": q,
+                        "price": price,
+                        "price_currency": currency
+                    }
+                    api_post(BASE_URL_PRICE_BREAK, pb_payload, api_print)
+                    print(f"DEBUG: Created quantity {q} price {price} {currency}")
 
     # BOM
     bom_path = part_path[:-5] + ".bom.json"
@@ -332,7 +345,7 @@ def main():
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--clean-dependencies", action="store_true")
     parser.add_argument("--force-price", action="store_true")
-    parser.add_argument("--api-print", action="store_true", help="Print all API calls and payloads (no headers)")
+    parser.add_argument("--api-print", action="store_true", help="Print all API calls and GET responses")
     args = parser.parse_args()
 
     print("DEBUG: Building part cache...")
