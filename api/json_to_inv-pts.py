@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-pts.py
-# version: 2025-11-18-v11
+# version: 2025-11-18-v12
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/pts/<level>/ to InvenTree, level by level.
 #
@@ -33,9 +33,6 @@ import sys
 import re
 from collections import defaultdict
 
-# ----------------------------------------------------------------------
-# Configuration
-# ----------------------------------------------------------------------
 BASE_URL = os.getenv("INVENTREE_URL").rstrip("/")
 BASE_URL_PARTS = f"{BASE_URL}/api/part/"
 BASE_URL_CATEGORIES = f"{BASE_URL}/api/part/category/"
@@ -52,9 +49,6 @@ HEADERS = {
     "Accept": "application/json",
 }
 
-# ----------------------------------------------------------------------
-# Helpers
-# ----------------------------------------------------------------------
 def fetch_data(url, params=None):
     items = []
     while url:
@@ -110,9 +104,6 @@ def parse_filename(filepath):
         return name, rev
     return name_part, None
 
-# ----------------------------------------------------------------------
-# Part cache
-# ----------------------------------------------------------------------
 def check_part_exists(cache, name, revision=None, ipn=None):
     candidates = cache.get(name, [])
     results = []
@@ -121,9 +112,6 @@ def check_part_exists(cache, name, revision=None, ipn=None):
             results.append(res)
     return results
 
-# ----------------------------------------------------------------------
-# Main push function
-# ----------------------------------------------------------------------
 def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=False, level_dir=None, cache=None):
     print(f"DEBUG: Pushing {part_path}")
     name, rev_from_file = parse_filename(part_path)
@@ -168,9 +156,8 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
             requests.delete(f"{BASE_URL_PARTS}{p['pk']}/", headers=HEADERS)
             cache[name] = [c for c in cache[name] if c["pk"] != p["pk"]]
     if existing and not force:
-        print(f"DEBUG: Part exists – using PK {existing[0]['pk']}")
+        print(f"DEBUG: Part exists - using PK {existing[0]['pk']}")
         new_pk = existing[0]["pk"]
-        # Refresh cache
         fresh = requests.get(f"{BASE_URL_PARTS}{new_pk}/", headers=HEADERS).json()
         cache[name] = [fresh]
     else:
@@ -196,7 +183,7 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
                 sys.exit(1)
             supplier_pk = suppliers[0]["pk"]
 
-            # ManufacturerPart
+            # ManufacturerPart (optional)
             mp_pk = None
             if "manufacturer_name" in supplier:
                 man_name = sanitize_company_name(supplier["manufacturer_name"])
@@ -241,7 +228,9 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
                     sys.exit(1)
                 sp_pk = sp_r.json()["pk"]
 
-            # Price breaks - FINAL FIX
+            # Price breaks - CURRENT INVENTREE QUIRK
+            # The API expects the field name "part" but it must contain the SupplierPart PK!
+            # When InvenTree fixes this, change "part": sp_pk -> "supplier_part": sp_pk
             existing_pbs = fetch_data(BASE_URL_PRICE_BREAK, {"supplier_part": sp_pk})
             if force_price:
                 for pb in existing_pbs:
@@ -260,7 +249,7 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
                     continue
 
                 pb_payload = {
-                    "supplier_part": sp_pk,   # ONLY this field - no "part"!
+                    "part": sp_pk,                    # ← CURRENT QUIRK: should be "supplier_part" in future
                     "quantity": q,
                     "price": price,
                     "price_currency": currency
@@ -271,7 +260,7 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
                     print(f"Payload: {json.dumps(pb_payload, indent=4)}")
                     print(f"ERROR: Failed to create price break: {r.text}")
                     sys.exit(1)
-                print(f"DEBUG: Created quantity {q} → {price} {currency}")
+                print(f"DEBUG: Created quantity {q} price {price} {currency}")
 
     # BOM
     bom_path = part_path[:-5] + ".bom.json"
@@ -279,9 +268,6 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
         print(f"DEBUG: Pushing BOM from {bom_path}")
         push_bom(new_pk, bom_path, cache=cache)
 
-# ----------------------------------------------------------------------
-# BOM push (unchanged)
-# ----------------------------------------------------------------------
 def push_bom(parent_pk, bom_path, level=0, cache=None):
     indent = " " * level
     with open(bom_path, "r", encoding="utf-8") as f:
@@ -291,16 +277,18 @@ def push_bom(parent_pk, bom_path, level=0, cache=None):
 
     for node in tree:
         qty = node.get("quantity", 1)
+        note = node.get("note", "")
         sub_name = node["sub_part"]["name"]
         sub_ipn = node["sub_part"].get("IPN", "")
+
         sub_parts = check_part_exists(cache, sub_name, None, sub_ipn if sub_ipn else None)
         if not sub_parts:
-            print(f"{indent}WARNING: Sub-part '{sub_name}' not found – skipping")
+            print(f"{indent}WARNING: Sub-part '{sub_name}' not found - skipping")
             continue
         sub_pk = sub_parts[0]["pk"]
 
         existing = [b for b in existing_boms if b["sub_part"] == sub_pk]
-        payload = {"part": parent_pk, "sub_part": sub_pk, "quantity": qty, "note": node.get("note", "")}
+        payload = {"part": parent_pk, "sub_part": sub_pk, "quantity": qty, "note": note}
 
         if existing:
             r = requests.patch(f"{BASE_URL_BOM}{existing[0]['pk']}/", headers=HEADERS, json=payload)
@@ -316,9 +304,6 @@ def push_bom(parent_pk, bom_path, level=0, cache=None):
         else:
             print(f"{indent}ERROR: BOM line failed: {r.text}")
 
-# ----------------------------------------------------------------------
-# Main
-# ----------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("patterns", nargs="*", default=["**/*"])
