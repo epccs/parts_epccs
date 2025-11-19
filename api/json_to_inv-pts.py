@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-pts.py
-# version: 2025-11-18-v12
+# version: 2025-11-18-v13
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/pts/<level>/ to InvenTree, level by level.
 #
@@ -12,6 +12,7 @@
 # * --force -> delete existing part (name + revision)
 # * --clean-dependencies -> delete BOM/stock/etc. (with confirmation)
 # * --force-price -> delete existing price breaks before pushing new ones
+# * --api-print: prints every API call (URL + payload) without Authorization header
 # * .bom.json pushed only if exists
 # * pushes suppliers/manufacturers/price breaks if purchaseable
 # * Uses a cache for part lookups to improve performance
@@ -33,6 +34,9 @@ import sys
 import re
 from collections import defaultdict
 
+# ----------------------------------------------------------------------
+# Configuration
+# ----------------------------------------------------------------------
 BASE_URL = os.getenv("INVENTREE_URL").rstrip("/")
 BASE_URL_PARTS = f"{BASE_URL}/api/part/"
 BASE_URL_CATEGORIES = f"{BASE_URL}/api/part/category/"
@@ -49,13 +53,50 @@ HEADERS = {
     "Accept": "application/json",
 }
 
-def fetch_data(url, params=None):
+# ----------------------------------------------------------------------
+# API helpers with optional printing
+# ----------------------------------------------------------------------
+def api_get(url, params=None, api_print=False):
+    if api_print:
+        print(f"API GET: {url}")
+        if params:
+            print(f"Params: {params}")
+    r = requests.get(url, headers=HEADERS, params=params or {})
+    if r.status_code != 200:
+        raise Exception(f"API error {r.status_code}: {r.text}")
+    return r.json()
+
+def api_post(url, payload, api_print=False):
+    if api_print:
+        print(f"API POST: {url}")
+        print(f"Payload: {json.dumps(payload, indent=4)}")
+    r = requests.post(url, headers=HEADERS, json=payload)
+    if r.status_code not in (200, 201):
+        print(f"ERROR {r.status_code}: {r.text}")
+        sys.exit(1)
+    return r.json()
+
+def api_patch(url, payload, api_print=False):
+    if api_print:
+        print(f"API PATCH: {url}")
+        print(f"Payload: {json.dumps(payload, indent=4)}")
+    r = requests.patch(url, headers=HEADERS, json=payload)
+    if r.status_code not in (200, 201):
+        print(f"ERROR {r.status_code}: {r.text}")
+        sys.exit(1)
+    return r.json()
+
+def api_delete(url, api_print=False):
+    if api_print:
+        print(f"API DELETE: {url}")
+    r = requests.delete(url, headers=HEADERS)
+    if r.status_code not in (200, 201, 204):
+        print(f"ERROR {r.status_code}: {r.text}")
+
+def fetch_data(url, params=None, api_print=False):
     items = []
     while url:
-        r = requests.get(url, headers=HEADERS, params=params or {})
-        if r.status_code != 200:
-            raise Exception(f"API error {r.status_code}: {r.text}")
-        data = r.json()
+        data = api_get(url, params, api_print)
         if isinstance(data, dict) and "results" in data:
             items.extend(data["results"])
             url = data.get("next")
@@ -64,6 +105,9 @@ def fetch_data(url, params=None):
             url = None
     return items
 
+# ----------------------------------------------------------------------
+# Helpers
+# ----------------------------------------------------------------------
 def sanitize_company_name(name):
     return re.sub(r'[<>:"/\\|?*]', '_', name.replace(' ', '_').replace('.', '').strip())
 
@@ -71,10 +115,7 @@ def check_category_exists(name, parent_pk=None):
     params = {"name": name}
     if parent_pk is not None:
         params["parent"] = parent_pk
-    r = requests.get(BASE_URL_CATEGORIES, headers=HEADERS, params=params)
-    if r.status_code != 200:
-        return []
-    data = r.json()
+    data = api_get(BASE_URL_CATEGORIES, params)
     return data.get("results", data) if isinstance(data, dict) else data
 
 def create_category_hierarchy(folder_path, start_dir, parent_pk=None):
@@ -88,10 +129,7 @@ def create_category_hierarchy(folder_path, start_dir, parent_pk=None):
             cur = existing[0]["pk"]
             continue
         payload = {"name": name, "parent": cur}
-        r = requests.post(BASE_URL_CATEGORIES, headers=HEADERS, json=payload)
-        if r.status_code != 201:
-            raise Exception(f"Create category failed: {r.text}")
-        cur = r.json()["pk"]
+        cur = api_post(BASE_URL_CATEGORIES, payload)["pk"]
     return cur
 
 def parse_filename(filepath):
@@ -112,7 +150,10 @@ def check_part_exists(cache, name, revision=None, ipn=None):
             results.append(res)
     return results
 
-def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=False, level_dir=None, cache=None):
+# ----------------------------------------------------------------------
+# Push one part
+# ----------------------------------------------------------------------
+def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=False, api_print=False, level_dir=None, cache=None):
     print(f"DEBUG: Pushing {part_path}")
     name, rev_from_file = parse_filename(part_path)
     if not name:
@@ -153,19 +194,15 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
     if existing and force:
         for p in existing:
             print(f"DEBUG: --force: deleting part PK {p['pk']}")
-            requests.delete(f"{BASE_URL_PARTS}{p['pk']}/", headers=HEADERS)
+            api_delete(f"{BASE_URL_PARTS}{p['pk']}/", api_print)
             cache[name] = [c for c in cache[name] if c["pk"] != p["pk"]]
     if existing and not force:
-        print(f"DEBUG: Part exists - using PK {existing[0]['pk']}")
+        print(f"DEBUG: Part exists – using PK {existing[0]['pk']}")
         new_pk = existing[0]["pk"]
-        fresh = requests.get(f"{BASE_URL_PARTS}{new_pk}/", headers=HEADERS).json()
+        fresh = api_get(f"{BASE_URL_PARTS}{new_pk}/", api_print=api_print)
         cache[name] = [fresh]
     else:
-        r = requests.post(BASE_URL_PARTS, headers=HEADERS, json=payload)
-        if r.status_code != 201:
-            print(f"API call: POST {BASE_URL_PARTS}\nPayload: {json.dumps(payload, indent=4)}")
-            raise Exception(f"Create failed: {r.text}")
-        new = r.json()
+        new = api_post(BASE_URL_PARTS, payload, api_print)
         new_pk = new["pk"]
         print(f"DEBUG: Created '{new['name']}' (PK {new_pk})")
         cache[new["name"]].append(new)
@@ -177,20 +214,19 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
     if data.get("purchaseable", False):
         for supplier in data.get("suppliers", []):
             supplier_name = sanitize_company_name(supplier["supplier_name"])
-            suppliers = [s for s in fetch_data(BASE_URL_COMPANY, {"name": supplier_name, "is_supplier": True}) if s["name"] == supplier_name]
+            suppliers = [s for s in fetch_data(BASE_URL_COMPANY, {"name": supplier_name, "is_supplier": True}, api_print) if s["name"] == supplier_name]
             if not suppliers:
                 print(f"ERROR: Supplier '{supplier_name}' not found")
                 sys.exit(1)
             supplier_pk = suppliers[0]["pk"]
 
-            # ManufacturerPart (optional)
             mp_pk = None
             if "manufacturer_name" in supplier:
                 man_name = sanitize_company_name(supplier["manufacturer_name"])
-                mans = [m for m in fetch_data(BASE_URL_COMPANY, {"name": man_name, "is_manufacturer": True}) if m["name"] == man_name]
+                mans = [m for m in fetch_data(BASE_URL_COMPANY, {"name": man_name, "is_manufacturer": True}, api_print) if m["name"] == man_name]
                 if mans:
                     man_pk = mans[0]["pk"]
-                    mp_existing = fetch_data(BASE_URL_MANUFACTURER_PART, {"part": new_pk, "manufacturer": man_pk})
+                    mp_existing = fetch_data(BASE_URL_MANUFACTURER_PART, {"part": new_pk, "manufacturer": man_pk}, api_print)
                     if mp_existing:
                         mp_pk = mp_existing[0]["pk"]
                     else:
@@ -201,14 +237,9 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
                             "description": supplier.get("mp_description", ""),
                             "link": supplier.get("mp_link", "")
                         }
-                        mp_r = requests.post(BASE_URL_MANUFACTURER_PART, headers=HEADERS, json=mp_payload)
-                        if mp_r.status_code != 201:
-                            print(f"ERROR: ManufacturerPart create failed: {mp_r.text}")
-                            sys.exit(1)
-                        mp_pk = mp_r.json()["pk"]
+                        mp_pk = api_post(BASE_URL_MANUFACTURER_PART, mp_payload, api_print)["pk"]
 
-            # SupplierPart
-            sp_existing = fetch_data(BASE_URL_SUPPLIER_PARTS, {"part": new_pk, "supplier": supplier_pk, "SKU": supplier.get("SKU", "")})
+            sp_existing = fetch_data(BASE_URL_SUPPLIER_PARTS, {"part": new_pk, "supplier": supplier_pk, "SKU": supplier.get("SKU", "")}, api_print)
             if sp_existing:
                 sp_pk = sp_existing[0]["pk"]
             else:
@@ -222,19 +253,12 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
                     "note": supplier.get("note", ""),
                     "packaging": supplier.get("packaging", "")
                 }
-                sp_r = requests.post(BASE_URL_SUPPLIER_PARTS, headers=HEADERS, json=sp_payload)
-                if sp_r.status_code != 201:
-                    print(f"ERROR: SupplierPart create failed: {sp_r.text}")
-                    sys.exit(1)
-                sp_pk = sp_r.json()["pk"]
+                sp_pk = api_post(BASE_URL_SUPPLIER_PARTS, sp_payload, api_print)["pk"]
 
-            # Price breaks - CURRENT INVENTREE QUIRK
-            # The API expects the field name "part" but it must contain the SupplierPart PK!
-            # When InvenTree fixes this, change "part": sp_pk -> "supplier_part": sp_pk
-            existing_pbs = fetch_data(BASE_URL_PRICE_BREAK, {"supplier_part": sp_pk})
+            existing_pbs = fetch_data(BASE_URL_PRICE_BREAK, {"supplier_part": sp_pk}, api_print)
             if force_price:
                 for pb in existing_pbs:
-                    requests.delete(f"{BASE_URL_PRICE_BREAK}{pb['pk']}/", headers=HEADERS)
+                    api_delete(f"{BASE_URL_PRICE_BREAK}{pb['pk']}/", api_print)
                 print(f"DEBUG: Deleted all price breaks for SupplierPart {sp_pk}")
                 existing_by_quantity = {}
             else:
@@ -248,32 +272,31 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
                     print(f"DEBUG: Skipping existing quantity {q}")
                     continue
 
+                # CURRENT INVENTREE QUIRK: "part" field must contain SupplierPart PK
                 pb_payload = {
-                    "part": sp_pk,                    # ← CURRENT QUIRK: should be "supplier_part" in future
+                    "part": sp_pk,                    # ← quirk – should be "supplier_part" in future
                     "quantity": q,
                     "price": price,
                     "price_currency": currency
                 }
-                r = requests.post(BASE_URL_PRICE_BREAK, headers=HEADERS, json=pb_payload)
-                if r.status_code != 201:
-                    print(f"API call: POST {BASE_URL_PRICE_BREAK}")
-                    print(f"Payload: {json.dumps(pb_payload, indent=4)}")
-                    print(f"ERROR: Failed to create price break: {r.text}")
-                    sys.exit(1)
+                api_post(BASE_URL_PRICE_BREAK, pb_payload, api_print)
                 print(f"DEBUG: Created quantity {q} price {price} {currency}")
 
     # BOM
     bom_path = part_path[:-5] + ".bom.json"
     if os.path.exists(bom_path):
         print(f"DEBUG: Pushing BOM from {bom_path}")
-        push_bom(new_pk, bom_path, cache=cache)
+        push_bom(new_pk, bom_path, cache=cache, api_print=api_print)
 
-def push_bom(parent_pk, bom_path, level=0, cache=None):
+# ----------------------------------------------------------------------
+# BOM push
+# ----------------------------------------------------------------------
+def push_bom(parent_pk, bom_path, level=0, cache=None, api_print=False):
     indent = " " * level
     with open(bom_path, "r", encoding="utf-8") as f:
         tree = json.load(f)
 
-    existing_boms = fetch_data(f"{BASE_URL_BOM}?part={parent_pk}")
+    existing_boms = fetch_data(f"{BASE_URL_BOM}?part={parent_pk}", api_print=api_print)
 
     for node in tree:
         qty = node.get("quantity", 1)
@@ -283,7 +306,7 @@ def push_bom(parent_pk, bom_path, level=0, cache=None):
 
         sub_parts = check_part_exists(cache, sub_name, None, sub_ipn if sub_ipn else None)
         if not sub_parts:
-            print(f"{indent}WARNING: Sub-part '{sub_name}' not found - skipping")
+            print(f"{indent}WARNING: Sub-part '{sub_name}' not found – skipping")
             continue
         sub_pk = sub_parts[0]["pk"]
 
@@ -291,19 +314,17 @@ def push_bom(parent_pk, bom_path, level=0, cache=None):
         payload = {"part": parent_pk, "sub_part": sub_pk, "quantity": qty, "note": note}
 
         if existing:
-            r = requests.patch(f"{BASE_URL_BOM}{existing[0]['pk']}/", headers=HEADERS, json=payload)
+            api_patch(f"{BASE_URL_BOM}{existing[0]['pk']}/", payload, api_print)
             action = "UPDATED"
         else:
-            r = requests.post(BASE_URL_BOM, headers=HEADERS, json=payload)
+            api_post(BASE_URL_BOM, payload, api_print)
             action = "CREATED"
 
-        if r.status_code in (200, 201):
-            print(f"{indent}{action} BOM: {qty} × {sub_name} (sub_pk {sub_pk})")
-            if action == "CREATED":
-                existing_boms.append(r.json())
-        else:
-            print(f"{indent}ERROR: BOM line failed: {r.text}")
+        print(f"{indent}{action} BOM: {qty} × {sub_name} (sub_pk {sub_pk})")
 
+# ----------------------------------------------------------------------
+# Main
+# ----------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("patterns", nargs="*", default=["**/*"])
@@ -311,10 +332,11 @@ def main():
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--clean-dependencies", action="store_true")
     parser.add_argument("--force-price", action="store_true")
+    parser.add_argument("--api-print", action="store_true", help="Print all API calls and payloads (no headers)")
     args = parser.parse_args()
 
     print("DEBUG: Building part cache...")
-    all_parts = fetch_data(BASE_URL_PARTS)
+    all_parts = fetch_data(BASE_URL_PARTS, api_print=args.api_print)
     cache = defaultdict(list)
     for p in all_parts:
         cache[p["name"]].append(p)
@@ -328,7 +350,7 @@ def main():
     files = sorted({f for f in files if f.endswith(".json") and not f.endswith(".bom.json") and "category.json" not in f})
 
     for f in files:
-        push_part(f, args.force_ipn, args.force, args.clean_dependencies, args.force_price, root, cache)
+        push_part(f, args.force_ipn, args.force, args.clean_dependencies, args.force_price, args.api_print, root, cache)
 
 if __name__ == "__main__":
     main()
