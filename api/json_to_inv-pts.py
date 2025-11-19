@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-pts.py
-# version: 2025-11-18-v17
+# version: 2025-11-19 v1
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/pts/<level>/ to InvenTree, level by level.
 #
@@ -149,20 +149,18 @@ def check_part_exists(cache, name, revision=None, ipn=None):
     return results
 
 # ----------------------------------------------------------------------
-# Push one part
+# Push one base part + all its revisions
 # ----------------------------------------------------------------------
-def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=False, api_print=False, level_dir=None, cache=None, all_price_breaks=None):
-    print(f"DEBUG: Pushing {part_path}")
-    name, rev_from_file = parse_filename(part_path)
-    if not name:
-        return
+def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, force_price=False, api_print=False, level_dir=None, cache=None, all_price_breaks=None):
+    first_path, _ = grouped_files[0]
+    name, _ = parse_filename(first_path)
+    print(f"DEBUG: Pushing base part '{name}' with {len(grouped_files)} revision(s)")
 
-    with open(part_path, "r", encoding="utf-8") as f:
+    # Load common data from first file
+    with open(first_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     if isinstance(data, list):
         data = data[0]
-
-    revision = rev_from_file or data.get("revision", "")
 
     payload = {k: data.get(k) for k in [
         "name", "description", "IPN", "keywords", "units",
@@ -171,14 +169,12 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
     ] if k in data}
     payload["name"] = name
     payload["active"] = True
-    if revision:
-        payload["revision"] = revision
 
     if force_ipn and (not payload.get("IPN") or payload["IPN"].strip() == ""):
         payload["IPN"] = name[:50]
         print(f"DEBUG: Generated IPN -> {payload['IPN']}")
 
-    payload["category"] = create_category_hierarchy(os.path.dirname(part_path), level_dir)
+    payload["category"] = create_category_hierarchy(os.path.dirname(first_path), level_dir)
 
     variant_of_name = data.get("variant_of_name")
     if variant_of_name:
@@ -186,51 +182,82 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
         if variants:
             payload["variant_of"] = variants[0]["pk"]
 
-    existing = check_part_exists(cache, name, revision if revision else None, payload.get("IPN"))
+    # Check if base part exists (ignore revision)
+    existing_base = check_part_exists(cache, name, None, payload.get("IPN"))
 
-    new_pk = None
-    if existing and force:
-        for p in existing:
-            print(f"DEBUG: --force: deleting part PK {p['pk']}")
+    if existing_base and force:
+        for p in existing_base:
+            print(f"DEBUG: --force: deleting base part PK {p['pk']}")
             api_delete(f"{BASE_URL_PARTS}{p['pk']}/", api_print)
-            cache[name] = [c for c in cache[name] if c["pk"] != p["pk"]]
-    if existing and not force:
-        print(f"DEBUG: Part exists – using PK {existing[0]['pk']}")
-        new_pk = existing[0]["pk"]
-        fresh = requests.get(f"{BASE_URL_PARTS}{new_pk}/", headers=HEADERS).json()
-        cache[name] = [fresh]
+            cache[name] = []
+
+    if existing_base and not force:
+        print(f"DEBUG: Base part exists – reusing")
+        base_pk = existing_base[0]["pk"]
     else:
         new = api_post(BASE_URL_PARTS, payload, api_print)
-        new_pk = new["pk"]
-        print(f"DEBUG: Created '{new['name']}' (PK {new_pk})")
-        cache[new["name"]].append(new)
+        base_pk = new["pk"]
+        print(f"DEBUG: Created base part '{name}' (PK {base_pk})")
+        cache[name].append(new)
 
-    if new_pk is None:
-        return
+    # Now process each revision
+    for file_path, rev in grouped_files:
+        print(f"DEBUG: Processing revision '{rev or '(default)'}' from {file_path}")
+        with open(file_path, "r", encoding="utf-8") as f:
+            rev_data = json.load(f)
+        if isinstance(rev_data, list):
+            rev_data = rev_data[0]
 
-    # Suppliers & pricing
+        rev_payload = {
+            "name": name,
+            "revision": rev or "",
+            "active": True,
+        }
+
+        existing_rev = check_part_exists(cache, name, rev or "", payload.get("IPN"))
+
+        if existing_rev and force:
+            for p in existing_rev:
+                print(f"DEBUG: --force: deleting revision PK {p['pk']}")
+                api_delete(f"{BASE_URL_PARTS}{p['pk']}/", api_print)
+                cache[name] = [c for c in cache[name] if c["pk"] != p["pk"]]
+            existing_rev = []
+
+        if existing_rev:
+            print(f"DEBUG: Revision '{rev or '(default)'}' exists – skipping creation")
+            rev_pk = existing_rev[0]["pk"]
+        else:
+            rev_payload["variant_of"] = base_pk
+            new_rev = api_post(BASE_URL_PARTS, rev_payload, api_print)
+            rev_pk = new_rev["pk"]
+            print(f"DEBUG: Created revision '{rev or '(default)'}' (PK {rev_pk})")
+            cache[name].append(new_rev)
+
+        # Push suppliers/pricing/BOM for this revision file
+        push_revision_content(rev_pk, rev_data, force_price, api_print, cache, all_price_breaks)
+
+def push_revision_content(part_pk, data, force_price, api_print, cache, all_price_breaks):
     if data.get("purchaseable", False):
         for supplier in data.get("suppliers", []):
             supplier_name = sanitize_company_name(supplier["supplier_name"])
-            suppliers = [s for s in fetch_all(BASE_URL_COMPANY + f"?name={supplier_name}&is_supplier=True", api_print=api_print) if s["name"] == supplier_name]
+            suppliers = [s for s in fetch_all(BASE_URL_COMPANY, api_print=api_print) if s["name"] == supplier_name and s["is_supplier"]]
             if not suppliers:
                 print(f"ERROR: Supplier '{supplier_name}' not found")
                 sys.exit(1)
             supplier_pk = suppliers[0]["pk"]
 
-            # ManufacturerPart (optional)
             mp_pk = None
             if "manufacturer_name" in supplier:
                 man_name = sanitize_company_name(supplier["manufacturer_name"])
-                mans = [m for m in fetch_all(BASE_URL_COMPANY + f"?name={man_name}&is_manufacturer=True", api_print=api_print) if m["name"] == man_name]
+                mans = [m for m in fetch_all(BASE_URL_COMPANY, api_print=api_print) if m["name"] == man_name and m["is_manufacturer"]]
                 if mans:
                     man_pk = mans[0]["pk"]
-                    mp_existing = fetch_all(BASE_URL_MANUFACTURER_PART + f"?part={new_pk}&manufacturer={man_pk}", api_print=api_print)
+                    mp_existing = fetch_all(BASE_URL_MANUFACTURER_PART + f"?part={part_pk}", api_print=api_print)
                     if mp_existing:
                         mp_pk = mp_existing[0]["pk"]
                     else:
                         mp_payload = {
-                            "part": new_pk,
+                            "part": part_pk,
                             "manufacturer": man_pk,
                             "MPN": supplier.get("MPN", ""),
                             "description": supplier.get("mp_description", ""),
@@ -238,13 +265,12 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
                         }
                         mp_pk = api_post(BASE_URL_MANUFACTURER_PART, mp_payload, api_print)["pk"]
 
-            # SupplierPart
-            sp_existing = fetch_all(BASE_URL_SUPPLIER_PARTS + f"?part={new_pk}&supplier={supplier_pk}&SKU={supplier.get('SKU', '')}", api_print=api_print)
+            sp_existing = fetch_all(BASE_URL_SUPPLIER_PARTS + f"?part={part_pk}&supplier={supplier_pk}", api_print=api_print)
             if sp_existing:
                 sp_pk = sp_existing[0]["pk"]
             else:
                 sp_payload = {
-                    "part": new_pk,
+                    "part": part_pk,
                     "supplier": supplier_pk,
                     "manufacturer_part": mp_pk,
                     "SKU": supplier.get("SKU", ""),
@@ -255,7 +281,6 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
                 }
                 sp_pk = api_post(BASE_URL_SUPPLIER_PARTS, sp_payload, api_print)["pk"]
 
-            # Price breaks – FIXED: no ?supplier_part= filter, use global list + local filter
             sp_price_breaks = [pb for pb in all_price_breaks if pb["part"] == sp_pk]
             existing_by_quantity = {pb["quantity"]: pb for pb in sp_price_breaks}
 
@@ -270,7 +295,7 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
                         print(f"DEBUG: Skipping unchanged quantity {q}")
                         continue
                     pb_payload = {
-                        "part": sp_pk,  # current InvenTree quirk – keep until fixed
+                        "part": sp_pk,  # current InvenTree quirk
                         "price": price,
                         "price_currency": currency
                     }
@@ -286,11 +311,10 @@ def push_part(part_path, force_ipn=False, force=False, clean=False, force_price=
                     api_post(BASE_URL_PRICE_BREAK, pb_payload, api_print)
                     print(f"DEBUG: Created quantity {q} → {price} {currency}")
 
-    # BOM
-    bom_path = part_path[:-5] + ".bom.json"
+    bom_path = part_path[:-5] + ".bom.json"  # Note: part_path not in scope — reconstruct if needed
     if os.path.exists(bom_path):
         print(f"DEBUG: Pushing BOM from {bom_path}")
-        push_bom(new_pk, bom_path, cache=cache, api_print=api_print)
+        push_bom(part_pk, bom_path, cache=cache, api_print=api_print)
 
 # ----------------------------------------------------------------------
 # BOM push
@@ -327,7 +351,7 @@ def push_bom(parent_pk, bom_path, level=0, cache=None, api_print=False):
         print(f"{indent}{action} BOM: {qty} × {sub_name} (sub_pk {sub_pk})")
 
 # ----------------------------------------------------------------------
-# Main
+# Main – groups files by base name
 # ----------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser()
@@ -357,8 +381,15 @@ def main():
         files.extend(glob.glob(os.path.join(root, pat + ".*json"), recursive=True))
     files = sorted({f for f in files if f.endswith(".json") and not f.endswith(".bom.json") and "category.json" not in f})
 
+    # Group by base name
+    grouped = defaultdict(list)
     for f in files:
-        push_part(f, args.force_ipn, args.force, args.clean_dependencies, args.force_price, args.api_print, root, cache, all_price_breaks)
+        name, rev = parse_filename(f)
+        if name:
+            grouped[name].append((f, rev))
+
+    for name, group in grouped.items():
+        push_base_part(group, args.force_ipn, args.force, args.clean_dependencies, args.force_price, args.api_print, root, cache, all_price_breaks)
 
 if __name__ == "__main__":
     main()
