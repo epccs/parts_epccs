@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-pts.py
-# version: 2025-11-19 v1
+# version: 2025-11-19 v2
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/pts/<level>/ to InvenTree, level by level.
 #
@@ -200,7 +200,7 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
         print(f"DEBUG: Created base part '{name}' (PK {base_pk})")
         cache[name].append(new)
 
-    # Now process each revision
+    # Process each revision
     for file_path, rev in grouped_files:
         print(f"DEBUG: Processing revision '{rev or '(default)'}' from {file_path}")
         with open(file_path, "r", encoding="utf-8") as f:
@@ -234,9 +234,9 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
             cache[name].append(new_rev)
 
         # Push suppliers/pricing/BOM for this revision file
-        push_revision_content(rev_pk, rev_data, force_price, api_print, cache, all_price_breaks)
+        push_revision_content(rev_pk, rev_data, file_path, force_price, api_print, cache, all_price_breaks)
 
-def push_revision_content(part_pk, data, force_price, api_print, cache, all_price_breaks):
+def push_revision_content(part_pk, data, file_path, force_price, api_print, cache, all_price_breaks):
     if data.get("purchaseable", False):
         for supplier in data.get("suppliers", []):
             supplier_name = sanitize_company_name(supplier["supplier_name"])
@@ -311,7 +311,8 @@ def push_revision_content(part_pk, data, force_price, api_print, cache, all_pric
                     api_post(BASE_URL_PRICE_BREAK, pb_payload, api_print)
                     print(f"DEBUG: Created quantity {q} → {price} {currency}")
 
-    bom_path = part_path[:-5] + ".bom.json"  # Note: part_path not in scope — reconstruct if needed
+    # BOM – reconstruct path from file_path
+    bom_path = file_path[:-5] + ".bom.json"
     if os.path.exists(bom_path):
         print(f"DEBUG: Pushing BOM from {bom_path}")
         push_bom(part_pk, bom_path, cache=cache, api_print=api_print)
