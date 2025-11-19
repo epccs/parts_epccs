@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-pts.py
-# version: 2025-11-19 v2
+# version: 2025-11-19 v4
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/pts/<level>/ to InvenTree, level by level.
 #
@@ -34,9 +34,6 @@ import sys
 import re
 from collections import defaultdict
 
-# ----------------------------------------------------------------------
-# Configuration
-# ----------------------------------------------------------------------
 BASE_URL = os.getenv("INVENTREE_URL").rstrip("/")
 BASE_URL_PARTS = f"{BASE_URL}/api/part/"
 BASE_URL_CATEGORIES = f"{BASE_URL}/api/part/category/"
@@ -65,9 +62,6 @@ def fetch_all(url, api_print=False):
         if r.status_code != 200:
             raise Exception(f"API error {r.status_code}: {r.text}")
         data = r.json()
-        if api_print and "results" in data:
-            preview = json.dumps(data["results"][:3], indent=2)
-            print(f"Response (first 3): {preview} {'...' if len(data['results']) > 3 else ''}")
         if isinstance(data, dict) and "results" in data:
             items.extend(data["results"])
             url = data.get("next")
@@ -144,7 +138,12 @@ def check_part_exists(cache, name, revision=None, ipn=None):
     candidates = cache.get(name, [])
     results = []
     for res in candidates:
-        if (revision is None or res.get('revision') == revision) and (ipn is None or res.get('IPN') == ipn):
+        match = True
+        if revision is not None and res.get('revision') != revision:
+            match = False
+        if ipn is not None and res.get('IPN') != ipn:
+            match = False
+        if match:
             results.append(res)
     return results
 
@@ -156,7 +155,7 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
     name, _ = parse_filename(first_path)
     print(f"DEBUG: Pushing base part '{name}' with {len(grouped_files)} revision(s)")
 
-    # Load common data from first file
+    # Load common data
     with open(first_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     if isinstance(data, list):
@@ -176,13 +175,12 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
 
     payload["category"] = create_category_hierarchy(os.path.dirname(first_path), level_dir)
 
-    variant_of_name = data.get("variant_of_name")
-    if variant_of_name:
-        variants = check_part_exists(cache, variant_of_name)
+    # Only set variant_of if explicitly defined in the first file
+    if data.get("variant_of_name"):
+        variants = check_part_exists(cache, data["variant_of_name"])
         if variants:
             payload["variant_of"] = variants[0]["pk"]
 
-    # Check if base part exists (ignore revision)
     existing_base = check_part_exists(cache, name, None, payload.get("IPN"))
 
     if existing_base and force:
@@ -214,6 +212,13 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
             "active": True,
         }
 
+        # Only set variant_of if this specific revision has variant_of_name
+        if rev_data.get("variant_of_name"):
+            variants = check_part_exists(cache, rev_data["variant_of_name"])
+            if variants:
+                rev_payload["variant_of"] = variants[0]["pk"]
+        # Else: do NOT set variant_of -> standalone revision
+
         existing_rev = check_part_exists(cache, name, rev or "", payload.get("IPN"))
 
         if existing_rev and force:
@@ -227,15 +232,16 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
             print(f"DEBUG: Revision '{rev or '(default)'}' exists – skipping creation")
             rev_pk = existing_rev[0]["pk"]
         else:
-            rev_payload["variant_of"] = base_pk
             new_rev = api_post(BASE_URL_PARTS, rev_payload, api_print)
             rev_pk = new_rev["pk"]
             print(f"DEBUG: Created revision '{rev or '(default)'}' (PK {rev_pk})")
             cache[name].append(new_rev)
 
-        # Push suppliers/pricing/BOM for this revision file
         push_revision_content(rev_pk, rev_data, file_path, force_price, api_print, cache, all_price_breaks)
 
+# ----------------------------------------------------------------------
+# Push suppliers, pricing, BOM for a revision
+# ----------------------------------------------------------------------
 def push_revision_content(part_pk, data, file_path, force_price, api_print, cache, all_price_breaks):
     if data.get("purchaseable", False):
         for supplier in data.get("suppliers", []):
@@ -295,23 +301,22 @@ def push_revision_content(part_pk, data, file_path, force_price, api_print, cach
                         print(f"DEBUG: Skipping unchanged quantity {q}")
                         continue
                     pb_payload = {
-                        "part": sp_pk,  # current InvenTree quirk
+                        "part": sp_pk,   # InvenTree quirk: price_breaks need suplier_part pk
                         "price": price,
                         "price_currency": currency
                     }
                     api_patch(f"{BASE_URL_PRICE_BREAK}{existing_pb['pk']}/", pb_payload, api_print)
-                    print(f"DEBUG: Updated quantity {q} → {price} {currency}")
+                    print(f"DEBUG: Updated quantity {q} -> {price} {currency}")
                 else:
                     pb_payload = {
-                        "part": sp_pk,  # current InvenTree quirk
+                        "part": sp_pk,  # InvenTree quirk: price_breaks need suplier_part pk
                         "quantity": q,
                         "price": price,
                         "price_currency": currency
                     }
                     api_post(BASE_URL_PRICE_BREAK, pb_payload, api_print)
-                    print(f"DEBUG: Created quantity {q} → {price} {currency}")
+                    print(f"DEBUG: Created quantity {q} -> {price} {currency}")
 
-    # BOM – reconstruct path from file_path
     bom_path = file_path[:-5] + ".bom.json"
     if os.path.exists(bom_path):
         print(f"DEBUG: Pushing BOM from {bom_path}")
@@ -352,7 +357,7 @@ def push_bom(parent_pk, bom_path, level=0, cache=None, api_print=False):
         print(f"{indent}{action} BOM: {qty} × {sub_name} (sub_pk {sub_pk})")
 
 # ----------------------------------------------------------------------
-# Main – groups files by base name
+# Main
 # ----------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser()
@@ -382,7 +387,6 @@ def main():
         files.extend(glob.glob(os.path.join(root, pat + ".*json"), recursive=True))
     files = sorted({f for f in files if f.endswith(".json") and not f.endswith(".bom.json") and "category.json" not in f})
 
-    # Group by base name
     grouped = defaultdict(list)
     for f in files:
         name, rev = parse_filename(f)
