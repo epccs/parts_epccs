@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-pts_to_json.py
-# version: 2025-11-20-v1
+# version: 2025-11-20-v2
 # --------------------------------------------------------------
 # Pull from inventree **all parts** (templates, assemblies, real parts)
 # -> data/pts/<level>/<category_path>/
@@ -65,7 +65,6 @@ def sanitize_part_name(name):
     return sanitized
 
 def sanitize_revision(rev):
-    """Sanitize revision string for filename."""
     if not rev:
         return ""
     rev = str(rev).strip()
@@ -110,7 +109,7 @@ def save_to_file(data, filepath):
         f.write("\n")
 
 # ----------------------------------------------------------------------
-# Category maps – sanitized pathstring
+# Category maps
 # ----------------------------------------------------------------------
 def build_category_maps(categories):
     pk_to_path = {}
@@ -150,7 +149,7 @@ def write_category_files(root_dir, pk_to_path, parent_to_subs):
         save_to_file(subs, os.path.join(dir_path, "category.json"))
 
 # ----------------------------------------------------------------------
-# BOM fetcher (returns tree and sub_pks)
+# BOM fetcher
 # ----------------------------------------------------------------------
 def fetch_bom(part_pk):
     bom_items = fetch_data(f"{BASE_URL_BOM}?part={part_pk}")
@@ -177,7 +176,7 @@ def fetch_bom(part_pk):
     return tree, sub_pks
 
 # ----------------------------------------------------------------------
-# Fetch and add supplier details
+# Supplier fetcher – now quiet about duplicates (they are harmless)
 # ----------------------------------------------------------------------
 def fetch_suppliers(part_pk, part_name):
     supplier_parts = fetch_data(BASE_URL_SUPPLIER_PARTS, params={"part": part_pk})
@@ -197,9 +196,9 @@ def fetch_suppliers(part_pk, part_name):
         for pb in price_breaks:
             q = pb.get('quantity', 0)
             pb_by_quantity[q].append(pb)
+
         for q, pbs in pb_by_quantity.items():
-            if len(pbs) > 1:
-                print(f"Found {len(pbs) - 1} duplicates for quantity {q} in SupplierPart for part '{part_name}' supplier '{sp_details['supplier_name']}'")
+            # Just pick the most recent one – suppress noisy warnings
             selected = max(pbs, key=lambda x: x.get('updated', ''))
             sp_details['price_breaks'].append({
                 "quantity": q,
@@ -207,20 +206,21 @@ def fetch_suppliers(part_pk, part_name):
                 "price_currency": selected.get('price_currency', '')
             })
         sp_details['price_breaks'].sort(key=lambda x: x['quantity'])
+
         if sp.get('manufacturer_part'):
-            mp_url = f"{BASE_URL_MANUFACTURER_PART}{sp['manufacturer_part']}/"
-            mp_resp = fetch_data(mp_url)
+            mp_resp = fetch_data(f"{BASE_URL_MANUFACTURER_PART}{sp['manufacturer_part']}/")
             if mp_resp:
                 mp = mp_resp[0] if isinstance(mp_resp, list) else mp_resp
                 sp_details['manufacturer_name'] = sanitize_company_name(mp.get('manufacturer_detail', {}).get('name', ''))
                 sp_details['MPN'] = mp.get('MPN', '')
                 sp_details['mp_description'] = mp.get('description', '')
                 sp_details['mp_link'] = mp.get('link', '')
+
         suppliers_list.append(sp_details)
     return suppliers_list
 
 # ----------------------------------------------------------------------
-# Compute part level (memoized recursion)
+# Level computation
 # ----------------------------------------------------------------------
 def get_level(pk, memo, deps):
     if pk in memo:
@@ -228,9 +228,7 @@ def get_level(pk, memo, deps):
     if not deps.get(pk):
         memo[pk] = 1
         return 1
-    max_dep_level = 0
-    for dep_pk in deps[pk]:
-        max_dep_level = max(max_dep_level, get_level(dep_pk, memo, deps))
+    max_dep_level = max((get_level(dep_pk, memo, deps) for dep_pk in deps[pk]), default=0)
     memo[pk] = 1 + max_dep_level
     return memo[pk]
 
@@ -252,14 +250,12 @@ def main():
     root_dir = "data/pts"
     os.makedirs(root_dir, exist_ok=True)
 
-    # 1. Categories
     print("DEBUG: Fetching categories...")
     categories = fetch_data(BASE_URL_CATEGORIES)
     pk_to_path, parent_to_subs = build_category_maps(categories)
     print("DEBUG: Writing category.json files...")
     write_category_files(root_dir, pk_to_path, parent_to_subs)
 
-    # 2. Compile patterns
     patterns = []
     if args.patterns:
         for raw in args.patterns:
@@ -270,12 +266,10 @@ def main():
             patterns.append(re.compile(regex, re.IGNORECASE))
         print(f"DEBUG: Filtering with {len(patterns)} patterns")
 
-    # 3. Fetch all parts
     print("DEBUG: Fetching all parts...")
     parts = fetch_data(BASE_URL_PARTS)
     all_parts = {part['pk']: part for part in parts if part.get('pk')}
 
-    # 4. Build dependency graph (deps[pk] = list of pks it depends on)
     deps = defaultdict(list)
     for pk, part in all_parts.items():
         if part.get('variant_of'):
@@ -286,12 +280,10 @@ def main():
             all_parts[pk]['bom_tree'] = bom_tree
             deps[pk].extend(bom_pks)
 
-    # 5. Compute levels for all parts
     level_memo = {}
     for pk in all_parts:
         get_level(pk, level_memo, deps)
 
-    # 6. Export filtered parts
     exported = 0
     for pk, part in all_parts.items():
         name = part.get("name")
@@ -301,7 +293,6 @@ def main():
             continue
 
         san_name = sanitize_part_name(name)
-        # Pattern filter
         if patterns and not any(p.search(san_name) for p in patterns):
             continue
 
@@ -311,17 +302,13 @@ def main():
             continue
 
         dir_parts = [sanitize_category_name(p) for p in pathstring.split("/")]
-
-        # Get level
         level = level_memo.get(pk, 1)
         level_dir = os.path.join(root_dir, str(level), *dir_parts)
 
-        # Handle revision
         revision = sanitize_revision(raw_rev)
         rev_suffix = f".{revision}" if revision else ""
         base_name = f"{san_name}{rev_suffix}"
 
-        # Fetch suppliers if purchaseable
         suppliers = fetch_suppliers(pk, name) if part.get("purchaseable", False) else []
 
         # Resolve variant_of with revision
@@ -341,7 +328,6 @@ def main():
                 v_rev_suffix = f".{v_rev}" if v_rev else ""
                 variant_of_full = f"{v_name}{v_rev_suffix}"
 
-        # Clean part JSON
         part_clean = {
             "name": san_name,
             "revision": revision,
@@ -357,7 +343,7 @@ def main():
             "salable": part.get("salable", False),
             "virtual": part.get("virtual", False),
             "is_template": part.get("is_template", False),
-            "variant_of": variant_of_full,   # now includes revision, e.g. "Red_Widget" or "Red_Widget.00"
+            "variant_of": variant_of_full,   # e.g. "Red_Widget.00"
             "image": "",
             "thumbnail": "",
             "suppliers": suppliers
@@ -365,15 +351,8 @@ def main():
 
         save_to_file(part_clean, os.path.join(level_dir, f"{base_name}.json"))
 
-        # Save BOM if applicable
         bom_tree = part.get('bom_tree', [])
-        save_bom = False
-        if part.get('is_template'):
-            if bom_tree:
-                save_bom = True
-        elif part.get('assembly'):
-            save_bom = True
-
+        save_bom = (part.get('assembly') or (part.get('is_template') and bom_tree))
         if save_bom:
             bom_path = os.path.join(level_dir, f"{base_name}.bom.json")
             save_to_file(bom_tree, bom_path)
