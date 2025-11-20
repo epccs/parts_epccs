@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-pts.py
-# version: 2025-11-19 v4
+# version: 2025-11-20 v1
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/pts/<level>/ to InvenTree, level by level.
 #
 # * Folder structure under each level -> category hierarchy
 # * Supports Part_Name[.revision].json + [Part_Name[.revision].bom.json]
+# * Supports variant_of format: "BaseName[.revision]" : Note that Inventree requires variant_of to be the part PK so a lookup is performed
 # * Pushes categories on demand from folder paths
 # * Pushes parts level by level to respect dependencies
 # * --force-ipn -> generate IPN from name when missing
@@ -98,11 +99,8 @@ def api_delete(url, api_print=False):
         print(f"ERROR {r.status_code}: {r.text}")
 
 # ----------------------------------------------------------------------
-# Helpers
+# Category & part lookup helpers
 # ----------------------------------------------------------------------
-def sanitize_company_name(name):
-    return re.sub(r'[<>:"/\\|?*]', '_', name.replace(' ', '_').replace('.', '').strip())
-
 def check_category_exists(name, parent_pk=None):
     params = {"name": name}
     if parent_pk is not None:
@@ -134,18 +132,19 @@ def parse_filename(filepath):
         return name, rev
     return name_part, None
 
-def check_part_exists(cache, name, revision=None, ipn=None):
+# Resolve a "Name[.revision]" string to a part PK
+def resolve_variant_target(variant_str, cache):
+    if not variant_str:
+        return None
+    if "." in variant_str:
+        name, rev = variant_str.rsplit(".", 1)
+    else:
+        name, rev = variant_str, ""
     candidates = cache.get(name, [])
-    results = []
-    for res in candidates:
-        match = True
-        if revision is not None and res.get('revision') != revision:
-            match = False
-        if ipn is not None and res.get('IPN') != ipn:
-            match = False
-        if match:
-            results.append(res)
-    return results
+    for c in candidates:
+        if c.get("revision", "") == rev:
+            return c["pk"]
+    return None
 
 # ----------------------------------------------------------------------
 # Push one base part + all its revisions
@@ -155,7 +154,6 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
     name, _ = parse_filename(first_path)
     print(f"DEBUG: Pushing base part '{name}' with {len(grouped_files)} revision(s)")
 
-    # Load common data
     with open(first_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     if isinstance(data, list):
@@ -175,22 +173,24 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
 
     payload["category"] = create_category_hierarchy(os.path.dirname(first_path), level_dir)
 
-    # Only set variant_of if explicitly defined in the first file
-    if data.get("variant_of_name"):
-        variants = check_part_exists(cache, data["variant_of_name"])
-        if variants:
-            payload["variant_of"] = variants[0]["pk"]
+    # Variant handling - uses new "variant_of" field with revision
+    variant_target = data.get("variant_of")
+    if variant_target:
+        variant_pk = resolve_variant_target(variant_target, cache)
+        if variant_pk:
+            payload["variant_of"] = variant_pk
+        else:
+            print(f"WARNING: Could not resolve variant_of '{variant_target}' - skipping")
 
-    existing_base = check_part_exists(cache, name, None, payload.get("IPN"))
-
+    existing_base = [p for p in cache.get(name, []) if p.get("revision", "") == "" or p.get("revision") is None]
     if existing_base and force:
         for p in existing_base:
             print(f"DEBUG: --force: deleting base part PK {p['pk']}")
             api_delete(f"{BASE_URL_PARTS}{p['pk']}/", api_print)
-            cache[name] = []
+            cache[name] = [c for c in cache[name] if c["pk"] != p["pk"]]
 
     if existing_base and not force:
-        print(f"DEBUG: Base part exists – reusing")
+        print(f"DEBUG: Base part exists - reusing")
         base_pk = existing_base[0]["pk"]
     else:
         new = api_post(BASE_URL_PARTS, payload, api_print)
@@ -212,15 +212,16 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
             "active": True,
         }
 
-        # Only set variant_of if this specific revision has variant_of_name
-        if rev_data.get("variant_of_name"):
-            variants = check_part_exists(cache, rev_data["variant_of_name"])
-            if variants:
-                rev_payload["variant_of"] = variants[0]["pk"]
-        # Else: do NOT set variant_of -> standalone revision
+        # Use revision-specific variant_of if present
+        rev_variant_target = rev_data.get("variant_of")
+        if rev_variant_target:
+            variant_pk = resolve_variant_target(rev_variant_target, cache)
+            if variant_pk:
+                rev_payload["variant_of"] = variant_pk
+            else:
+                print(f"WARNING: Could not resolve variant_of '{rev_variant_target}' for revision {rev or '(default)'}")
 
-        existing_rev = check_part_exists(cache, name, rev or "", payload.get("IPN"))
-
+        existing_rev = [p for p in cache.get(name, []) if p.get("revision", "") == (rev or "")]
         if existing_rev and force:
             for p in existing_rev:
                 print(f"DEBUG: --force: deleting revision PK {p['pk']}")
@@ -229,7 +230,7 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
             existing_rev = []
 
         if existing_rev:
-            print(f"DEBUG: Revision '{rev or '(default)'}' exists – skipping creation")
+            print(f"DEBUG: Revision '{rev or '(default)'}' exists - skipping creation")
             rev_pk = existing_rev[0]["pk"]
         else:
             new_rev = api_post(BASE_URL_PARTS, rev_payload, api_print)
@@ -245,7 +246,7 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
 def push_revision_content(part_pk, data, file_path, force_price, api_print, cache, all_price_breaks):
     if data.get("purchaseable", False):
         for supplier in data.get("suppliers", []):
-            supplier_name = sanitize_company_name(supplier["supplier_name"])
+            supplier_name = supplier["supplier_name"]
             suppliers = [s for s in fetch_all(BASE_URL_COMPANY, api_print=api_print) if s["name"] == supplier_name and s["is_supplier"]]
             if not suppliers:
                 print(f"ERROR: Supplier '{supplier_name}' not found")
@@ -254,7 +255,7 @@ def push_revision_content(part_pk, data, file_path, force_price, api_print, cach
 
             mp_pk = None
             if "manufacturer_name" in supplier:
-                man_name = sanitize_company_name(supplier["manufacturer_name"])
+                man_name = supplier["manufacturer_name"]
                 mans = [m for m in fetch_all(BASE_URL_COMPANY, api_print=api_print) if m["name"] == man_name and m["is_manufacturer"]]
                 if mans:
                     man_pk = mans[0]["pk"]
@@ -287,6 +288,7 @@ def push_revision_content(part_pk, data, file_path, force_price, api_print, cach
                 }
                 sp_pk = api_post(BASE_URL_SUPPLIER_PARTS, sp_payload, api_print)["pk"]
 
+            # Price breaks
             sp_price_breaks = [pb for pb in all_price_breaks if pb["part"] == sp_pk]
             existing_by_quantity = {pb["quantity"]: pb for pb in sp_price_breaks}
 
@@ -294,28 +296,15 @@ def push_revision_content(part_pk, data, file_path, force_price, api_print, cach
                 q = pb.get("quantity", 0)
                 price = pb.get("price", 0.0)
                 currency = pb.get("price_currency", "")
-
                 if q in existing_by_quantity:
                     existing_pb = existing_by_quantity[q]
                     if existing_pb["price"] == price and existing_pb["price_currency"] == currency:
-                        print(f"DEBUG: Skipping unchanged quantity {q}")
                         continue
-                    pb_payload = {
-                        "part": sp_pk,   # InvenTree quirk: price_breaks need suplier_part pk
-                        "price": price,
-                        "price_currency": currency
-                    }
+                    pb_payload = {"part": sp_pk, "price": price, "price_currency": currency}
                     api_patch(f"{BASE_URL_PRICE_BREAK}{existing_pb['pk']}/", pb_payload, api_print)
-                    print(f"DEBUG: Updated quantity {q} -> {price} {currency}")
                 else:
-                    pb_payload = {
-                        "part": sp_pk,  # InvenTree quirk: price_breaks need suplier_part pk
-                        "quantity": q,
-                        "price": price,
-                        "price_currency": currency
-                    }
+                    pb_payload = {"part": sp_pk, "quantity": q, "price": price, "price_currency": currency}
                     api_post(BASE_URL_PRICE_BREAK, pb_payload, api_print)
-                    print(f"DEBUG: Created quantity {q} -> {price} {currency}")
 
     bom_path = file_path[:-5] + ".bom.json"
     if os.path.exists(bom_path):
@@ -329,31 +318,25 @@ def push_bom(parent_pk, bom_path, level=0, cache=None, api_print=False):
     indent = " " * level
     with open(bom_path, "r", encoding="utf-8") as f:
         tree = json.load(f)
-
     existing_boms = fetch_all(f"{BASE_URL_BOM}?part={parent_pk}", api_print=api_print)
-
     for node in tree:
         qty = node.get("quantity", 1)
         note = node.get("note", "")
         sub_name = node["sub_part"]["name"]
         sub_ipn = node["sub_part"].get("IPN", "")
-
-        sub_parts = check_part_exists(cache, sub_name, None, sub_ipn if sub_ipn else None)
+        sub_parts = [p for p in cache.get(sub_name, []) if p.get("IPN", "") == sub_ipn or not sub_ipn]
         if not sub_parts:
-            print(f"{indent}WARNING: Sub-part '{sub_name}' not found – skipping")
+            print(f"{indent}WARNING: Sub-part '{sub_name}' (IPN: {sub_ipn}) not found - skipping")
             continue
         sub_pk = sub_parts[0]["pk"]
-
         existing = [b for b in existing_boms if b["sub_part"] == sub_pk]
         payload = {"part": parent_pk, "sub_part": sub_pk, "quantity": qty, "note": note}
-
         if existing:
             api_patch(f"{BASE_URL_BOM}{existing[0]['pk']}/", payload, api_print)
             action = "UPDATED"
         else:
             api_post(BASE_URL_BOM, payload, api_print)
             action = "CREATED"
-
         print(f"{indent}{action} BOM: {qty} × {sub_name} (sub_pk {sub_pk})")
 
 # ----------------------------------------------------------------------
@@ -378,7 +361,6 @@ def main():
 
     print("DEBUG: Fetching all price breaks...")
     all_price_breaks = fetch_all(BASE_URL_PRICE_BREAK, api_print=args.api_print)
-    print(f"DEBUG: Fetched {len(all_price_breaks)} price breaks")
 
     root = "data/pts"
     files = []
@@ -394,7 +376,8 @@ def main():
             grouped[name].append((f, rev))
 
     for name, group in grouped.items():
-        push_base_part(group, args.force_ipn, args.force, args.clean_dependencies, args.force_price, args.api_print, root, cache, all_price_breaks)
+        push_base_part(group, args.force_ipn, args.force, args.clean_dependencies,
+                       args.force_price, args.api_print, root, cache, all_price_breaks)
 
 if __name__ == "__main__":
     main()
