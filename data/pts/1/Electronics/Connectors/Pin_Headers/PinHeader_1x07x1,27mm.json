@@ -13,7 +13,7 @@
     "salable": false,
     "virtual": false,
     "is_template": false,
-    "variant_of_name": null,
+    "variant_of": null,
     "image": "",
     "thumbnail": "",
     "suppliers": []

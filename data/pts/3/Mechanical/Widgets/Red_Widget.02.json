@@ -13,7 +13,7 @@
     "salable": true,
     "virtual": false,
     "is_template": true,
-    "variant_of_name": "Red_Widget",
+    "variant_of": "Red_Widget",
     "image": "",
     "thumbnail": "",
     "suppliers": []

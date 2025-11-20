@@ -13,7 +13,7 @@
     "salable": true,
     "virtual": false,
     "is_template": false,
-    "variant_of_name": "Square_Table",
+    "variant_of": "Square_Table",
     "image": "",
     "thumbnail": "",
     "suppliers": []
