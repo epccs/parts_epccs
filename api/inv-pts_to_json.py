@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-pts_to_json.py
-# version: 2025-11-17-v3
+# version: 2025-11-20-v1
 # --------------------------------------------------------------
 # Pull from inventree **all parts** (templates, assemblies, real parts)
 # -> data/pts/<level>/<category_path>/
@@ -17,6 +17,7 @@
 # * Sanitized names/paths
 # * Pulls suppliers/manufacturers/price breaks (aggregates duplicates)
 # * category.json files saved in data/pts/0/<category_path>/
+# * variant_of now stored as "variant_of": "BaseName[.revision]" so that the exact base part + revision is known when re-importing
 #
 # example usage:
 # python3 ./api/inv-pts_to_json.py
@@ -57,10 +58,12 @@ def sanitize_category_name(name):
     sanitized = name.replace(' ', '_').replace('.', '')
     sanitized = re.sub(r'[<>:"/\\|?*]', '_', sanitized.strip())
     return sanitized
+
 def sanitize_part_name(name):
     sanitized = name.replace(' ', '_').replace('.', ',')
     sanitized = re.sub(r'[<>:"/\\|?*]', '_', sanitized.strip())
     return sanitized
+
 def sanitize_revision(rev):
     """Sanitize revision string for filename."""
     if not rev:
@@ -68,10 +71,12 @@ def sanitize_revision(rev):
     rev = str(rev).strip()
     rev = re.sub(r'[<>:"/\\|?*]', '_', rev)
     return rev
+
 def sanitize_company_name(name):
     sanitized = name.replace(' ', '_').replace('.', '')
     sanitized = re.sub(r'[<>:"/\\|?*]', '_', sanitized.strip())
     return sanitized
+
 # ----------------------------------------------------------------------
 # Fetch with pagination
 # ----------------------------------------------------------------------
@@ -94,6 +99,7 @@ def fetch_data(url, params=None):
         else:
             raise Exception("Unexpected data type from API")
     return items
+
 # ----------------------------------------------------------------------
 # Save helper
 # ----------------------------------------------------------------------
@@ -102,6 +108,7 @@ def save_to_file(data, filepath):
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
         f.write("\n")
+
 # ----------------------------------------------------------------------
 # Category maps – sanitized pathstring
 # ----------------------------------------------------------------------
@@ -126,6 +133,7 @@ def build_category_maps(categories):
         pk_to_path[pk] = san_path
         parent_to_subs.setdefault(parent, []).append(cat_mod)
     return pk_to_path, parent_to_subs
+
 def write_category_files(root_dir, pk_to_path, parent_to_subs):
     cat_root = os.path.join(root_dir, "0")
     top = parent_to_subs.get("None", [])
@@ -140,6 +148,7 @@ def write_category_files(root_dir, pk_to_path, parent_to_subs):
         dir_parts = [sanitize_category_name(p) for p in parent_path.split("/")]
         dir_path = os.path.join(cat_root, *dir_parts)
         save_to_file(subs, os.path.join(dir_path, "category.json"))
+
 # ----------------------------------------------------------------------
 # BOM fetcher (returns tree and sub_pks)
 # ----------------------------------------------------------------------
@@ -166,6 +175,7 @@ def fetch_bom(part_pk):
         }
         tree.append(node)
     return tree, sub_pks
+
 # ----------------------------------------------------------------------
 # Fetch and add supplier details
 # ----------------------------------------------------------------------
@@ -208,6 +218,7 @@ def fetch_suppliers(part_pk, part_name):
                 sp_details['mp_link'] = mp.get('link', '')
         suppliers_list.append(sp_details)
     return suppliers_list
+
 # ----------------------------------------------------------------------
 # Compute part level (memoized recursion)
 # ----------------------------------------------------------------------
@@ -222,6 +233,7 @@ def get_level(pk, memo, deps):
         max_dep_level = max(max_dep_level, get_level(dep_pk, memo, deps))
     memo[pk] = 1 + max_dep_level
     return memo[pk]
+
 # ----------------------------------------------------------------------
 # Main
 # ----------------------------------------------------------------------
@@ -236,14 +248,17 @@ def main():
     args = parser.parse_args()
     if not TOKEN or not BASE_URL:
         raise Exception("INVENTREE_TOKEN and INVENTREE_URL must be set")
+
     root_dir = "data/pts"
     os.makedirs(root_dir, exist_ok=True)
+
     # 1. Categories
     print("DEBUG: Fetching categories...")
     categories = fetch_data(BASE_URL_CATEGORIES)
     pk_to_path, parent_to_subs = build_category_maps(categories)
     print("DEBUG: Writing category.json files...")
     write_category_files(root_dir, pk_to_path, parent_to_subs)
+
     # 2. Compile patterns
     patterns = []
     if args.patterns:
@@ -254,10 +269,12 @@ def main():
             regex = "^" + re.escape(pat).replace("\\*", ".*").replace("\\?", ".") + "$"
             patterns.append(re.compile(regex, re.IGNORECASE))
         print(f"DEBUG: Filtering with {len(patterns)} patterns")
+
     # 3. Fetch all parts
     print("DEBUG: Fetching all parts...")
     parts = fetch_data(BASE_URL_PARTS)
     all_parts = {part['pk']: part for part in parts if part.get('pk')}
+
     # 4. Build dependency graph (deps[pk] = list of pks it depends on)
     deps = defaultdict(list)
     for pk, part in all_parts.items():
@@ -268,10 +285,12 @@ def main():
             bom_tree, bom_pks = fetch_bom(pk)
             all_parts[pk]['bom_tree'] = bom_tree
             deps[pk].extend(bom_pks)
+
     # 5. Compute levels for all parts
     level_memo = {}
     for pk in all_parts:
         get_level(pk, level_memo, deps)
+
     # 6. Export filtered parts
     exported = 0
     for pk, part in all_parts.items():
@@ -280,36 +299,48 @@ def main():
         cat_pk = part.get("category")
         if not (name and cat_pk):
             continue
+
         san_name = sanitize_part_name(name)
         # Pattern filter
         if patterns and not any(p.search(san_name) for p in patterns):
             continue
+
         pathstring = pk_to_path.get(cat_pk)
         if not pathstring:
             print(f"WARNING: Part '{name}' (pk {pk}) has no category, skipping.")
             continue
+
         dir_parts = [sanitize_category_name(p) for p in pathstring.split("/")]
+
         # Get level
         level = level_memo.get(pk, 1)
         level_dir = os.path.join(root_dir, str(level), *dir_parts)
+
         # Handle revision
         revision = sanitize_revision(raw_rev)
         rev_suffix = f".{revision}" if revision else ""
         base_name = f"{san_name}{rev_suffix}"
+
         # Fetch suppliers if purchaseable
         suppliers = fetch_suppliers(pk, name) if part.get("purchaseable", False) else []
-        # Handle variant_of_name
-        variant_of_name = None
+
+        # Resolve variant_of with revision
+        variant_of_full = None
         if part.get("variant_of"):
             variant_pk = part["variant_of"]
             variant_part = all_parts.get(variant_pk)
-            if variant_part:
-                variant_of_name = sanitize_part_name(variant_part.get("name"))
-            else:
+            if not variant_part:
                 variant_r = requests.get(f"{BASE_URL_PARTS}{variant_pk}/", headers=HEADERS)
                 if variant_r.status_code == 200:
-                    variant_json = variant_r.json()
-                    variant_of_name = sanitize_part_name(variant_json.get("name"))
+                    variant_part = variant_r.json()
+
+            if variant_part:
+                v_name = sanitize_part_name(variant_part.get("name", ""))
+                v_rev_raw = variant_part.get("revision")
+                v_rev = sanitize_revision(v_rev_raw)
+                v_rev_suffix = f".{v_rev}" if v_rev else ""
+                variant_of_full = f"{v_name}{v_rev_suffix}"
+
         # Clean part JSON
         part_clean = {
             "name": san_name,
@@ -326,12 +357,14 @@ def main():
             "salable": part.get("salable", False),
             "virtual": part.get("virtual", False),
             "is_template": part.get("is_template", False),
-            "variant_of_name": variant_of_name,
+            "variant_of": variant_of_full,   # now includes revision, e.g. "Red_Widget" or "Red_Widget.00"
             "image": "",
             "thumbnail": "",
             "suppliers": suppliers
         }
+
         save_to_file(part_clean, os.path.join(level_dir, f"{base_name}.json"))
+
         # Save BOM if applicable
         bom_tree = part.get('bom_tree', [])
         save_bom = False
@@ -340,13 +373,17 @@ def main():
                 save_bom = True
         elif part.get('assembly'):
             save_bom = True
+
         if save_bom:
             bom_path = os.path.join(level_dir, f"{base_name}.bom.json")
             save_to_file(bom_tree, bom_path)
             print(f"DEBUG: Saved BOM to {bom_path}")
         else:
             print(f"DEBUG: No BOM saved for {base_name}")
+
         exported += 1
+
     print(f"SUMMARY: Pulled {exported} parts + BOMs (when applicable) to {root_dir}/<level>/")
+
 if __name__ == "__main__":
     main()
