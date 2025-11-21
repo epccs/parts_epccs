@@ -166,6 +166,7 @@ def fetch_bom(part_pk):
         node = {
             "quantity": item.get("quantity"),
             "note": item.get("note", ""),
+            "validated": item.get("validated", False),
             "sub_part": {
                 "name": sub_name,
                 "IPN": sub_ipn,

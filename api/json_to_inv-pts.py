@@ -13,17 +13,17 @@
 # * --force -> delete existing part (name + revision)
 # * --clean-dependencies -> delete BOM/stock/etc. (with confirmation)
 # * --force-price -> delete existing price breaks before pushing new ones
-# * --api-print: prints every API call (URL + payload) without Authorization header
+# * --api-print -> prints every API call (URL + payload) without Authorization header
 # * .bom.json pushed only if exists
 # * pushes suppliers/manufacturers/price breaks if purchaseable, fetched globally + local filter (no ?supplier_part=)
 # * Uses a cache for part lookups to improve performance
 #
 # example usage:
-# python3 ./api/json_to_inv-pts.py "1/Mechanical/Fasteners/Wood_Screw" --force --force-ipn --clean-dependencies
-# python3 ./api/json_to_inv-pts.py "1/Furniture/Leg" --force --force-ipn --clean-dependencies
-# python3 ./api/json_to_inv-pts.py "1/Furniture/*_Top" --force --force-ipn --clean-dependencies
-# python3 ./api/json_to_inv-pts.py "2/Furniture/Tables/*_Table" --force --force-ipn --clean-dependencies
-# python3 ./api/json_to_inv-pts.py "**/*" --force --clean-dependencies
+# python3 ./api/json_to_inv-pts.py "1/Mechanical/Fasteners/Wood_Screw"
+# python3 ./api/json_to_inv-pts.py "1/Furniture/Leg"
+# python3 ./api/json_to_inv-pts.py "1/Furniture/*_Top"
+# python3 ./api/json_to_inv-pts.py "2/Furniture/Tables/*_Table"
+# python3 ./api/json_to_inv-pts.py "**/*"
 # --------------------------------------------------------------
 
 import requests
@@ -322,6 +322,7 @@ def push_bom(parent_pk, bom_path, level=0, cache=None, api_print=False):
     for node in tree:
         qty = node.get("quantity", 1)
         note = node.get("note", "")
+        validated = node.get("validated", False)
         sub_name = node["sub_part"]["name"]
         sub_ipn = node["sub_part"].get("IPN", "")
         sub_parts = [p for p in cache.get(sub_name, []) if p.get("IPN", "") == sub_ipn or not sub_ipn]
@@ -330,7 +331,13 @@ def push_bom(parent_pk, bom_path, level=0, cache=None, api_print=False):
             continue
         sub_pk = sub_parts[0]["pk"]
         existing = [b for b in existing_boms if b["sub_part"] == sub_pk]
-        payload = {"part": parent_pk, "sub_part": sub_pk, "quantity": qty, "note": note}
+        payload = {
+            "part": parent_pk, 
+            "sub_part": sub_pk, 
+            "quantity": qty, 
+            "note": note,
+            "validated": validated
+        }
         if existing:
             api_patch(f"{BASE_URL_BOM}{existing[0]['pk']}/", payload, api_print)
             action = "UPDATED"
