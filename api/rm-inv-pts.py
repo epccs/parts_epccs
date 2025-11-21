@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: rm-inv-pts.py
-# version: 2025-11-20-v1
+# version: 2025-11-20-v2
 # --------------------------------------------------------------
 # Delete InvenTree parts based on JSON files in data/pts/<level>/...
 #
@@ -8,6 +8,7 @@
 # * Global search using name + revision + optional IPN fallback
 # * --clean-dependencies -> two-step confirmation + deletes stock, BOMs, supplier parts, price breaks, etc.
 # * --remove-json -> deletes the JSON + .bom.json after successful removal
+# * --api-print -> verbose API logging (GET preview, POST/PATCH/DELETE URLs)
 # * Respects variant dependencies (no special handling needed – just deletes the variant)
 # * Works with the exact same folder/layout as inv-pts_to_json.py and json_to_inv-pts.py
 #
@@ -15,12 +16,14 @@
 #   python3 ./api/rm-inv-pts.py "4/Mechanical/Widgets/Widget_Assembly_Variant*" --clean-dependencies --remove-json
 #   python3 ./api/rm-inv-pts.py "2/Electronics/PCBA/Widget_Board*" --remove-json
 # --------------------------------------------------------------
+
 import requests
 import json
 import os
 import glob
 import sys
 import argparse
+import re
 from collections import defaultdict
 
 # ----------------------------------------------------------------------
@@ -49,7 +52,7 @@ HEADERS = {
 }
 
 # ----------------------------------------------------------------------
-# Same sanitizers as the pull/push scripts
+# Same sanitizers as pull/push scripts
 # ----------------------------------------------------------------------
 def sanitize_part_name(name):
     sanitized = name.replace(' ', '_').replace('.', ',')
@@ -64,25 +67,53 @@ def sanitize_revision(rev):
     return rev
 
 # ----------------------------------------------------------------------
-# Global search by name + revision (and IPN fallback)
+# Verbose API helpers
 # ----------------------------------------------------------------------
-def find_part_exact(name_san, revision_san, ipn=""):
-    params = {
-        "name": name_san,
-        "revision": revision_san or None,
-        "search": name_san  # fallback broad search
-    }
+def api_get(url, params=None, api_print=False):
+    if api_print:
+        param_str = f"?{requests.compat.urlencode(params)}" if params else ""
+        print(f"API GET: {url}{param_str}")
+    r = requests.get(url, headers=HEADERS, params=params)
+    if api_print and r.status_code == 200:
+        preview = json.dumps(r.json())[:200].replace("\n", " ")
+        print(f"       -> {r.status_code} {preview}...")
+    elif api_print:
+        print(f"       -> {r.status_code}")
+    return r
+
+def api_patch(url, payload, api_print=False):
+    if api_print:
+        print(f"API PATCH: {url}")
+        print(f"Payload: {json.dumps(payload, indent=4)}")
+    r = requests.patch(url, headers=HEADERS, json=payload)
+    if api_print:
+        print(f"       -> {r.status_code}")
+    return r
+
+def api_delete(url, api_print=False):
+    if api_print:
+        print(f"API DELETE: {url}")
+    r = requests.delete(url, headers=HEADERS)
+    if api_print:
+        print(f"       -> {r.status_code}")
+    return r
+
+# ----------------------------------------------------------------------
+# Global search by name + revision
+# ----------------------------------------------------------------------
+def find_part_exact(name_san, revision_san, ipn="", api_print=False):
+    params = {"name": name_san, "search": name_san}
+    if revision_san:
+        params["revision"] = revision_san
     if ipn:
         params["IPN"] = ipn
 
-    r = requests.get(BASE_URL_PARTS, headers=HEADERS, params=params)
+    r = api_get(BASE_URL_PARTS, params=params, api_print=api_print)
     if r.status_code != 200:
-        print(f"DEBUG: Search failed {r.status_code}: {r.text}")
         return []
 
     data = r.json()
     results = data.get("results", data) if isinstance(data, dict) else data
-    # Extra filter to be 100% sure (API sometimes ignores revision)
     filtered = [
         p for p in results
         if p.get("name") == name_san and
@@ -91,19 +122,19 @@ def find_part_exact(name_san, revision_san, ipn=""):
     return filtered
 
 # ----------------------------------------------------------------------
-# Dependency checking & cleaning
+# Dependency handling
 # ----------------------------------------------------------------------
-def check_dependencies(part_pk):
+def check_dependencies(part_pk, api_print=False):
     endpoints = [
         (BASE_URL_STOCK + f"?part={part_pk}", "stock"),
         (BASE_URL_BOM + f"?sub_part={part_pk}", "used_in_bom"),
         (BASE_URL_SUPPLIER_PARTS + f"?part={part_pk}", "supplier_parts"),
-        (BASE_URL_PRICE_BREAK + f"?part__part={part_pk}", "price_breaks"),  # nested
+        (BASE_URL_PRICE_BREAK + f"?part__part={part_pk}", "price_breaks"),
     ]
     deps = {}
     total = 0
     for url, name in endpoints:
-        r = requests.get(url, headers=HEADERS)
+        r = api_get(url, api_print=api_print)
         if r.status_code == 200:
             js = r.json()
             items = js.get("results", js) if isinstance(js, dict) else js
@@ -111,31 +142,29 @@ def check_dependencies(part_pk):
             total += len(items)
     return deps, total
 
-def delete_all_dependencies(part_pk):
-    # Order matters – delete leaf dependencies first
+def delete_all_dependencies(part_pk, api_print=False):
     to_delete = [
-        (BASE_URL_PRICE_BREAK, "price_break"),
-        (BASE_URL_SUPPLIER_PARTS, "supplier_part"),
-        (BASE_URL_STOCK, "stock"),
-        (BASE_URL_BOM, "bom_used"),
+        (BASE_URL_PRICE_BREAK, "?part__part="),
+        (BASE_URL_SUPPLIER_PARTS, "?part="),
+        (BASE_URL_STOCK, "?part="),
+        (BASE_URL_BOM, "?sub_part="),
     ]
-    for base, kind in to_delete:
-        url = f"{base}?part={part_pk}" if "price_break" not in base else f"{base}?part__part={part_pk}"
-        r = requests.get(url, headers=HEADERS)
+    for base_url, query in to_delete:
+        url = f"{base_url}{query}{part_pk}"
+        r = api_get(url, api_print=api_print)
         if r.status_code != 200:
             continue
         data = r.json()
         items = data.get("results", data) if isinstance(data, dict) else data
         for item in items:
             pk = item["pk"]
-            del_url = f"{base}{pk}/" if "price_break" not in base else f"{BASE_URL_PRICE_BREAK}{pk}/"
-            dr = requests.delete(del_url, headers=HEADERS)
-            print(f"  Deleted {kind} {pk} -> {dr.status_code}")
+            del_url = f"{base_url}{pk}/"
+            api_delete(del_url, api_print=api_print)
 
 # ----------------------------------------------------------------------
 # Main deletion routine
 # ----------------------------------------------------------------------
-def delete_part_from_file(json_path, clean_deps=False, remove_json=False):
+def delete_part_from_file(json_path, clean_deps=False, remove_json=False, api_print=False):
     print(f"\nProcessing: {json_path}")
 
     try:
@@ -160,17 +189,17 @@ def delete_part_from_file(json_path, clean_deps=False, remove_json=False):
 
     print(f"  Looking for part: '{name_raw}' | Rev: '{revision_raw or '(none)'}' | IPN: {ipn or '(none)'}")
 
-    candidates = find_part_exact(name_san, revision_san, ipn if ipn else None)
+    candidates = find_part_exact(name_san, revision_san, ipn if ipn else None, api_print=api_print)
     if not candidates:
         print("  Not found in InvenTree – nothing to delete")
         return
 
     for part in candidates:
         pk = part["pk"]
-        print(f"  Found match -> PK {pk}")
+        print(f"  Found match → PK {pk}")
 
         if clean_deps:
-            deps, total = check_dependencies(pk)
+            deps, total = check_dependencies(pk, api_print=api_print)
             if total > 0:
                 print(f"  {total} dependencies detected")
                 if input("  Type YES to delete dependencies: ") != "YES":
@@ -179,36 +208,30 @@ def delete_part_from_file(json_path, clean_deps=False, remove_json=False):
                 if input("  Type CONFIRM to permanently delete: ") != "CONFIRM":
                     print("  Aborted")
                     continue
-                delete_all_dependencies(pk)
+                delete_all_dependencies(pk, api_print=api_print)
             else:
                 print("  No dependencies")
 
-        # Deactivate first (some instances require this)
-        requests.patch(f"{BASE_URL_PARTS}{pk}/", headers=HEADERS, json={"active": False})
+        # Deactivate first
+        api_patch(f"{BASE_URL_PARTS}{pk}/", {"active": False}, api_print=api_print)
 
         # Final delete
-        r = requests.delete(f"{BASE_URL_PARTS}{pk}/", headers=HEADERS)
+        r = api_delete(f"{BASE_URL_PARTS}{pk}/", api_print=api_print)
         if r.status_code == 204:
             print(f"  SUCCESS: Deleted part PK {pk}")
         else:
             print(f"  Delete failed {r.status_code}: {r.text}")
             return  # don't remove files on failure
 
-    # Only remove files if deletion succeeded
+    # Remove files only on success
     if remove_json:
-        try:
-            os.remove(json_path)
-            print(f"  Removed {json_path}")
-        except Exception as e:
-            print(f"  File remove error: {e}")
-
-        bom_path = json_path[:-5] + ".bom.json"
-        if os.path.exists(bom_path):
-            try:
-                os.remove(bom_path)
-                print(f"  Removed {bom_path}")
-            except Exception as e:
-                print(f"  BOM file remove error: {e}")
+        for path in [json_path, json_path[:-5] + ".bom.json"]:
+            if os.path.exists(path):
+                try:
+                    os.remove(path)
+                    print(f"  Removed {path}")
+                except Exception as e:
+                    print(f"  File remove error: {e}")
 
 # ----------------------------------------------------------------------
 # Main
@@ -220,7 +243,7 @@ def main():
     parser.add_argument(
         "patterns", nargs="*",
         default=["**/*"],
-        help="Glob patterns relative to data/pts (e.g. '3/Mechanical/Widgets/*Variant*')"
+        help="Glob patterns relative to data/pts (e.g. '1/Electronics/Connectors/*')"
     )
     parser.add_argument(
         "--clean-dependencies", action="store_true",
@@ -229,6 +252,10 @@ def main():
     parser.add_argument(
         "--remove-json", action="store_true",
         help="Delete the .json and .bom.json files after successful deletion"
+    )
+    parser.add_argument(
+        "--api-print", action="store_true",
+        help="Print every API call and short preview of GET responses"
     )
     args = parser.parse_args()
 
@@ -254,10 +281,14 @@ def main():
 
     print(f"Found {len(json_files)} part file(s) to process\n")
     for f in json_files:
-        delete_part_from_file(f, args.clean_dependencies, args.remove_json)
+        delete_part_from_file(
+            f,
+            clean_deps=args.clean_dependencies,
+            remove_json=args.remove_json,
+            api_print=args.api_print
+        )
 
     print("\nDone.")
 
 if __name__ == "__main__":
-    import re  # used in sanitizers
     main()
