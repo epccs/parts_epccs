@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # file name: rm-inv-pts.py
-# version: 2025-11-20-v4
+# version: 2025-11-20-v5
 # --------------------------------------------------------------
 # Delete InvenTree parts based on JSON files in data/pts/<level>/...
 #
 # * Matches parts by sanitized name + revision (exact filename match)
 # * Global search using name + revision + optional IPN fallback
 # * --clean-dependencies -> two-step confirmation + deletes stock, BOMs, supplier parts, price breaks, etc.
+# * --clean-dependencies-yes -> deletes ALL dependencies with NO confirmation
 # * --remove-json -> deletes the JSON + .bom.json after successful removal
 # * --api-print -> verbose API logging (GET preview, POST/PATCH/DELETE URLs)
 # * Respects variant dependencies (no special handling needed - just deletes the variant)
@@ -17,8 +18,9 @@
 #   python3 ./api/rm-inv-pts.py "2/Electronics/PCBA/Widget_Board*" --remove-json
 # --------------------------------------------------------------
 # Changelog:
-# Fixed: Safe handling of price-break endpoint returning list OR dict
-# Fixed: Robust JSON parsing for all paginated endpoints
+# New: --clean-dependencies-yes -> deletes ALL dependencies with NO confirmation
+# Safe price-break deletion via SupplierPart
+# Robust list/dict JSON handling
 # --------------------------------------------------------------
 import requests
 import json
@@ -53,10 +55,9 @@ HEADERS = {
 }
 
 # ----------------------------------------------------------------------
-# Safe JSON list extractor
+# Safe JSON extractor
 # ----------------------------------------------------------------------
 def extract_results(data):
-    """Handle both paginated {'results': [...]} and direct list responses."""
     if isinstance(data, list):
         return data
     if isinstance(data, dict):
@@ -124,8 +125,7 @@ def find_part_exact(name_san, revision_san, ipn="", api_print=False):
     if r.status_code != 200:
         return []
 
-    data = r.json()
-    results = extract_results(data)
+    results = extract_results(r.json())
     filtered = [
         p for p in results
         if p.get("name") == name_san and
@@ -134,54 +134,46 @@ def find_part_exact(name_san, revision_san, ipn="", api_print=False):
     return filtered
 
 # ----------------------------------------------------------------------
-# Dependency handling - now fully safe
+# Dependency handling
 # ----------------------------------------------------------------------
 def check_dependencies(part_pk, api_print=False):
-    endpoints = [
-        (f"{BASE_URL_STOCK}?part={part_pk}", "stock"),
-        (f"{BASE_URL_BOM}?sub_part={part_pk}", "used_in_bom"),
-        (f"{BASE_URL_SUPPLIER_PARTS}?part={part_pk}", "supplier_parts"),
-    ]
     total = 0
-    for url, name in endpoints:
-        r = api_get(url, api_print=api_print)
+    # Supplier parts + price breaks
+    sp_r = api_get(f"{BASE_URL_SUPPLIER_PARTS}?part={part_pk}", api_print=False)
+    if sp_r.status_code == 200:
+        for sp in extract_results(sp_r.json()):
+            total += 1
+            pb_r = api_get(f"{BASE_URL_PRICE_BREAK}", params={"supplier_part": sp["pk"]}, api_print=False)
+            if pb_r.status_code == 200:
+                total += len(extract_results(pb_r.json()))
+    # Stock + BOM usage
+    for endpoint in [f"{BASE_URL_STOCK}?part={part_pk}", f"{BASE_URL_BOM}?sub_part={part_pk}"]:
+        r = api_get(endpoint, api_print=False)
         if r.status_code == 200:
-            items = extract_results(r.json())
-            if name == "supplier_parts":
-                for sp in items:
-                    sp_pk = sp["pk"]
-                    pb_r = api_get(f"{BASE_URL_PRICE_BREAK}", params={"supplier_part": sp_pk}, api_print=False)
-                    if pb_r.status_code == 200:
-                        total += len(extract_results(pb_r.json()))
-            total += len(items)
-    return None, total  # we don't need the dict anymore, just count
+            total += len(extract_results(r.json()))
+    return total
 
 def delete_all_dependencies(part_pk, api_print=False):
-    # 1. SupplierParts + their price breaks
+    # SupplierParts + PriceBreaks
     sp_r = api_get(f"{BASE_URL_SUPPLIER_PARTS}?part={part_pk}", api_print=api_print)
     if sp_r.status_code == 200:
-        supplier_parts = extract_results(sp_r.json())
-        for sp in supplier_parts:
+        for sp in extract_results(sp_r.json()):
             sp_pk = sp["pk"]
             if api_print:
-                print(f"  Deleting price breaks + SupplierPart {sp_pk}")
-
-            # Price breaks
+                print(f"  Deleting SupplierPart {sp_pk} + price breaks")
             pb_r = api_get(f"{BASE_URL_PRICE_BREAK}", params={"supplier_part": sp_pk}, api_print=api_print)
             if pb_r.status_code == 200:
                 for pb in extract_results(pb_r.json()):
                     api_delete(f"{BASE_URL_PRICE_BREAK}{pb['pk']}/", api_print=api_print)
-
-            # SupplierPart itself
             api_delete(f"{BASE_URL_SUPPLIER_PARTS}{sp_pk}/", api_print=api_print)
 
-    # 2. Stock items
+    # Stock
     stock_r = api_get(f"{BASE_URL_STOCK}?part={part_pk}", api_print=api_print)
     if stock_r.status_code == 200:
         for item in extract_results(stock_r.json()):
             api_delete(f"{BASE_URL_STOCK}{item['pk']}/", api_print=api_print)
 
-    # 3. BOM usages
+    # BOM usages
     bom_r = api_get(f"{BASE_URL_BOM}?sub_part={part_pk}", api_print=api_print)
     if bom_r.status_code == 200:
         for bom in extract_results(bom_r.json()):
@@ -190,17 +182,13 @@ def delete_all_dependencies(part_pk, api_print=False):
 # ----------------------------------------------------------------------
 # Main deletion
 # ----------------------------------------------------------------------
-def delete_part_from_file(json_path, clean_deps=False, remove_json=False, api_print=False):
+def delete_part_from_file(json_path, clean_deps=False, clean_deps_yes=False, remove_json=False, api_print=False):
     print(f"\nProcessing: {json_path}")
 
-    try:
-        with open(json_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
+    with open(json_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
         if isinstance(data, list):
             data = data[0]
-    except Exception as e:
-        print(f"  JSON load error: {e}")
-        return
 
     name_raw = data.get("name")
     revision_raw = data.get("revision", "")
@@ -224,19 +212,27 @@ def delete_part_from_file(json_path, clean_deps=False, remove_json=False, api_pr
         pk = part["pk"]
         print(f"  Found match -> PK {pk}")
 
-        if clean_deps:
-            _, total = check_dependencies(pk, api_print=False)
+        do_clean = clean_deps or clean_deps_yes
+        if do_clean:
+            total = check_dependencies(pk)
             if total > 0:
-                print(f"  {total} dependencies detected")
-                if input("  Type YES to delete dependencies: ") != "YES":
-                    print("  Skipped")
-                    continue
-                if input("  Type CONFIRM to permanently delete: ") != "CONFIRM":
-                    print("  Aborted")
-                    continue
-                delete_all_dependencies(pk, api_print=api_print)
+                if clean_deps_yes:
+                    print(f"  --clean-dependencies-yes: Auto-deleting {total} dependencies (no confirm)")
+                else:
+                    print(f"  {total} dependencies detected")
+                    if input("  Type YES to delete dependencies: ") != "YES":
+                        print("  Skipped")
+                        continue
+                    if input("  Type CONFIRM to permanently delete: ") != "CONFIRM":
+                        print("  Aborted")
+                        continue
             else:
                 print("  No dependencies")
+
+            delete_all_dependencies(pk, api_print=api_print)
+        elif total := check_dependencies(pk):
+            print(f"  Warning: {total} dependencies exist but --clean-dependencies not used - skipping part")
+            continue
 
         api_patch(f"{BASE_URL_PARTS}{pk}/", {"active": False}, api_print=api_print)
         r = api_delete(f"{BASE_URL_PARTS}{pk}/", api_print=api_print)
@@ -264,10 +260,19 @@ def main():
     )
     parser.add_argument("patterns", nargs="*", default=["**/*"],
                         help="Glob patterns relative to data/pts")
-    parser.add_argument("--clean-dependencies", action="store_true")
-    parser.add_argument("--remove-json", action="store_true")
-    parser.add_argument("--api-print", action="store_true")
+    parser.add_argument("--clean-dependencies", action="store_true",
+                        help="Delete dependencies with double confirmation")
+    parser.add_argument("--clean-dependencies-yes", action="store_true",
+                        help="Delete dependencies with NO confirmation (dangerous!)")
+    parser.add_argument("--remove-json", action="store_true",
+                        help="Delete JSON + .bom.json files after success")
+    parser.add_argument("--api-print", action="store_true",
+                        help="Verbose API logging")
     args = parser.parse_args()
+
+    if args.clean_dependencies and args.clean_dependencies_yes:
+        print("Error: --clean-dependencies and --clean-dependencies-yes are mutually exclusive")
+        sys.exit(1)
 
     root = "data/pts"
     if not os.path.isdir(root):
@@ -291,7 +296,13 @@ def main():
 
     print(f"Found {len(json_files)} part(s) to delete\n")
     for f in json_files:
-        delete_part_from_file(f, args.clean_dependencies, args.remove_json, args.api_print)
+        delete_part_from_file(
+            f,
+            clean_deps=args.clean_dependencies,
+            clean_deps_yes=args.clean_dependencies_yes,
+            remove_json=args.remove_json,
+            api_print=args.api_print
+        )
 
     print("\nDone.")
 
