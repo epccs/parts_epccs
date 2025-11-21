@@ -16,12 +16,18 @@
 # Example usage:
 #   python3 ./api/rm-inv-pts.py "4/Mechanical/Widgets/Widget_Assembly_Variant*" --clean-dependencies --remove-json
 #   python3 ./api/rm-inv-pts.py "2/Electronics/PCBA/Widget_Board*" --remove-json
+#   python3 ./api/rm-inv-pts.py "2/Furniture/Tables/*_Table.json" --clean-dependencies
+#   python3 ./api/rm-inv-pts.py "1/Mechanical/Fasteners/Wood_Screw.json"
+#   python3 ./api/rm-inv-pts.py "1/Furniture/Leg.json"
+#   python3 ./api/rm-inv-pts.py "1/Furniture/*_Top.json"
 # --------------------------------------------------------------
 # Changelog:
 # New: --clean-dependencies-yes -> deletes ALL dependencies with NO confirmation
 # Safe price-break deletion via SupplierPart
 # Robust list/dict JSON handling
 # --------------------------------------------------------------
+# Todo: remove the .json match from CLI globbing
+
 import requests
 import json
 import os
