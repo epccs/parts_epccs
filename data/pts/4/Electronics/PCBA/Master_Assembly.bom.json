@@ -2,6 +2,7 @@
     {
         "quantity": 2.0,
         "note": "",
+        "validated": true,
         "sub_part": {
             "name": "Widget_Assembly",
             "IPN": "WID-TEMPLATE",
@@ -11,6 +12,7 @@
     {
         "quantity": 1.0,
         "note": "Enclosure",
+        "validated": true,
         "sub_part": {
             "name": "1551AGY",
             "IPN": "",
@@ -20,6 +22,7 @@
     {
         "quantity": 3.0,
         "note": "Doohicket",
+        "validated": false,
         "sub_part": {
             "name": "Doohickey",
             "IPN": "D.123",
@@ -29,6 +32,7 @@
     {
         "quantity": 1.0,
         "note": "",
+        "validated": true,
         "sub_part": {
             "name": "Widget_Board_(assembled)",
             "IPN": "002.01-PCBA",
@@ -38,6 +42,7 @@
     {
         "quantity": 1.0,
         "note": "",
+        "validated": true,
         "sub_part": {
             "name": "Test_Board_2",
             "IPN": "TB2",
@@ -47,6 +52,7 @@
     {
         "quantity": 1.0,
         "note": "",
+        "validated": true,
         "sub_part": {
             "name": "Test_Board_3",
             "IPN": "TB3",
@@ -56,6 +62,7 @@
     {
         "quantity": 2.0,
         "note": "",
+        "validated": false,
         "sub_part": {
             "name": "Silicon_Wire_10AWG_Red",
             "IPN": "",
@@ -65,6 +72,7 @@
     {
         "quantity": 13.0,
         "note": "",
+        "validated": false,
         "sub_part": {
             "name": "Silicon_Wire_10AWG_Red",
             "IPN": "",
@@ -74,6 +82,7 @@
     {
         "quantity": 25.0,
         "note": "",
+        "validated": false,
         "sub_part": {
             "name": "Silicon_Wire_12AWG_Black",
             "IPN": "",
@@ -83,6 +92,7 @@
     {
         "quantity": 1.0,
         "note": "",
+        "validated": true,
         "sub_part": {
             "name": "Test_Board_1",
             "IPN": "TB1",

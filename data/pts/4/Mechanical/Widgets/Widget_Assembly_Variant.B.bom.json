@@ -2,6 +2,7 @@
     {
         "quantity": 12.0,
         "note": "",
+        "validated": true,
         "sub_part": {
             "name": "R_10K_0805_1%",
             "IPN": null,
@@ -11,6 +12,7 @@
     {
         "quantity": 5.0,
         "note": "",
+        "validated": false,
         "sub_part": {
             "name": "M3x8_Torx",
             "IPN": null,
@@ -20,6 +22,7 @@
     {
         "quantity": 3.0,
         "note": "",
+        "validated": true,
         "sub_part": {
             "name": "Red_Widget",
             "IPN": "widget.red",
@@ -29,6 +32,7 @@
     {
         "quantity": 6.0,
         "note": "",
+        "validated": true,
         "sub_part": {
             "name": "Green_Widget",
             "IPN": "widget.green",
@@ -38,6 +42,7 @@
     {
         "quantity": 5.0,
         "note": "",
+        "validated": true,
         "sub_part": {
             "name": "Blue_Widget",
             "IPN": "widget.blue",
@@ -47,6 +52,7 @@
     {
         "quantity": 4.0,
         "note": "",
+        "validated": true,
         "sub_part": {
             "name": "Pink_Widget",
             "IPN": "widget.pink",

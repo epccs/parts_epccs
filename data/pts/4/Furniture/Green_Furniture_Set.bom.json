@@ -2,6 +2,7 @@
     {
         "quantity": 1.0,
         "note": "",
+        "validated": true,
         "sub_part": {
             "name": "Green_Square_Table",
             "IPN": "",
@@ -11,6 +12,7 @@
     {
         "quantity": 4.0,
         "note": "",
+        "validated": true,
         "sub_part": {
             "name": "Green_Chair",
             "IPN": "",

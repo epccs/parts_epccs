@@ -2,6 +2,7 @@
     {
         "quantity": 4.0,
         "note": "",
+        "validated": true,
         "sub_part": {
             "name": "M3x8_Torx",
             "IPN": null,
@@ -11,6 +12,7 @@
     {
         "quantity": 1.0,
         "note": "",
+        "validated": true,
         "sub_part": {
             "name": "M3x10_Torx",
             "IPN": null,
@@ -20,6 +22,7 @@
     {
         "quantity": 1.0,
         "note": "",
+        "validated": true,
         "sub_part": {
             "name": "1551ABK",
             "IPN": "",
@@ -29,6 +32,7 @@
     {
         "quantity": 1.0,
         "note": "Assembled board",
+        "validated": true,
         "sub_part": {
             "name": "Widget_Board_(assembled)",
             "IPN": "002.01-PCBA",

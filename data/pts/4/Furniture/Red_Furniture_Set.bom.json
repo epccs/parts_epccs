@@ -2,6 +2,7 @@
     {
         "quantity": 1.0,
         "note": "",
+        "validated": true,
         "sub_part": {
             "name": "Red_Round_Table",
             "IPN": "",
@@ -11,6 +12,7 @@
     {
         "quantity": 6.0,
         "note": "",
+        "validated": true,
         "sub_part": {
             "name": "Red_Chair",
             "IPN": "",
