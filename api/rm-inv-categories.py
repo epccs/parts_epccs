@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # file name: rm-inv-categories.py
-# version: 2025-10-27-v1
+# version: 2025-11-21-v1
 # --------------------------------------------------------------
-# Delete EMPTY part categories based on folder structure in data/parts.
+# This script does not work and may be deleted in future, just manualy remove empty categories from InvenTree UI
+# --------------------------------------------------------------
+# Delete EMPTY part categories based on folder structure in data/pts/0.
 # * Only deletes if category has ZERO parts.
 # * Supports --remove-json to delete category.json files.
 # * Safe: skips non-empty categories.
@@ -16,8 +18,8 @@
 #      python3 ./api/rm-inv-categories.py "Electronics/Passives/Capacitors" --remove-json
 #      # note: the last example does not alter category.json or remove it, at this time handling is manual.
 # --------------------------------------------------------------
-# todo: category.json are found under data/parts, data/templates, and data/assemblies
-# todo: add --clean-dependencies to remove blockers from InvenTree ... clean recursively from bottom up? (e.g., .cat1/2/3/bottom)
+# todo: category.json are found under data/pts/0/* 
+# todo: add --clean-dependencies to remove blockers from InvenTree ... clean recursively from bottom up?
 # --------------------------------------------------------------
 
 import requests
