@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: rm-inv-pts.py
-# version: 2025-11-20-v3
+# version: 2025-11-20-v4
 # --------------------------------------------------------------
 # Delete InvenTree parts based on JSON files in data/pts/<level>/...
 #
@@ -17,8 +17,8 @@
 #   python3 ./api/rm-inv-pts.py "2/Electronics/PCBA/Widget_Board*" --remove-json
 # --------------------------------------------------------------
 # Changelog:
-# Fixed: Price breaks are now correctly deleted via SupplierPart -> PriceBreak
-# No more invalid ?part__part= filter
+# Fixed: Safe handling of price-break endpoint returning list OR dict
+# Fixed: Robust JSON parsing for all paginated endpoints
 # --------------------------------------------------------------
 import requests
 import json
@@ -53,6 +53,17 @@ HEADERS = {
 }
 
 # ----------------------------------------------------------------------
+# Safe JSON list extractor
+# ----------------------------------------------------------------------
+def extract_results(data):
+    """Handle both paginated {'results': [...]} and direct list responses."""
+    if isinstance(data, list):
+        return data
+    if isinstance(data, dict):
+        return data.get("results", data if "pk" in data else [])
+    return []
+
+# ----------------------------------------------------------------------
 # Sanitizers
 # ----------------------------------------------------------------------
 def sanitize_part_name(name):
@@ -76,7 +87,7 @@ def api_get(url, params=None, api_print=False):
         print(f"API GET: {url}{param_str}")
     r = requests.get(url, headers=HEADERS, params=params)
     if api_print:
-        if r.status_code == 200:
+        if r.status_code == 200 and r.content:
             preview = json.dumps(r.json() if r.content else "", default=str)[:200].replace("\n", " ")
             print(f"       -> {r.status_code} {preview}...")
         else:
@@ -100,7 +111,7 @@ def api_patch(url, payload, api_print=False):
     return r
 
 # ----------------------------------------------------------------------
-# Search part by name + revision
+# Search part
 # ----------------------------------------------------------------------
 def find_part_exact(name_san, revision_san, ipn="", api_print=False):
     params = {"name": name_san, "search": name_san}
@@ -114,7 +125,7 @@ def find_part_exact(name_san, revision_san, ipn="", api_print=False):
         return []
 
     data = r.json()
-    results = data.get("results", data) if isinstance(data, dict) else data
+    results = extract_results(data)
     filtered = [
         p for p in results
         if p.get("name") == name_san and
@@ -123,7 +134,7 @@ def find_part_exact(name_san, revision_san, ipn="", api_print=False):
     return filtered
 
 # ----------------------------------------------------------------------
-# Dependency handling - FIXED price break deletion
+# Dependency handling - now fully safe
 # ----------------------------------------------------------------------
 def check_dependencies(part_pk, api_print=False):
     endpoints = [
@@ -131,57 +142,49 @@ def check_dependencies(part_pk, api_print=False):
         (f"{BASE_URL_BOM}?sub_part={part_pk}", "used_in_bom"),
         (f"{BASE_URL_SUPPLIER_PARTS}?part={part_pk}", "supplier_parts"),
     ]
-    deps = {}
     total = 0
     for url, name in endpoints:
         r = api_get(url, api_print=api_print)
         if r.status_code == 200:
-            js = r.json()
-            items = js.get("results", js) if isinstance(js, dict) else js
-            deps[name] = items
-            total += len(items)
+            items = extract_results(r.json())
             if name == "supplier_parts":
-                # Also count price breaks per supplier part
                 for sp in items:
                     sp_pk = sp["pk"]
-                    pb_resp = api_get(f"{BASE_URL_PRICE_BREAK}", params={"supplier_part": sp_pk}, api_print=False)
-                    if pb_resp.status_code == 200:
-                        pbs = pb_resp.json().get("results", pb_resp.json() if isinstance(pb_resp.json(), list) else [])
-                        total += len(pbs)
-    return deps, total
+                    pb_r = api_get(f"{BASE_URL_PRICE_BREAK}", params={"supplier_part": sp_pk}, api_print=False)
+                    if pb_r.status_code == 200:
+                        total += len(extract_results(pb_r.json()))
+            total += len(items)
+    return None, total  # we don't need the dict anymore, just count
 
 def delete_all_dependencies(part_pk, api_print=False):
-    # 1. Get SupplierParts for this part
-    sp_resp = api_get(f"{BASE_URL_SUPPLIER_PARTS}?part={part_pk}", api_print=api_print)
-    if sp_resp.status_code == 200:
-        supplier_parts = sp_resp.json().get("results", [])
+    # 1. SupplierParts + their price breaks
+    sp_r = api_get(f"{BASE_URL_SUPPLIER_PARTS}?part={part_pk}", api_print=api_print)
+    if sp_r.status_code == 200:
+        supplier_parts = extract_results(sp_r.json())
         for sp in supplier_parts:
             sp_pk = sp["pk"]
             if api_print:
-                print(f"  Deleting price breaks for SupplierPart {sp_pk}")
+                print(f"  Deleting price breaks + SupplierPart {sp_pk}")
 
-            # Delete price breaks for this SupplierPart
-            pb_resp = api_get(f"{BASE_URL_PRICE_BREAK}", params={"supplier_part": sp_pk}, api_print=api_print)
-            if pb_resp.status_code == 200:
-                pbs = pb_resp.json().get("results", pb_resp.json() if isinstance(pb_resp.json(), list) else [])
-                for pb in pbs:
+            # Price breaks
+            pb_r = api_get(f"{BASE_URL_PRICE_BREAK}", params={"supplier_part": sp_pk}, api_print=api_print)
+            if pb_r.status_code == 200:
+                for pb in extract_results(pb_r.json()):
                     api_delete(f"{BASE_URL_PRICE_BREAK}{pb['pk']}/", api_print=api_print)
 
-            # Delete the SupplierPart itself
+            # SupplierPart itself
             api_delete(f"{BASE_URL_SUPPLIER_PARTS}{sp_pk}/", api_print=api_print)
 
-    # 2. Delete stock items
-    stock_resp = api_get(f"{BASE_URL_STOCK}?part={part_pk}", api_print=api_print)
-    if stock_resp.status_code == 200:
-        stocks = stock_resp.json().get("results", [])
-        for item in stocks:
+    # 2. Stock items
+    stock_r = api_get(f"{BASE_URL_STOCK}?part={part_pk}", api_print=api_print)
+    if stock_r.status_code == 200:
+        for item in extract_results(stock_r.json()):
             api_delete(f"{BASE_URL_STOCK}{item['pk']}/", api_print=api_print)
 
-    # 3. Delete BOM usages (where this part is used)
-    bom_resp = api_get(f"{BASE_URL_BOM}?sub_part={part_pk}", api_print=api_print)
-    if bom_resp.status_code == 200:
-        boms = bom_resp.json().get("results", [])
-        for bom in boms:
+    # 3. BOM usages
+    bom_r = api_get(f"{BASE_URL_BOM}?sub_part={part_pk}", api_print=api_print)
+    if bom_r.status_code == 200:
+        for bom in extract_results(bom_r.json()):
             api_delete(f"{BASE_URL_BOM}{bom['pk']}/", api_print=api_print)
 
 # ----------------------------------------------------------------------
@@ -204,7 +207,7 @@ def delete_part_from_file(json_path, clean_deps=False, remove_json=False, api_pr
     ipn = data.get("IPN", "")
 
     if not name_raw:
-        print("  Missing name in JSON - skipping")
+        print("  Missing name - skipping")
         return
 
     name_san = sanitize_part_name(name_raw)
@@ -235,7 +238,6 @@ def delete_part_from_file(json_path, clean_deps=False, remove_json=False, api_pr
             else:
                 print("  No dependencies")
 
-        # Deactivate + delete part
         api_patch(f"{BASE_URL_PARTS}{pk}/", {"active": False}, api_print=api_print)
         r = api_delete(f"{BASE_URL_PARTS}{pk}/", api_print=api_print)
         if r.status_code == 204:
@@ -244,7 +246,6 @@ def delete_part_from_file(json_path, clean_deps=False, remove_json=False, api_pr
             print(f"  FAILED: {r.status_code} {r.text}")
             return
 
-    # Remove JSON files on success
     if remove_json:
         for path in [json_path, json_path[:-5] + ".bom.json"]:
             if os.path.exists(path):
