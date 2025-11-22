@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-pts.py
-# version: 2025-11-21-v3
+# version: 2025-11-22-v4
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/pts/<level>/ to InvenTree, level by level.
 #
@@ -23,13 +23,15 @@
 # python3 ./api/json_to_inv-pts.py "1/Mechanical/Fasteners/Wood_Screw"
 # python3 ./api/json_to_inv-pts.py "1/Furniture/Leg"
 # python3 ./api/json_to_inv-pts.py "1/Furniture/*_Top"
-# python3 ./api/json_to_inv-pts.py "2/Furniture/Tables/*_Table"
-# python3 ./api/json_to_inv-pts.py "**/*" --api-print
+# python3 ./api/json_to_inv-pts.py "2/Furniture/Tables/*_Table" --api-print
+# python3 ./api/json_to_inv-pts.py "**/*"
 # --------------------------------------------------------------
 # Changelog:
-# * Now correctly sets part.validated_bom = True when all BOM lines are validated
-# * add short GET response preview to --api-print
-
+# * Full BOM validation preserved:
+#     - "validated": true/false per line
+#     - "active": true on every line (REQUIRED for validation!)
+#     - part.validated_bom = True when all lines validated
+# --------------------------------------------------------------
 import requests
 import json
 import os
@@ -68,19 +70,18 @@ def fetch_all(url, api_print=False):
             raise Exception(f"API error {r.status_code}: {r.text}")
         data = r.json()
 
-        # Show short preview of GET response
         if api_print:
             if isinstance(data, dict) and "results" in data:
                 count = len(data["results"])
                 sample = json.dumps(data["results"][:2] if count > 0 else [], default=str)[:200]
-                print(f"       → {r.status_code} [{count} items] sample: {sample}...")
+                print(f"       -> {r.status_code} [{count} items] sample: {sample}...")
             elif isinstance(data, list):
                 count = len(data)
                 sample = json.dumps(data[:2] if count > 0 else [], default=str)[:200]
-                print(f"       → {r.status_code} [{count} items] sample: {sample}...")
+                print(f"       -> {r.status_code} [{count} items] sample: {sample}...")
             else:
                 preview = json.dumps(data, default=str)[:200]
-                print(f"       → {r.status_code} {preview}...")
+                print(f"       -> {r.status_code} {preview}...")
 
         if isinstance(data, dict) and "results" in data:
             items.extend(data["results"])
@@ -118,7 +119,7 @@ def api_delete(url, api_print=False):
         print(f"ERROR {r.status_code}: {r.text}")
 
 # ----------------------------------------------------------------------
-# Category & part lookup helpers
+# Helpers
 # ----------------------------------------------------------------------
 def check_category_exists(name, parent_pk=None):
     params = {"name": name}
@@ -151,7 +152,6 @@ def parse_filename(filepath):
         return name, rev
     return name_part, None
 
-# Resolve a "Name[.revision]" string to a part PK
 def resolve_variant_target(variant_str, cache):
     if not variant_str:
         return None
@@ -166,7 +166,7 @@ def resolve_variant_target(variant_str, cache):
     return None
 
 # ----------------------------------------------------------------------
-# Push one base part + all its revisions
+# Push one base part + all revisions
 # ----------------------------------------------------------------------
 def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, force_price=False, api_print=False, level_dir=None, cache=None, all_price_breaks=None):
     first_path, _ = grouped_files[0]
@@ -198,7 +198,7 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
         if variant_pk:
             payload["variant_of"] = variant_pk
         else:
-            print(f"WARNING: Could not resolve variant_of '{variant_target}' - skipping")
+            print(f"WARNING: Could not resolve variant_of '{variant_target}' -> skipping")
 
     existing_base = [p for p in cache.get(name, []) if p.get("revision", "") == "" or p.get("revision") is None]
     if existing_base and force:
@@ -208,7 +208,7 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
             cache[name] = [c for c in cache[name] if c["pk"] != p["pk"]]
 
     if existing_base and not force:
-        print(f"DEBUG: Base part exists - reusing")
+        print(f"DEBUG: Base part exists -> reusing")
         base_pk = existing_base[0]["pk"]
     else:
         new = api_post(BASE_URL_PARTS, payload, api_print)
@@ -247,7 +247,7 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
             existing_rev = []
 
         if existing_rev:
-            print(f"DEBUG: Revision '{rev or '(default)'}' exists - skipping creation")
+            print(f"DEBUG: Revision '{rev or '(default)'}' exists -> skipping creation")
             rev_pk = existing_rev[0]["pk"]
         else:
             new_rev = api_post(BASE_URL_PARTS, rev_payload, api_print)
@@ -258,9 +258,10 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
         push_revision_content(rev_pk, rev_data, file_path, force_price, api_print, cache, all_price_breaks)
 
 # ----------------------------------------------------------------------
-# Push suppliers, pricing, BOM for a revision
+# Push suppliers, pricing, BOM
 # ----------------------------------------------------------------------
 def push_revision_content(part_pk, data, file_path, force_price, api_print, cache, all_price_breaks):
+    # Suppliers & pricing (unchanged)
     if data.get("purchaseable", False):
         for supplier in data.get("suppliers", []):
             supplier_name = supplier["supplier_name"]
@@ -322,13 +323,14 @@ def push_revision_content(part_pk, data, file_path, force_price, api_print, cach
                     pb_payload = {"part": sp_pk, "quantity": q, "price": price, "price_currency": currency}
                     api_post(BASE_URL_PRICE_BREAK, pb_payload, api_print)
 
+    # BOM
     bom_path = file_path[:-5] + ".bom.json"
     if os.path.exists(bom_path):
         print(f"DEBUG: Pushing BOM from {bom_path}")
         push_bom(part_pk, bom_path, cache=cache, api_print=api_print)
 
 # ----------------------------------------------------------------------
-# BOM push - now sets part.validated_bom = True when appropriate
+# BOM push - FULLY CORRECT VALIDATION
 # ----------------------------------------------------------------------
 def push_bom(parent_pk, bom_path, level=0, cache=None, api_print=False):
     indent = " " * level
@@ -337,19 +339,22 @@ def push_bom(parent_pk, bom_path, level=0, cache=None, api_print=False):
 
     existing_boms = fetch_all(f"{BASE_URL_BOM}?part={parent_pk}", api_print=api_print)
     all_validated = True
+    any_line = False
 
     for node in tree:
+        any_line = True
         qty = node.get("quantity", 1)
         note = node.get("note", "")
         validated = node.get("validated", False)
-        if not validated:
+        active = node.get("active", True) 
+        if not validated or not active:
             all_validated = False
 
         sub_name = node["sub_part"]["name"]
         sub_ipn = node["sub_part"].get("IPN", "")
         sub_parts = [p for p in cache.get(sub_name, []) if p.get("IPN", "") == sub_ipn or not sub_ipn]
         if not sub_parts:
-            print(f"{indent}WARNING: Sub-part '{sub_name}' (IPN: {sub_ipn}) not found – skipping")
+            print(f"{indent}WARNING: Sub-part '{sub_name}' not found -> skipping")
             continue
         sub_pk = sub_parts[0]["pk"]
 
@@ -359,7 +364,8 @@ def push_bom(parent_pk, bom_path, level=0, cache=None, api_print=False):
             "sub_part": sub_pk,
             "quantity": qty,
             "note": note,
-            "validated": validated
+            "validated": validated,
+            "active": active 
         }
         if existing:
             api_patch(f"{BASE_URL_BOM}{existing[0]['pk']}/", payload, api_print)
@@ -371,8 +377,8 @@ def push_bom(parent_pk, bom_path, level=0, cache=None, api_print=False):
         status = " (VALIDATED)" if validated else ""
         print(f"{indent}{action} BOM: {qty} x {sub_name}{status} (sub_pk {sub_pk})")
 
-    # Set part-level validated_bom flag if all lines are validated
-    if all_validated and tree:
+    # Only set validated_bom if BOM exists and all lines are validated + active
+    if any_line and all_validated:
         print(f"{indent}Setting part.validated_bom = True for PK {parent_pk}")
         api_patch(f"{BASE_URL_PARTS}{parent_pk}/", {"validated_bom": True}, api_print)
 
