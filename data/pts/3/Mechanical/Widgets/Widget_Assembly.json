@@ -14,6 +14,7 @@
     "virtual": false,
     "is_template": true,
     "variant_of": null,
+    "validated_bom": false,
     "image": "",
     "thumbnail": "",
     "suppliers": []

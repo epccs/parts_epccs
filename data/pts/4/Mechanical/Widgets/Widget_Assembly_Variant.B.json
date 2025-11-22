@@ -14,6 +14,7 @@
     "virtual": false,
     "is_template": false,
     "variant_of": "Widget_Assembly",
+    "validated_bom": false,
     "image": "",
     "thumbnail": "",
     "suppliers": []

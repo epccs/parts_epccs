@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-pts_to_json.py
-# version: 2025-11-22-v2
+# version: 2025-11-22-v3
 # --------------------------------------------------------------
 # Pull from inventree **all parts** (templates, assemblies, real parts)
 # -> data/pts/<level>/<category_path>/
@@ -22,6 +22,8 @@
 #
 # example usage:
 # python3 ./api/inv-pts_to_json.py
+# python3 ./api/inv-pts_to_json.py "**/*"        # <- pulls everything
+# python3 ./api/inv-pts_to_json.py "Round_Table"
 # python3 ./api/inv-pts_to_json.py "*_Table"
 # --------------------------------------------------------------
 # Changelog:
@@ -158,7 +160,7 @@ def write_category_files(root_dir, pk_to_path, parent_to_subs):
         save_to_file(subs, os.path.join(dir_path, "category.json"))
 
 # ----------------------------------------------------------------------
-# BOM fetcher - now includes "active" and "validated" flags
+# BOM fetcher - includes active + validated
 # ----------------------------------------------------------------------
 def fetch_bom(part_pk):
     bom_items = fetch_data(f"{BASE_URL_BOM}?part={part_pk}")
@@ -176,7 +178,7 @@ def fetch_bom(part_pk):
             "quantity": item.get("quantity"),
             "note": item.get("note", ""),
             "validated": item.get("validated", False),
-            "active": item.get("active", True),  # <- Critical for validation!
+            "active": item.get("active", True),
             "sub_part": {
                 "name": sub_name,
                 "IPN": sub_ipn,
@@ -187,7 +189,7 @@ def fetch_bom(part_pk):
     return tree, sub_pks
 
 # ----------------------------------------------------------------------
-# Supplier fetcher – quiet about harmless duplicates
+# Supplier fetcher - quiet about duplicates
 # ----------------------------------------------------------------------
 def fetch_suppliers(part_pk, part_name):
     supplier_parts = fetch_data(BASE_URL_SUPPLIER_PARTS, params={"part": part_pk})
@@ -248,9 +250,10 @@ def main():
     )
     parser.add_argument(
         "patterns", nargs="*",
-        help="Glob patterns for sanitized part names (e.g. '*_Table'). Default: all."
+        help='Glob patterns for sanitized part names (e.g. "*_Table"). Use "**/*" or nothing to pull everything.'
     )
     args = parser.parse_args()
+
     if not TOKEN or not BASE_URL:
         raise Exception("INVENTREE_TOKEN and INVENTREE_URL must be set")
 
@@ -263,8 +266,9 @@ def main():
     print("DEBUG: Writing category.json files...")
     write_category_files(root_dir, pk_to_path, parent_to_subs)
 
+    # Special case: "**/*" or no patterns → pull everything
     patterns = []
-    if args.patterns:
+    if args.patterns and not any(p in ["**/*", "*"] for p in args.patterns):
         for raw in args.patterns:
             pat = raw.removesuffix(".json").strip()
             if not pat:
@@ -272,6 +276,8 @@ def main():
             regex = "^" + re.escape(pat).replace("\\*", ".*").replace("\\?", ".") + "$"
             patterns.append(re.compile(regex, re.IGNORECASE))
         print(f"DEBUG: Filtering with {len(patterns)} patterns")
+    else:
+        print("DEBUG: No filter -> pulling ALL parts")
 
     print("DEBUG: Fetching all parts...")
     parts = fetch_data(BASE_URL_PARTS)
@@ -300,6 +306,8 @@ def main():
             continue
 
         san_name = sanitize_part_name(name)
+
+        # Apply filter only if patterns exist and it's not the "pull all" case
         if patterns and not any(p.search(san_name) for p in patterns):
             continue
 
@@ -350,7 +358,7 @@ def main():
             "virtual": part.get("virtual", False),
             "is_template": part.get("is_template", False),
             "variant_of": variant_of_full,
-            "validated_bom": part.get("validated_bom", False),  # <- NEW: part-level BOM validation
+            "validated_bom": part.get("validated_bom", False),
             "image": "",
             "thumbnail": "",
             "suppliers": suppliers

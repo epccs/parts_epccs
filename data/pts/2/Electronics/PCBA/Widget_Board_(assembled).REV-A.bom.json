@@ -3,6 +3,7 @@
         "quantity": 2.0,
         "note": "",
         "validated": false,
+        "active": true,
         "sub_part": {
             "name": "R_10R_0402_1%",
             "IPN": null,
@@ -13,6 +14,7 @@
         "quantity": 10.0,
         "note": "",
         "validated": false,
+        "active": true,
         "sub_part": {
             "name": "R_100K_0805_1%",
             "IPN": null,
@@ -23,6 +25,7 @@
         "quantity": 2.0,
         "note": "",
         "validated": false,
+        "active": true,
         "sub_part": {
             "name": "R_220K_0603_1%",
             "IPN": null,
@@ -33,6 +36,7 @@
         "quantity": 19.0,
         "note": "",
         "validated": false,
+        "active": true,
         "sub_part": {
             "name": "C_1uF_0402",
             "IPN": null,
@@ -43,6 +47,7 @@
         "quantity": 5.0,
         "note": "",
         "validated": false,
+        "active": true,
         "sub_part": {
             "name": "C_100nF_0603",
             "IPN": null,
@@ -53,6 +58,7 @@
         "quantity": 1.0,
         "note": "RS232 transceiver",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "MAX232IDR",
             "IPN": null,
@@ -63,6 +69,7 @@
         "quantity": 3.0,
         "note": "A third line item, with higher quanity",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "Widget_Board",
             "IPN": "002.01-PCB",
@@ -73,6 +80,7 @@
         "quantity": 1.0,
         "note": "A second instance of this PCB",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "Widget_Board",
             "IPN": "002.01-PCB",
@@ -83,6 +91,7 @@
         "quantity": 1.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "Widget_Board",
             "IPN": "002.01-PCB",
@@ -93,6 +102,7 @@
         "quantity": 2.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "530470210",
             "IPN": "",
@@ -103,6 +113,7 @@
         "quantity": 1.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "Widget_Template",
             "IPN": "",

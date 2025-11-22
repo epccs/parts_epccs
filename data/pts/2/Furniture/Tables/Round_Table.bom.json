@@ -3,6 +3,7 @@
         "quantity": 4.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "Leg",
             "IPN": "",
@@ -13,6 +14,7 @@
         "quantity": 1.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "Round_Top",
             "IPN": "",
@@ -23,6 +25,7 @@
         "quantity": 12.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "Wood_Screw",
             "IPN": "",

@@ -3,6 +3,7 @@
         "quantity": 26.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_470R_0805_1%",
             "IPN": null,
@@ -13,6 +14,7 @@
         "quantity": 27.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_550R_0402_1%",
             "IPN": null,
@@ -23,6 +25,7 @@
         "quantity": 10.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_2,2K_0805_5%",
             "IPN": "",
@@ -33,6 +36,7 @@
         "quantity": 5.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_220K_0805_1%",
             "IPN": null,
@@ -43,6 +47,7 @@
         "quantity": 11.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_100K_0603_1%",
             "IPN": null,
@@ -53,6 +58,7 @@
         "quantity": 31.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "C_100pF_0603",
             "IPN": null,
@@ -63,6 +69,7 @@
         "quantity": 5.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_220K_0402_1%",
             "IPN": null,
@@ -73,6 +80,7 @@
         "quantity": 32.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "C_100nF_0603",
             "IPN": null,
@@ -83,6 +91,7 @@
         "quantity": 7.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "C_10uF_0805",
             "IPN": null,
@@ -93,6 +102,7 @@
         "quantity": 45.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "C_1uF_0805",
             "IPN": null,
@@ -103,6 +113,7 @@
         "quantity": 35.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "C_100pF_0805",
             "IPN": null,
@@ -113,6 +124,7 @@
         "quantity": 38.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "C_100pF_0402",
             "IPN": null,
@@ -123,6 +135,7 @@
         "quantity": 25.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "C_10uF_0603",
             "IPN": null,
@@ -133,6 +146,7 @@
         "quantity": 19.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "C_1uF_0603",
             "IPN": null,
@@ -143,6 +157,7 @@
         "quantity": 22.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "C_10uF_0402",
             "IPN": null,
@@ -153,6 +168,7 @@
         "quantity": 26.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "C_1uF_0402",
             "IPN": null,
@@ -163,6 +179,7 @@
         "quantity": 17.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "C_100nF_0402",
             "IPN": null,
@@ -173,6 +190,7 @@
         "quantity": 31.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "C_100nF_0805",
             "IPN": null,
@@ -183,6 +201,7 @@
         "quantity": 8.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_100K_0402_1%",
             "IPN": null,
@@ -193,6 +212,7 @@
         "quantity": 34.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_68K_0805_1%",
             "IPN": null,
@@ -203,6 +223,7 @@
         "quantity": 27.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_220K_0603_1%",
             "IPN": null,
@@ -213,6 +234,7 @@
         "quantity": 31.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_100K_0805_1%",
             "IPN": null,
@@ -223,6 +245,7 @@
         "quantity": 32.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_68K_0402_1%",
             "IPN": null,
@@ -233,6 +256,7 @@
         "quantity": 7.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_22K_0805_1%",
             "IPN": null,
@@ -243,6 +267,7 @@
         "quantity": 20.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_10R_0402_1%",
             "IPN": null,
@@ -253,6 +278,7 @@
         "quantity": 27.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_10K_0603_1%",
             "IPN": null,
@@ -263,6 +289,7 @@
         "quantity": 17.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_4,7K_0805_1%",
             "IPN": null,
@@ -273,6 +300,7 @@
         "quantity": 5.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_2,2K_0603_1%",
             "IPN": null,
@@ -283,6 +311,7 @@
         "quantity": 34.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_220R_0402_1%",
             "IPN": null,
@@ -293,6 +322,7 @@
         "quantity": 11.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_56K_0603_1%",
             "IPN": null,
@@ -303,6 +333,7 @@
         "quantity": 22.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_56K_0402_1%",
             "IPN": null,
@@ -313,6 +344,7 @@
         "quantity": 11.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_47K_0805_1%",
             "IPN": null,
@@ -323,6 +355,7 @@
         "quantity": 45.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_47K_0603_1%",
             "IPN": null,
@@ -333,6 +366,7 @@
         "quantity": 39.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_47K_0402_1%",
             "IPN": null,
@@ -343,6 +377,7 @@
         "quantity": 36.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_22K_0402_1%",
             "IPN": null,
@@ -353,6 +388,7 @@
         "quantity": 33.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_68K_0603_1%",
             "IPN": null,
@@ -363,6 +399,7 @@
         "quantity": 10.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_10K_0402_1%",
             "IPN": "",
@@ -373,6 +410,7 @@
         "quantity": 11.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_5,6K_0805_1%",
             "IPN": null,
@@ -383,6 +421,7 @@
         "quantity": 16.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_5,6K_0603_1%",
             "IPN": null,
@@ -393,6 +432,7 @@
         "quantity": 22.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_5,6K_0402_1%",
             "IPN": null,
@@ -403,6 +443,7 @@
         "quantity": 12.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_4,7K_0603_0,1%",
             "IPN": "",
@@ -413,6 +454,7 @@
         "quantity": 12.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_4,7K_0402_10%",
             "IPN": "",
@@ -423,6 +465,7 @@
         "quantity": 9.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_10K_0805_1%",
             "IPN": null,
@@ -433,6 +476,7 @@
         "quantity": 15.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_56K_0805_1%",
             "IPN": null,
@@ -443,6 +487,7 @@
         "quantity": 7.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_1K_0805_1%",
             "IPN": null,
@@ -453,6 +498,7 @@
         "quantity": 36.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_1K_0603_1%",
             "IPN": null,
@@ -463,6 +509,7 @@
         "quantity": 7.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_1K_0402_1%",
             "IPN": null,
@@ -473,6 +520,7 @@
         "quantity": 16.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_470R_0603_1%",
             "IPN": null,
@@ -483,6 +531,7 @@
         "quantity": 26.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_550R_0805_1%",
             "IPN": null,
@@ -493,6 +542,7 @@
         "quantity": 41.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_550R_0603_1%",
             "IPN": null,
@@ -503,6 +553,7 @@
         "quantity": 31.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_470R_0402_1%",
             "IPN": null,
@@ -513,6 +564,7 @@
         "quantity": 40.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_220R_0805_1%",
             "IPN": null,
@@ -523,6 +575,7 @@
         "quantity": 32.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_220R_0603_1%",
             "IPN": null,
@@ -533,6 +586,7 @@
         "quantity": 41.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_2,2K_0402_1%",
             "IPN": null,
@@ -543,6 +597,7 @@
         "quantity": 13.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_100R_0805_1%",
             "IPN": null,
@@ -553,6 +608,7 @@
         "quantity": 5.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_10R_0805_1%",
             "IPN": null,
@@ -563,6 +619,7 @@
         "quantity": 19.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_100R_0603_1%",
             "IPN": null,
@@ -573,6 +630,7 @@
         "quantity": 21.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_100R_0402_1%",
             "IPN": null,
@@ -583,6 +641,7 @@
         "quantity": 10.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_10R_0603_1%",
             "IPN": null,
@@ -593,6 +652,7 @@
         "quantity": 24.0,
         "note": "",
         "validated": true,
+        "active": true,
         "sub_part": {
             "name": "R_22K_0603_1%",
             "IPN": null,
