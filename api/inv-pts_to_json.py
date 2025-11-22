@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-pts_to_json.py
-# version: 2025-11-20-v2
+# version: 2025-11-22-v2
 # --------------------------------------------------------------
 # Pull from inventree **all parts** (templates, assemblies, real parts)
 # -> data/pts/<level>/<category_path>/
@@ -10,19 +10,25 @@
 # - Higher levels: Based on max dependency level + 1
 # Dependencies include variant_of and BOM sub-parts (if applicable)
 #
+# Features:
 # * CLI glob patterns (e.g. "C_*_0402", "*_Table")
 # * Saves: Part_Name[.revision].json
-# * + Part_Name[.revision].bom.json for assemblies (always) or templates (if BOM exists)
+# * + Part_Name[.revision].bom.json for assemblies/templates with BOM
 # * Skips parts with no category
 # * Sanitized names/paths
 # * Pulls suppliers/manufacturers/price breaks (aggregates duplicates)
 # * category.json files saved in data/pts/0/<category_path>/
-# * variant_of now stored as "variant_of": "BaseName[.revision]" so that the exact base part + revision is known when re-importing
+# * variant_of stored as "variant_of": "BaseName[.revision]"
 #
 # example usage:
 # python3 ./api/inv-pts_to_json.py
 # python3 ./api/inv-pts_to_json.py "*_Table"
 # --------------------------------------------------------------
+# Changelog:
+# * Now pulls part.validated_bom -> saved in .json (controls big green "Validated" badge)
+# * Now pulls BOM item "active" flag -> saved in .bom.json (required for BOM to be considered validated)
+# * Now pulls BOM item "validated" flag -> saved in .bom.json
+# * ensures 100% faithful migration of BOM validation state between InvenTree instances
 
 import requests
 import json
@@ -30,6 +36,7 @@ import os
 import re
 import argparse
 from collections import defaultdict
+
 # ----------------------------------------------------------------------
 # API & Auth
 # ----------------------------------------------------------------------
@@ -45,12 +52,14 @@ if BASE_URL:
 else:
     BASE_URL_PARTS = BASE_URL_CATEGORIES = BASE_URL_BOM = None
     BASE_URL_SUPPLIER_PARTS = BASE_URL_MANUFACTURER_PART = BASE_URL_PRICE_BREAK = None
+
 TOKEN = os.getenv("INVENTREE_TOKEN")
 HEADERS = {
     "Authorization": f"Token {TOKEN}",
     "Accept": "application/json",
     "Content-Type": "application/json"
 }
+
 # ----------------------------------------------------------------------
 # Sanitizers
 # ----------------------------------------------------------------------
@@ -149,7 +158,7 @@ def write_category_files(root_dir, pk_to_path, parent_to_subs):
         save_to_file(subs, os.path.join(dir_path, "category.json"))
 
 # ----------------------------------------------------------------------
-# BOM fetcher
+# BOM fetcher - now includes "active" and "validated" flags
 # ----------------------------------------------------------------------
 def fetch_bom(part_pk):
     bom_items = fetch_data(f"{BASE_URL_BOM}?part={part_pk}")
@@ -167,6 +176,7 @@ def fetch_bom(part_pk):
             "quantity": item.get("quantity"),
             "note": item.get("note", ""),
             "validated": item.get("validated", False),
+            "active": item.get("active", True),  # <- Critical for validation!
             "sub_part": {
                 "name": sub_name,
                 "IPN": sub_ipn,
@@ -177,7 +187,7 @@ def fetch_bom(part_pk):
     return tree, sub_pks
 
 # ----------------------------------------------------------------------
-# Supplier fetcher – now quiet about duplicates (they are harmless)
+# Supplier fetcher – quiet about harmless duplicates
 # ----------------------------------------------------------------------
 def fetch_suppliers(part_pk, part_name):
     supplier_parts = fetch_data(BASE_URL_SUPPLIER_PARTS, params={"part": part_pk})
@@ -197,9 +207,7 @@ def fetch_suppliers(part_pk, part_name):
         for pb in price_breaks:
             q = pb.get('quantity', 0)
             pb_by_quantity[q].append(pb)
-
         for q, pbs in pb_by_quantity.items():
-            # Just pick the most recent one – suppress noisy warnings
             selected = max(pbs, key=lambda x: x.get('updated', ''))
             sp_details['price_breaks'].append({
                 "quantity": q,
@@ -207,7 +215,6 @@ def fetch_suppliers(part_pk, part_name):
                 "price_currency": selected.get('price_currency', '')
             })
         sp_details['price_breaks'].sort(key=lambda x: x['quantity'])
-
         if sp.get('manufacturer_part'):
             mp_resp = fetch_data(f"{BASE_URL_MANUFACTURER_PART}{sp['manufacturer_part']}/")
             if mp_resp:
@@ -216,7 +223,6 @@ def fetch_suppliers(part_pk, part_name):
                 sp_details['MPN'] = mp.get('MPN', '')
                 sp_details['mp_description'] = mp.get('description', '')
                 sp_details['mp_link'] = mp.get('link', '')
-
         suppliers_list.append(sp_details)
     return suppliers_list
 
@@ -321,7 +327,6 @@ def main():
                 variant_r = requests.get(f"{BASE_URL_PARTS}{variant_pk}/", headers=HEADERS)
                 if variant_r.status_code == 200:
                     variant_part = variant_r.json()
-
             if variant_part:
                 v_name = sanitize_part_name(variant_part.get("name", ""))
                 v_rev_raw = variant_part.get("revision")
@@ -344,7 +349,8 @@ def main():
             "salable": part.get("salable", False),
             "virtual": part.get("virtual", False),
             "is_template": part.get("is_template", False),
-            "variant_of": variant_of_full,   # e.g. "Red_Widget.00"
+            "variant_of": variant_of_full,
+            "validated_bom": part.get("validated_bom", False),  # <- NEW: part-level BOM validation
             "image": "",
             "thumbnail": "",
             "suppliers": suppliers
