@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: rm-inv-pts.py
-# version: 2025-11-20-v5
+# version: 2025-11-21-v1
 # --------------------------------------------------------------
 # Delete InvenTree parts based on JSON files in data/pts/<level>/...
 #
@@ -15,18 +15,16 @@
 #
 # Example usage:
 #   python3 ./api/rm-inv-pts.py "4/Mechanical/Widgets/Widget_Assembly_Variant*" --clean-dependencies --remove-json
+#   python3 ./api/rm-inv-pts.py "4/Mechanical/Widgets/Red_Widget.02" --clean-dependencies
 #   python3 ./api/rm-inv-pts.py "2/Electronics/PCBA/Widget_Board*" --remove-json
-#   python3 ./api/rm-inv-pts.py "2/Furniture/Tables/*_Table.json" --clean-dependencies
-#   python3 ./api/rm-inv-pts.py "1/Mechanical/Fasteners/Wood_Screw.json"
-#   python3 ./api/rm-inv-pts.py "1/Furniture/Leg.json"
-#   python3 ./api/rm-inv-pts.py "1/Furniture/*_Top.json"
+#   python3 ./api/rm-inv-pts.py "2/Furniture/Tables/*_Table" --clean-dependencies
+#   python3 ./api/rm-inv-pts.py "1/Mechanical/Fasteners/Wood_Screw"
+#   python3 ./api/rm-inv-pts.py "1/Furniture/Leg"
+#   python3 ./api/rm-inv-pts.py "1/Furniture/*_Top"
 # --------------------------------------------------------------
 # Changelog:
-# New: --clean-dependencies-yes -> deletes ALL dependencies with NO confirmation
-# Safe price-break deletion via SupplierPart
-# Robust list/dict JSON handling
-# --------------------------------------------------------------
-# Todo: remove the .json match from CLI globbing
+#   remove the .json match from CLI globbing
+#   added revision handling "4/Mechanical/Widgets/Red_Widget.02"
 
 import requests
 import json
@@ -142,9 +140,8 @@ def find_part_exact(name_san, revision_san, ipn="", api_print=False):
 # ----------------------------------------------------------------------
 # Dependency handling
 # ----------------------------------------------------------------------
-def check_dependencies(part_pk, api_print=False):
+def check_dependencies(part_pk):
     total = 0
-    # Supplier parts + price breaks
     sp_r = api_get(f"{BASE_URL_SUPPLIER_PARTS}?part={part_pk}", api_print=False)
     if sp_r.status_code == 200:
         for sp in extract_results(sp_r.json()):
@@ -152,7 +149,6 @@ def check_dependencies(part_pk, api_print=False):
             pb_r = api_get(f"{BASE_URL_PRICE_BREAK}", params={"supplier_part": sp["pk"]}, api_print=False)
             if pb_r.status_code == 200:
                 total += len(extract_results(pb_r.json()))
-    # Stock + BOM usage
     for endpoint in [f"{BASE_URL_STOCK}?part={part_pk}", f"{BASE_URL_BOM}?sub_part={part_pk}"]:
         r = api_get(endpoint, api_print=False)
         if r.status_code == 200:
@@ -184,6 +180,45 @@ def delete_all_dependencies(part_pk, api_print=False):
     if bom_r.status_code == 200:
         for bom in extract_results(bom_r.json()):
             api_delete(f"{BASE_URL_BOM}{bom['pk']}/", api_print=api_print)
+
+# ----------------------------------------------------------------------
+# Resolve pattern -> actual JSON file(s)
+# ----------------------------------------------------------------------
+def resolve_pattern_to_files(pattern):
+    root = "data/pts"
+    candidates = []
+
+    # 1. Direct file match (with or without .json)
+    path_no_ext = os.path.join(root, pattern)
+    path_with_ext = path_no_ext + ".json"
+
+    if os.path.exists(path_with_ext):
+        candidates.append(path_with_ext)
+    elif os.path.exists(path_no_ext):
+        candidates.append(path_no_ext)
+
+    # 2. If it has revision (ends with .X), try that
+    if "." in os.path.basename(pattern):
+        base, rev = pattern.rsplit(".", 1)
+        rev_path = os.path.join(root, base + f".{rev}.json")
+        if os.path.exists(rev_path):
+            candidates.append(rev_path)
+
+    # 3. Glob fallback (for wildcards like *)
+    if "*" in pattern or "?" in pattern:
+        glob_path = os.path.join(root, pattern + ".json")
+        candidates.extend(glob.glob(glob_path, recursive=True))
+        glob_path_rev = os.path.join(root, pattern + ".*.json")
+        candidates.extend(glob.glob(glob_path_rev, recursive=True))
+
+    # Remove duplicates and non-JSON files
+    json_files = []
+    for f in candidates:
+        if f.endswith(".json") and not f.endswith(".bom.json") and "category.json" not in f:
+            if f not in json_files:
+                json_files.append(f)
+
+    return sorted(json_files)
 
 # ----------------------------------------------------------------------
 # Main deletion
@@ -223,7 +258,7 @@ def delete_part_from_file(json_path, clean_deps=False, clean_deps_yes=False, rem
             total = check_dependencies(pk)
             if total > 0:
                 if clean_deps_yes:
-                    print(f"  --clean-dependencies-yes: Auto-deleting {total} dependencies (no confirm)")
+                    print(f"  --clean-dependencies-yes: Auto-deleting {total} dependencies")
                 else:
                     print(f"  {total} dependencies detected")
                     if input("  Type YES to delete dependencies: ") != "YES":
@@ -234,11 +269,7 @@ def delete_part_from_file(json_path, clean_deps=False, clean_deps_yes=False, rem
                         continue
             else:
                 print("  No dependencies")
-
             delete_all_dependencies(pk, api_print=api_print)
-        elif total := check_dependencies(pk):
-            print(f"  Warning: {total} dependencies exist but --clean-dependencies not used - skipping part")
-            continue
 
         api_patch(f"{BASE_URL_PARTS}{pk}/", {"active": False}, api_print=api_print)
         r = api_delete(f"{BASE_URL_PARTS}{pk}/", api_print=api_print)
@@ -262,46 +293,31 @@ def delete_part_from_file(json_path, clean_deps=False, clean_deps_yes=False, rem
 # ----------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(
-        description="Safely delete InvenTree parts from data/pts/ JSON files"
+        description="Delete InvenTree parts - no .json required!"
     )
     parser.add_argument("patterns", nargs="*", default=["**/*"],
-                        help="Glob patterns relative to data/pts")
-    parser.add_argument("--clean-dependencies", action="store_true",
-                        help="Delete dependencies with double confirmation")
+                        help="Path + name (no .json needed), e.g. 2/Furniture/Tables/Round_Table")
+    parser.add_argument("--clean-dependencies", action="store_true")
     parser.add_argument("--clean-dependencies-yes", action="store_true",
-                        help="Delete dependencies with NO confirmation (dangerous!)")
-    parser.add_argument("--remove-json", action="store_true",
-                        help="Delete JSON + .bom.json files after success")
-    parser.add_argument("--api-print", action="store_true",
-                        help="Verbose API logging")
+                        help="Delete dependencies with NO confirmation")
+    parser.add_argument("--remove-json", action="store_true")
+    parser.add_argument("--api-print", action="store_true")
     args = parser.parse_args()
 
     if args.clean_dependencies and args.clean_dependencies_yes:
         print("Error: --clean-dependencies and --clean-dependencies-yes are mutually exclusive")
         sys.exit(1)
 
-    root = "data/pts"
-    if not os.path.isdir(root):
-        print(f"Error: {root} not found")
-        sys.exit(1)
-
-    files = []
+    all_files = []
     for pat in args.patterns:
-        full = os.path.join(root, pat)
-        files.extend(glob.glob(full, recursive=True))
-        files.extend(glob.glob(full + ".*.json", recursive=True))
+        all_files.extend(resolve_pattern_to_files(pat))
 
-    json_files = sorted({
-        f for f in files
-        if f.endswith(".json") and not f.endswith(".bom.json") and "category.json" not in f
-    })
-
-    if not json_files:
-        print("No matching files")
+    if not all_files:
+        print("No matching part files found")
         return
 
-    print(f"Found {len(json_files)} part(s) to delete\n")
-    for f in json_files:
+    print(f"Found {len(all_files)} part(s) to delete\n")
+    for f in all_files:
         delete_part_from_file(
             f,
             clean_deps=args.clean_dependencies,
