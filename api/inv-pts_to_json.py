@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-pts_to_json.py
-# version: 2025-11-23-v2
+# version: 2025-11-23-v5
 # --------------------------------------------------------------
 # Pull from inventree all parts (templates, assemblies, real parts)
 # -> data/pts/<level>/<category_path>/
@@ -36,15 +36,22 @@
 # python3 ./api/inv-pts_to_json.py "*_Table"
 # --------------------------------------------------------------
 # Changelog:
-#   add --api-print with --dry-diff
+#   fix --api-print with --dry-diff
 
 import requests
 import json
 import os
 import re
+import sys         
 import argparse
 from collections import defaultdict
-from deepdiff import DeepDiff
+from typing import List, Dict, Any, Optional  # ← Optional: makes Pylance even happier
+
+try:
+    from deepdiff import DeepDiff
+except ImportError:
+    print("Error: deepdiff not installed. Run: pip install deepdiff")
+    sys.exit(1)
 
 # ----------------------------------------------------------------------
 # API & Auth
@@ -59,11 +66,13 @@ if BASE_URL:
     BASE_URL_MANUFACTURER_PART = f"{BASE_URL}/api/company/part/manufacturer/"
     BASE_URL_PRICE_BREAK = f"{BASE_URL}/api/company/price-break/"
 else:
-    raise Exception("INVENTREE_URL must be set")
+    print("Error: INVENTREE_URL environment variable not set")
+    sys.exit(1)
 
 TOKEN = os.getenv("INVENTREE_TOKEN")
 if not TOKEN:
-    raise Exception("INVENTREE_TOKEN must be set")
+    print("Error: INVENTREE_TOKEN environment variable not set")
+    sys.exit(1)
 
 HEADERS = {
     "Authorization": f"Token {TOKEN}",
@@ -74,17 +83,17 @@ HEADERS = {
 # ----------------------------------------------------------------------
 # Sanitizers
 # ----------------------------------------------------------------------
-def sanitize_category_name(name):
+def sanitize_category_name(name: str) -> str:
     sanitized = name.replace(' ', '_').replace('.', '')
     sanitized = re.sub(r'[<>:"/\\|?*]', '_', sanitized.strip())
     return sanitized
 
-def sanitize_part_name(name):
+def sanitize_part_name(name: str) -> str:
     sanitized = name.replace(' ', '_').replace('.', ',')
     sanitized = re.sub(r'[<>:"/\\|?*]', '_', sanitized.strip())
     return sanitized
 
-def sanitize_revision(rev):
+def sanitize_revision(rev: Optional[str]) -> str:
     if not rev:
         return ""
     rev = str(rev).strip()
@@ -94,7 +103,7 @@ def sanitize_revision(rev):
 # ----------------------------------------------------------------------
 # Fetch with pagination + API print
 # ----------------------------------------------------------------------
-def fetch_data(url, params=None, api_print=False):
+def fetch_data(url: str, params: Optional[Dict] = None, api_print: bool = False) -> List[Any]:
     items = []
     while url:
         if api_print:
@@ -104,6 +113,7 @@ def fetch_data(url, params=None, api_print=False):
         if r.status_code != 200:
             raise Exception(f"API error {r.status_code}: {r.text}")
         data = r.json()
+
         if api_print:
             if isinstance(data, dict) and "results" in data:
                 count = len(data["results"])
@@ -112,6 +122,7 @@ def fetch_data(url, params=None, api_print=False):
             else:
                 preview = json.dumps(data, default=str)[:200]
                 print(f"       -> {r.status_code} {preview}...")
+
         if isinstance(data, dict) and "results" in data:
             items.extend(data["results"])
             url = data.get("next")
@@ -121,9 +132,9 @@ def fetch_data(url, params=None, api_print=False):
     return items
 
 # ----------------------------------------------------------------------
-# Save helper (skipped in dry-diff)
+# Save helper
 # ----------------------------------------------------------------------
-def save_to_file(data, filepath, dry_diff=False):
+def save_to_file(data: Any, filepath: str, dry_diff: bool = False) -> None:
     if dry_diff:
         print(f"[DRY-DIFF] Would save: {filepath}")
         return
@@ -135,9 +146,9 @@ def save_to_file(data, filepath, dry_diff=False):
 # ----------------------------------------------------------------------
 # Category maps
 # ----------------------------------------------------------------------
-def build_category_maps(categories):
-    pk_to_path = {}
-    parent_to_subs = {"None": []}
+def build_category_maps(categories: List[Dict]) -> tuple[Dict[int, str], Dict[str, List[Dict]]]:
+    pk_to_path: Dict[int, str] = {}
+    parent_to_subs: Dict[str, List[Dict]] = {"None": []}
     for cat in categories:
         pk = cat.get("pk")
         name = cat.get("name")
@@ -157,7 +168,7 @@ def build_category_maps(categories):
         parent_to_subs.setdefault(parent, []).append(cat_mod)
     return pk_to_path, parent_to_subs
 
-def write_category_files(root_dir, pk_to_path, parent_to_subs, dry_diff=False):
+def write_category_files(root_dir: str, pk_to_path: Dict[int, str], parent_to_subs: Dict[str, List[Dict]], dry_diff: bool = False) -> None:
     cat_root = os.path.join(root_dir, "0")
     top = parent_to_subs.get("None", [])
     if top:
@@ -173,15 +184,17 @@ def write_category_files(root_dir, pk_to_path, parent_to_subs, dry_diff=False):
         save_to_file(subs, os.path.join(dir_path, "category.json"), dry_diff)
 
 # ----------------------------------------------------------------------
-# BOM fetcher
+# BOM fetcher – returns tree + raw sub_part PKs
 # ----------------------------------------------------------------------
-def fetch_bom(part_pk, api_print=False):
+def fetch_bom(part_pk: int, api_print: bool = False) -> tuple[List[Dict], List[int]]:
     bom_items = fetch_data(f"{BASE_URL_BOM}?part={part_pk}", api_print=api_print)
     tree = []
+    raw_sub_pks = []
     for item in bom_items:
         sub_pk = item.get("sub_part")
         if not sub_pk:
             continue
+        raw_sub_pks.append(sub_pk)
         sub_part = requests.get(f"{BASE_URL_PARTS}{sub_pk}/", headers=HEADERS).json()
         sub_name = sanitize_part_name(sub_part.get("name", ""))
         sub_ipn = sub_part.get("IPN", "")
@@ -197,22 +210,19 @@ def fetch_bom(part_pk, api_print=False):
             }
         }
         tree.append(node)
-    return tree
+    return tree, raw_sub_pks
 
 # ----------------------------------------------------------------------
 # Main
 # ----------------------------------------------------------------------
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Pull parts from InvenTree -> data/pts/ (with diff mode)"
     )
     parser.add_argument("patterns", nargs="*", help='Glob patterns (e.g. "*_Table")')
-    parser.add_argument("--dry-diff", action="store_true", help="Compare local JSON vs live InvenTree (no write)")
+    parser.add_argument("--dry-diff", action="store_true", help="Compare local JSON vs live InvenTree")
     parser.add_argument("--api-print", action="store_true", help="Show API calls + response preview")
     args = parser.parse_args()
-
-    if not TOKEN or not BASE_URL:
-        raise Exception("INVENTREE_TOKEN and INVENTREE_URL must be set")
 
     root_dir = "data/pts"
 
@@ -245,9 +255,9 @@ def main():
             deps[pk].append(part['variant_of'])
         if part.get('assembly') or part.get('is_template'):
             print(f"DEBUG: Fetching BOM for pk {pk} ({part.get('name')})")
-            bom_tree = fetch_bom(pk, api_print=args.api_print)
+            bom_tree, sub_pks = fetch_bom(pk, api_print=args.api_print)
             all_parts[pk]['bom_tree'] = bom_tree
-            deps[pk].extend([item["sub_part"]["pk"] for item in bom_tree])
+            deps[pk].extend(sub_pks)
 
     level_memo = {}
     for pk in all_parts:
@@ -279,7 +289,6 @@ def main():
         base_name = f"{san_name}{rev_suffix}"
         json_path = os.path.join(level_dir, f"{base_name}.json")
 
-        # Build clean part data (same as save logic)
         variant_of_full = None
         if part.get("variant_of"):
             variant_pk = part["variant_of"]
@@ -309,7 +318,7 @@ def main():
             "validated_bom": part.get("validated_bom", False),
             "image": "",
             "thumbnail": "",
-            "suppliers": []  # Simplified for diff
+            "suppliers": []
         }
 
         if args.dry_diff:
@@ -328,7 +337,6 @@ def main():
         else:
             save_to_file(current_data, json_path)
 
-        # BOM handling
         bom_tree = part.get('bom_tree', [])
         if bom_tree:
             bom_path = os.path.join(level_dir, f"{base_name}.bom.json")
@@ -352,7 +360,7 @@ def main():
     else:
         print(f"SUMMARY: Pulled {compared} parts + BOMs to {root_dir}/<level>/")
 
-def get_level(pk, memo, deps):
+def get_level(pk: int, memo: Dict[int, int], deps: Dict[int, List[int]]) -> int:
     if pk in memo:
         return memo[pk]
     if not deps.get(pk):
@@ -363,9 +371,4 @@ def get_level(pk, memo, deps):
     return memo[pk]
 
 if __name__ == "__main__":
-    try:
-        from deepdiff import DeepDiff
-    except ImportError:
-        print("Install deepdiff for --dry-diff: pip install deepdiff")
-        sys.exit(1)
     main()
