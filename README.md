@@ -21,16 +21,17 @@ data/
 ├── companies/                 # Companies (Suppliers and Manufacturers) from inv-companies2json.py
 │   └── DigiKey.json
 │
-├── parts/                     # Real parts only from inv-parts2json.py
-│   └── Electronics/Passives/Capacitors/C_100nF_0402.json
+├── parts/                     # all parts (templates, assemblies, real parts)
+│   ├── 0/Electronics
+│   ├── 0/category.json
+│   │ 
+│   │                          # Level one parts have no dependencies (no variant_of, no BOM sub-parts)
+│   ├── 1/Electronics/C_100nF_0402[.ver].json                   # parts can have version
+│   │  
+│   │                          # Level based on max dependency level + 1
+│   ├── <level>/Electronics/PCBA/Widget_Board[.ver].json        # Dependencies include variant_of and 
+│   └── [<level>/Electronics/PCBA/Widget_Board[.ver].bom.json]  # BOM sub-parts
 │
-├── assemblies/                # Assemblies with BOMs from inv-assemblies2json.py
-│   └── Electronics/PCBA/Widget_Board.version.json
-│   └── Electronics/PCBA/Widget_Board.version.bom.json
-│
-└── templates/                 # Template Part from inv-template2json.py
-    └── Furniture/Tables/Square_Table.json
-    └── Furniture/Tables/Square_Table.bom.json
 ```
 
 [Parts_JSON.md](Parts_JSON.md)
