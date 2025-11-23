@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# file name: json_to_inv-pts.py
+# file name: json_to_inv-parts.py
 # version: 2025-11-23-v3
 # --------------------------------------------------------------
-# Push all parts (templates, assemblies, real) from data/pts/<level>/ to InvenTree, level by level.
+# Push all parts (templates, assemblies, real) from data/parts/<level>/ to InvenTree, level by level.
 #
 # * Folder structure under each level -> category hierarchy
 # * Supports Part_Name[.revision].json + [Part_Name[.revision].bom.json]
@@ -21,11 +21,11 @@
 # --------------------------------------------------------------
 #
 # example usage:
-# python3 ./api/json_to_inv-pts.py "1/Mechanical/Fasteners/Wood_Screw"
-# python3 ./api/json_to_inv-pts.py "1/Furniture/Leg"
-# python3 ./api/json_to_inv-pts.py "1/Furniture/*_Top"
-# python3 ./api/json_to_inv-pts.py "2/Furniture/Tables/*_Table" --api-print
-# python3 ./api/json_to_inv-pts.py "**/*"
+# python3 ./api/json_to_inv-parts.py "1/Mechanical/Fasteners/Wood_Screw"
+# python3 ./api/json_to_inv-parts.py "1/Furniture/Leg"
+# python3 ./api/json_to_inv-parts.py "1/Furniture/*_Top"
+# python3 ./api/json_to_inv-parts.py "2/Furniture/Tables/*_Table" --api-print
+# python3 ./api/json_to_inv-parts.py "**/*"
 # --------------------------------------------------------------
 # Changelog:
 #   - InvenTree will silently downgrade BOM validation durring push and this can not be fixed
@@ -69,7 +69,7 @@ HEADERS = {
 }
 
 # ----------------------------------------------------------------------
-# API helpers – support dry-run
+# API helpers - support dry-run
 # ----------------------------------------------------------------------
 def fetch_all(url, api_print=False, dry_run=False):
     if dry_run and api_print:
@@ -87,10 +87,10 @@ def fetch_all(url, api_print=False, dry_run=False):
             if isinstance(data, dict) and "results" in data:
                 count = len(data["results"])
                 sample = json.dumps(data["results"][:2] if count else [], default=str)[:200]
-                print(f"       → {r.status_code} [{count} items] sample: {sample}...")
+                print(f"       -> {r.status_code} [{count} items] sample: {sample}...")
             else:
                 preview = json.dumps(data, default=str)[:200]
-                print(f"       → {r.status_code} {preview}...")
+                print(f"       -> {r.status_code} {preview}...")
         if isinstance(data, dict) and "results" in data:
             items.extend(data["results"])
             url = data.get("next")
@@ -258,7 +258,7 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
         base_pk = existing_base[0]["pk"]
         if data.get("validated_bom", False):
             api_patch(f"{BASE_URL_PARTS}{base_pk}/", {"validated_bom": True}, api_print, dry_run)
-        print(f"DEBUG: Base part exists → reusing PK {base_pk}")
+        print(f"DEBUG: Base part exists -> reusing PK {base_pk}")
     else:
         new = api_post(BASE_URL_PARTS, payload, api_print, dry_run)
         base_pk = new["pk"] if not dry_run else "DRY-RUN"
@@ -292,7 +292,7 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
             rev_pk = existing_rev[0]["pk"]
             if rev_data.get("validated_bom", False):
                 api_patch(f"{BASE_URL_PARTS}{rev_pk}/", {"validated_bom": True}, api_print, dry_run)
-            print(f"DEBUG: Revision exists → reusing PK {rev_pk}")
+            print(f"DEBUG: Revision exists -> reusing PK {rev_pk}")
         else:
             new_rev = api_post(BASE_URL_PARTS, rev_payload, api_print, dry_run)
             rev_pk = new_rev["pk"] if not dry_run else "DRY-RUN"
@@ -316,7 +316,7 @@ def push_revision_content(part_pk, data, file_path, force_price, api_print, dry_
         push_bom(part_pk, bom_path, cache=cache, api_print=api_print, dry_run=dry_run)
 
 # ----------------------------------------------------------------------
-# BOM push – now works 100%
+# BOM push - now works 100%
 # ----------------------------------------------------------------------
 def push_bom(parent_pk, bom_path, level=0, cache=None, api_print=False, dry_run=False):
     indent = " " * level
@@ -336,7 +336,7 @@ def push_bom(parent_pk, bom_path, level=0, cache=None, api_print=False, dry_run=
         sub_ipn = node["sub_part"].get("IPN", "")
         sub_parts = [p for p in cache.get(sub_name, []) if p.get("IPN", "") == sub_ipn or not sub_ipn]
         if not sub_parts:
-            print(f"{indent}WARNING: Sub-part '{sub_name}' not found → skipping")
+            print(f"{indent}WARNING: Sub-part '{sub_name}' not found -> skipping")
             all_subparts_validated = False
             continue
 
@@ -359,7 +359,7 @@ def push_bom(parent_pk, bom_path, level=0, cache=None, api_print=False, dry_run=
             action = "CREATED"
 
         status = " (VALIDATED)" if validated else ""
-        print(f"{indent}{action} BOM: {qty} × {sub_name}{status} (sub_pk {sub_pk})")
+        print(f"{indent}{action} BOM: {qty} x {sub_name}{status} (sub_pk {sub_pk})")
 
     if all_subparts_validated and tree:
         print(f"{indent}Setting parent part.validated_bom = True (PK {parent_pk})")
@@ -391,7 +391,7 @@ def main():
     # CRITICAL: Pre-validate all parts FIRST
     pre_validate_all_parts(cache, api_print=args.api_print, dry_run=args.dry_run)
 
-    root = "data/pts"
+    root = "data/parts"
     files = []
     for pat in args.patterns:
         files.extend(glob.glob(os.path.join(root, pat), recursive=True))

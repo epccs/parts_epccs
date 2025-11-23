@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# file name: rm-inv-pts.py
+# file name: rm-inv-parts.py
 # version: 2025-11-21-v1
 # --------------------------------------------------------------
-# Delete InvenTree parts based on JSON files in data/pts/<level>/...
+# Delete InvenTree parts based on JSON files in data/parts/<level>/...
 #
 # * Matches parts by sanitized name + revision (exact filename match)
 # * Global search using name + revision + optional IPN fallback
@@ -11,16 +11,16 @@
 # * --remove-json -> deletes the JSON + .bom.json after successful removal
 # * --api-print -> verbose API logging (GET preview, POST/PATCH/DELETE URLs)
 # * Respects variant dependencies (no special handling needed - just deletes the variant)
-# * Works with the exact same folder/layout as inv-pts_to_json.py and json_to_inv-pts.py
+# * Works with the exact same folder/layout as inv-parts_to_json.py and json_to_inv-parts.py
 #
 # Example usage:
-#   python3 ./api/rm-inv-pts.py "4/Mechanical/Widgets/Widget_Assembly_Variant*" --clean-dependencies --remove-json
-#   python3 ./api/rm-inv-pts.py "4/Mechanical/Widgets/Red_Widget.02" --clean-dependencies
-#   python3 ./api/rm-inv-pts.py "2/Electronics/PCBA/Widget_Board*" --remove-json
-#   python3 ./api/rm-inv-pts.py "2/Furniture/Tables/*_Table" --clean-dependencies
-#   python3 ./api/rm-inv-pts.py "1/Mechanical/Fasteners/Wood_Screw"
-#   python3 ./api/rm-inv-pts.py "1/Furniture/Leg"
-#   python3 ./api/rm-inv-pts.py "1/Furniture/*_Top"
+#   python3 ./api/rm-inv-parts.py "4/Mechanical/Widgets/Widget_Assembly_Variant*" --clean-dependencies --remove-json
+#   python3 ./api/rm-inv-parts.py "4/Mechanical/Widgets/Red_Widget.02" --clean-dependencies
+#   python3 ./api/rm-inv-parts.py "2/Electronics/PCBA/Widget_Board*" --remove-json
+#   python3 ./api/rm-inv-parts.py "2/Furniture/Tables/*_Table" --clean-dependencies
+#   python3 ./api/rm-inv-parts.py "1/Mechanical/Fasteners/Wood_Screw"
+#   python3 ./api/rm-inv-parts.py "1/Furniture/Leg"
+#   python3 ./api/rm-inv-parts.py "1/Furniture/*_Top"
 # --------------------------------------------------------------
 # Changelog:
 #   remove the .json match from CLI globbing
@@ -185,7 +185,7 @@ def delete_all_dependencies(part_pk, api_print=False):
 # Resolve pattern -> actual JSON file(s)
 # ----------------------------------------------------------------------
 def resolve_pattern_to_files(pattern):
-    root = "data/pts"
+    root = "data/parts"
     candidates = []
 
     # 1. Direct file match (with or without .json)

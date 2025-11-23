@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-# file name: inv-pts_to_json.py
+# file name: inv-parts_to_json.py
 # version: 2025-11-23-v7
 # --------------------------------------------------------------
 # Pull from inventree all parts (templates, assemblies, real parts)
-# -> data/pts/<level>/<category_path>/
+# -> data/parts/<level>/<category_path>/
 # Organizes parts into dependency levels:
 # - Level 1: Parts with no dependencies (no variant_of, no BOM sub-parts)
 # - Higher levels: Based on max dependency level + 1
@@ -17,7 +17,7 @@
 # * Skips parts with no category
 # * Sanitized names/paths
 # * Pulls suppliers/manufacturers/price breaks
-# * category.json files saved in data/pts/0/<category_path>/
+# * category.json files saved in data/parts/0/<category_path>/
 # * variant_of stored as "variant_of": "BaseName[.revision]"
 # * Pulls part.validated_bom -> saved in .json
 # * Pulls BOM item "active" and "validated" flags
@@ -30,10 +30,10 @@
 #   once: pip install --upgrade pip
 #   once: pip install requests deepdiff
 # example usage:
-# python3 ./api/inv-pts_to_json.py
-# python3 ./api/inv-pts_to_json.py "**/*"        # <- pulls everything
-# python3 ./api/inv-pts_to_json.py "Round_Table" --dry-run --api-print
-# python3 ./api/inv-pts_to_json.py "*_Table"
+# python3 ./api/inv-parts_to_json.py
+# python3 ./api/inv-parts_to_json.py "**/*"        # <- pulls everything
+# python3 ./api/inv-parts_to_json.py "Round_Table" --dry-run --api-print
+# python3 ./api/inv-parts_to_json.py "*_Table"
 # --------------------------------------------------------------
 # Changelog:
 #   fix --dry-diff zero comparisons reported
@@ -108,10 +108,10 @@ def fetch_data(url: str, params=None, api_print: bool = False) -> List[Any]:
             if isinstance(data, dict) and "results" in data:
                 c = len(data["results"])
                 s = json.dumps(data["results"][:2] if c else [], default=str)[:200]
-                print(f"       → {r.status_code} [{c} items] sample: {s}...")
+                print(f"       -> {r.status_code} [{c} items] sample: {s}...")
             else:
                 preview = json.dumps(data, default=str)[:200]
-                print(f"       → {r.status_code} {preview}...")
+                print(f"       -> {r.status_code} {preview}...")
         if isinstance(data, dict) and "results" in data:
             items.extend(data["results"])
             url = data.get("next")
@@ -184,14 +184,14 @@ def fetch_bom(part_pk: int, api_print: bool = False) -> tuple[List[Dict], List[i
 # ----------------------------------------------------------------------
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Pull parts from InvenTree → data/pts/ (with diff mode)"
+        description="Pull parts from InvenTree -> data/parts/ (with diff mode)"
     )
     parser.add_argument("patterns", nargs="*", help='Path or name (e.g. "2/Furniture/Tables/Round_Table", "Round_Table", "*_Table")')
     parser.add_argument("--dry-diff", action="store_true", help="Compare local vs live")
     parser.add_argument("--api-print", action="store_true", help="Show API calls")
     args = parser.parse_args()
 
-    root_dir = "data/pts"
+    root_dir = "data/parts"
 
     print("DEBUG: Fetching categories...")
     categories = fetch_data(BASE_URL_CATEGORIES, api_print=args.api_print)
