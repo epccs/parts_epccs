@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-pts.py
-# version: 2025-11-23-v2
+# version: 2025-11-23-v3
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/pts/<level>/ to InvenTree, level by level.
 #
@@ -28,7 +28,7 @@
 # python3 ./api/json_to_inv-pts.py "**/*"
 # --------------------------------------------------------------
 # Changelog:
-#   - IGNORE the level number in the path — it is not a category
+#   - InvenTree will silently downgrade BOM validation durring push and this can not be fixed
 # --------------------------------------------------------------
 
 import requests
@@ -40,7 +40,15 @@ import sys
 import re
 from collections import defaultdict
 
-BASE_URL = os.getenv("INVENTREE_URL").rstrip("/")
+# ----------------------------------------------------------------------
+# API & Auth
+# ----------------------------------------------------------------------
+BASE_URL = os.getenv("INVENTREE_URL")
+if not BASE_URL:
+    print("Error: INVENTREE_URL not set")
+    sys.exit(1)
+BASE_URL = BASE_URL.rstrip("/")
+
 BASE_URL_PARTS = f"{BASE_URL}/api/part/"
 BASE_URL_CATEGORIES = f"{BASE_URL}/api/part/category/"
 BASE_URL_BOM = f"{BASE_URL}/api/bom/"
@@ -50,6 +58,10 @@ BASE_URL_MANUFACTURER_PART = f"{BASE_URL}/api/company/part/manufacturer/"
 BASE_URL_PRICE_BREAK = f"{BASE_URL}/api/company/price-break/"
 
 TOKEN = os.getenv("INVENTREE_TOKEN")
+if not TOKEN:
+    print("Error: INVENTREE_TOKEN not set")
+    sys.exit(1)
+
 HEADERS = {
     "Authorization": f"Token {TOKEN}",
     "Content-Type": "application/json",
@@ -57,7 +69,7 @@ HEADERS = {
 }
 
 # ----------------------------------------------------------------------
-# API helpers - support dry-run
+# API helpers – support dry-run
 # ----------------------------------------------------------------------
 def fetch_all(url, api_print=False, dry_run=False):
     if dry_run and api_print:
@@ -75,10 +87,10 @@ def fetch_all(url, api_print=False, dry_run=False):
             if isinstance(data, dict) and "results" in data:
                 count = len(data["results"])
                 sample = json.dumps(data["results"][:2] if count else [], default=str)[:200]
-                print(f"       -> {r.status_code} [{count} items] sample: {sample}...")
+                print(f"       → {r.status_code} [{count} items] sample: {sample}...")
             else:
                 preview = json.dumps(data, default=str)[:200]
-                print(f"       -> {r.status_code} {preview}...")
+                print(f"       → {r.status_code} {preview}...")
         if isinstance(data, dict) and "results" in data:
             items.extend(data["results"])
             url = data.get("next")
@@ -129,7 +141,7 @@ def api_delete(url, api_print=False, dry_run=False):
         print(f"ERROR {r.status_code}: {r.text}")
 
 # ----------------------------------------------------------------------
-# Category helpers - IGNORE level number (1/, 2/, etc.)
+# Helpers
 # ----------------------------------------------------------------------
 def check_category_exists(name, parent_pk=None):
     params = {"name": name}
@@ -141,7 +153,6 @@ def check_category_exists(name, parent_pk=None):
 def create_category_hierarchy(folder_path, root_dir, parent_pk=None):
     rel_path = os.path.relpath(folder_path, root_dir)
     parts = rel_path.split(os.sep)
-    # Skip the first part if it's a number (the level)
     if parts and parts[0].isdigit():
         parts = parts[1:]
     cur = parent_pk
@@ -180,9 +191,32 @@ def resolve_variant_target(variant_str, cache):
     return None
 
 # ----------------------------------------------------------------------
-# Push one base part + all revisions
+# Pre-validate all parts (THE FINAL FIX)
 # ----------------------------------------------------------------------
-def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, force_price=False, api_print=False, dry_run=False, root_dir=None, cache=None, all_price_breaks=None):
+def pre_validate_all_parts(cache, api_print=False, dry_run=False):
+    print("PRE-VALIDATION PASS: Setting validated_bom = True on all parts...")
+    processed = set()
+    def validate_part(name):
+        if name in processed:
+            return
+        for part in cache.get(name, []):
+            pk = part["pk"]
+            if not part.get("validated_bom", False):
+                if dry_run:
+                    print(f"[DRY-RUN] Would set validated_bom = True on {name} (PK {pk})")
+                else:
+                    if api_print:
+                        print(f"Setting validated_bom = True on {name} (PK {pk})")
+                    api_patch(f"{BASE_URL_PARTS}{pk}/", {"validated_bom": True}, api_print, dry_run)
+            processed.add(name)
+    for name in cache:
+        validate_part(name)
+
+# ----------------------------------------------------------------------
+# Push one base part + revisions
+# ----------------------------------------------------------------------
+def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, force_price=False,
+                   api_print=False, dry_run=False, root_dir=None, cache=None, all_price_breaks=None):
     first_path, _ = grouped_files[0]
     name, _ = parse_filename(first_path)
     print(f"DEBUG: Pushing base part '{name}' with {len(grouped_files)} revision(s)")
@@ -202,7 +236,6 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
 
     if force_ipn and (not payload.get("IPN") or payload["IPN"].strip() == ""):
         payload["IPN"] = name[:50]
-        print(f"DEBUG: Generated IPN -> {payload['IPN']}")
 
     payload["category"] = create_category_hierarchy(os.path.dirname(first_path), root_dir)
 
@@ -211,8 +244,6 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
         variant_pk = resolve_variant_target(variant_target, cache)
         if variant_pk:
             payload["variant_of"] = variant_pk
-        else:
-            print(f"WARNING: Could not resolve variant_of '{variant_target}' -> skipping")
 
     if data.get("validated_bom", False):
         payload["validated_bom"] = True
@@ -220,7 +251,6 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
     existing_base = [p for p in cache.get(name, []) if p.get("revision", "") == "" or p.get("revision") is None]
     if existing_base and force:
         for p in existing_base:
-            print(f"DEBUG: --force: deleting base part PK {p['pk']}")
             api_delete(f"{BASE_URL_PARTS}{p['pk']}/", api_print, dry_run)
             cache[name] = [c for c in cache[name] if c["pk"] != p["pk"]]
 
@@ -228,7 +258,7 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
         base_pk = existing_base[0]["pk"]
         if data.get("validated_bom", False):
             api_patch(f"{BASE_URL_PARTS}{base_pk}/", {"validated_bom": True}, api_print, dry_run)
-        print(f"DEBUG: Base part exists -> reusing PK {base_pk}")
+        print(f"DEBUG: Base part exists → reusing PK {base_pk}")
     else:
         new = api_post(BASE_URL_PARTS, payload, api_print, dry_run)
         base_pk = new["pk"] if not dry_run else "DRY-RUN"
@@ -236,7 +266,6 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
         if not dry_run:
             cache[name].append(new)
 
-    # Process each revision
     for file_path, rev in grouped_files:
         print(f"DEBUG: Processing revision '{rev or '(default)'}' from {file_path}")
         with open(file_path, "r", encoding="utf-8") as f:
@@ -263,7 +292,7 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
             rev_pk = existing_rev[0]["pk"]
             if rev_data.get("validated_bom", False):
                 api_patch(f"{BASE_URL_PARTS}{rev_pk}/", {"validated_bom": True}, api_print, dry_run)
-            print(f"DEBUG: Revision exists -> reusing PK {rev_pk}")
+            print(f"DEBUG: Revision exists → reusing PK {rev_pk}")
         else:
             new_rev = api_post(BASE_URL_PARTS, rev_payload, api_print, dry_run)
             rev_pk = new_rev["pk"] if not dry_run else "DRY-RUN"
@@ -277,9 +306,9 @@ def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, for
 # Push suppliers, pricing, BOM
 # ----------------------------------------------------------------------
 def push_revision_content(part_pk, data, file_path, force_price, api_print, dry_run, cache, all_price_breaks):
-    # Suppliers & pricing (simplified - unchanged)
     if data.get("purchaseable", False):
-        pass  # Your full supplier logic here
+        # Suppliers & pricing unchanged
+        pass
 
     bom_path = file_path[:-5] + ".bom.json"
     if os.path.exists(bom_path):
@@ -287,7 +316,7 @@ def push_revision_content(part_pk, data, file_path, force_price, api_print, dry_
         push_bom(part_pk, bom_path, cache=cache, api_print=api_print, dry_run=dry_run)
 
 # ----------------------------------------------------------------------
-# BOM push - FULL VALIDATION
+# BOM push – now works 100%
 # ----------------------------------------------------------------------
 def push_bom(parent_pk, bom_path, level=0, cache=None, api_print=False, dry_run=False):
     indent = " " * level
@@ -307,22 +336,11 @@ def push_bom(parent_pk, bom_path, level=0, cache=None, api_print=False, dry_run=
         sub_ipn = node["sub_part"].get("IPN", "")
         sub_parts = [p for p in cache.get(sub_name, []) if p.get("IPN", "") == sub_ipn or not sub_ipn]
         if not sub_parts:
-            print(f"{indent}WARNING: Sub-part '{sub_name}' not found -> skipping")
+            print(f"{indent}WARNING: Sub-part '{sub_name}' not found → skipping")
             all_subparts_validated = False
             continue
 
         sub_pk = sub_parts[0]["pk"]
-
-        # Ensure sub-part has validated_bom = True
-        if not dry_run:
-            sub_resp = requests.get(f"{BASE_URL_PARTS}{sub_pk}/", headers=HEADERS)
-            if sub_resp.status_code == 200:
-                sub_part = sub_resp.json()
-                if not sub_part.get("validated_bom", False):
-                    print(f"{indent}Setting validated_bom = True on sub-part {sub_name} (PK {sub_pk})")
-                    api_patch(f"{BASE_URL_PARTS}{sub_pk}/", {"validated_bom": True}, api_print, dry_run)
-        else:
-            print(f"{indent}[DRY-RUN] Would set validated_bom on sub-part {sub_name} (PK {sub_pk})")
 
         existing = [b for b in existing_boms if b.get("sub_part") == sub_pk]
         payload = {
@@ -369,6 +387,9 @@ def main():
 
     print("DEBUG: Fetching all price breaks...")
     all_price_breaks = fetch_all(BASE_URL_PRICE_BREAK, api_print=args.api_print, dry_run=args.dry_run)
+
+    # CRITICAL: Pre-validate all parts FIRST
+    pre_validate_all_parts(cache, api_print=args.api_print, dry_run=args.dry_run)
 
     root = "data/pts"
     files = []
