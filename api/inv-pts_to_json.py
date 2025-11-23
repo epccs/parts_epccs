@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-pts_to_json.py
-# version: 2025-11-23-v5
+# version: 2025-11-23-v6
 # --------------------------------------------------------------
 # Pull from inventree all parts (templates, assemblies, real parts)
 # -> data/pts/<level>/<category_path>/
@@ -36,16 +36,16 @@
 # python3 ./api/inv-pts_to_json.py "*_Table"
 # --------------------------------------------------------------
 # Changelog:
-#   fix --api-print with --dry-diff
+#   fix --dry-diff exact name matching (no regex) when no wildcards used
 
 import requests
 import json
 import os
 import re
-import sys         
+import sys
 import argparse
 from collections import defaultdict
-from typing import List, Dict, Any, Optional  # ← Optional: makes Pylance even happier
+from typing import List, Dict, Any, Optional
 
 try:
     from deepdiff import DeepDiff
@@ -62,16 +62,13 @@ if BASE_URL:
     BASE_URL_PARTS = f"{BASE_URL}/api/part/"
     BASE_URL_CATEGORIES = f"{BASE_URL}/api/part/category/"
     BASE_URL_BOM = f"{BASE_URL}/api/bom/"
-    BASE_URL_SUPPLIER_PARTS = f"{BASE_URL}/api/company/part/"
-    BASE_URL_MANUFACTURER_PART = f"{BASE_URL}/api/company/part/manufacturer/"
-    BASE_URL_PRICE_BREAK = f"{BASE_URL}/api/company/price-break/"
 else:
-    print("Error: INVENTREE_URL environment variable not set")
+    print("Error: INVENTREE_URL not set")
     sys.exit(1)
 
 TOKEN = os.getenv("INVENTREE_TOKEN")
 if not TOKEN:
-    print("Error: INVENTREE_TOKEN environment variable not set")
+    print("Error: INVENTREE_TOKEN not set")
     sys.exit(1)
 
 HEADERS = {
@@ -84,45 +81,37 @@ HEADERS = {
 # Sanitizers
 # ----------------------------------------------------------------------
 def sanitize_category_name(name: str) -> str:
-    sanitized = name.replace(' ', '_').replace('.', '')
-    sanitized = re.sub(r'[<>:"/\\|?*]', '_', sanitized.strip())
-    return sanitized
+    return re.sub(r'[<>:"/\\|?*]', '_', name.replace(' ', '_').replace('.', '').strip())
 
 def sanitize_part_name(name: str) -> str:
-    sanitized = name.replace(' ', '_').replace('.', ',')
-    sanitized = re.sub(r'[<>:"/\\|?*]', '_', sanitized.strip())
-    return sanitized
+    return re.sub(r'[<>:"/\\|?*]', '_', name.replace(' ', '_').replace('.', ',').strip())
 
 def sanitize_revision(rev: Optional[str]) -> str:
     if not rev:
         return ""
-    rev = str(rev).strip()
-    rev = re.sub(r'[<>:"/\\|?*]', '_', rev)
-    return rev
+    return re.sub(r'[<>:"/\\|?*]', '_', str(rev).strip())
 
 # ----------------------------------------------------------------------
-# Fetch with pagination + API print
+# Fetch + print
 # ----------------------------------------------------------------------
-def fetch_data(url: str, params: Optional[Dict] = None, api_print: bool = False) -> List[Any]:
+def fetch_data(url: str, params=None, api_print: bool = False) -> List[Any]:
     items = []
     while url:
         if api_print:
-            param_str = f"?{requests.compat.urlencode(params or {})}" if params else ""
-            print(f"API GET: {url}{param_str}")
+            p = f"?{requests.compat.urlencode(params or {})}" if params else ""
+            print(f"API GET: {url}{p}")
         r = requests.get(url, headers=HEADERS, params=params or {})
         if r.status_code != 200:
             raise Exception(f"API error {r.status_code}: {r.text}")
         data = r.json()
-
         if api_print:
             if isinstance(data, dict) and "results" in data:
-                count = len(data["results"])
-                sample = json.dumps(data["results"][:2] if count else [], default=str)[:200]
-                print(f"       -> {r.status_code} [{count} items] sample: {sample}...")
+                c = len(data["results"])
+                s = json.dumps(data["results"][:2] if c else [], default=str)[:200]
+                print(f"       → {r.status_code} [{c} items] sample: {s}...")
             else:
                 preview = json.dumps(data, default=str)[:200]
-                print(f"       -> {r.status_code} {preview}...")
-
+                print(f"       → {r.status_code} {preview}...")
         if isinstance(data, dict) and "results" in data:
             items.extend(data["results"])
             url = data.get("next")
@@ -144,11 +133,11 @@ def save_to_file(data: Any, filepath: str, dry_diff: bool = False) -> None:
         f.write("\n")
 
 # ----------------------------------------------------------------------
-# Category maps
+# Category handling
 # ----------------------------------------------------------------------
 def build_category_maps(categories: List[Dict]) -> tuple[Dict[int, str], Dict[str, List[Dict]]]:
-    pk_to_path: Dict[int, str] = {}
-    parent_to_subs: Dict[str, List[Dict]] = {"None": []}
+    pk_to_path = {}
+    parent_to_subs = {"None": []}
     for cat in categories:
         pk = cat.get("pk")
         name = cat.get("name")
@@ -184,7 +173,7 @@ def write_category_files(root_dir: str, pk_to_path: Dict[int, str], parent_to_su
         save_to_file(subs, os.path.join(dir_path, "category.json"), dry_diff)
 
 # ----------------------------------------------------------------------
-# BOM fetcher – returns tree + raw sub_part PKs
+# BOM fetcher
 # ----------------------------------------------------------------------
 def fetch_bom(part_pk: int, api_print: bool = False) -> tuple[List[Dict], List[int]]:
     bom_items = fetch_data(f"{BASE_URL_BOM}?part={part_pk}", api_print=api_print)
@@ -217,11 +206,11 @@ def fetch_bom(part_pk: int, api_print: bool = False) -> tuple[List[Dict], List[i
 # ----------------------------------------------------------------------
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Pull parts from InvenTree -> data/pts/ (with diff mode)"
+        description="Pull parts from InvenTree → data/pts/ (with diff mode)"
     )
-    parser.add_argument("patterns", nargs="*", help='Glob patterns (e.g. "*_Table")')
-    parser.add_argument("--dry-diff", action="store_true", help="Compare local JSON vs live InvenTree")
-    parser.add_argument("--api-print", action="store_true", help="Show API calls + response preview")
+    parser.add_argument("patterns", nargs="*", help='Part name or glob (e.g. Round_Table, "*_Table", "**/*")')
+    parser.add_argument("--dry-diff", action="store_true", help="Compare local vs live (no write)")
+    parser.add_argument("--api-print", action="store_true", help="Show API calls")
     args = parser.parse_args()
 
     root_dir = "data/pts"
@@ -232,22 +221,28 @@ def main() -> None:
     print("DEBUG: Writing category.json files...")
     write_category_files(root_dir, pk_to_path, parent_to_subs, dry_diff=args.dry_diff)
 
-    # Filter logic
-    patterns = []
-    if args.patterns and not any(p in ["**/*", "*"] for p in args.patterns):
-        for raw in args.patterns:
-            pat = raw.removesuffix(".json").strip()
-            if not pat:
-                continue
-            regex = "^" + re.escape(pat).replace("\\*", ".*").replace("\\?", ".") + "$"
-            patterns.append(re.compile(regex, re.IGNORECASE))
-        print(f"DEBUG: Filtering with {len(patterns)} patterns")
-    else:
-        print("DEBUG: No filter -> pulling ALL parts")
+    # Smart pattern handling
+    exact_names = []
+    glob_patterns = []
+    for pat in args.patterns or []:
+        pat = pat.strip()
+        if not pat:
+            continue
+        if "*" in pat or "?" in pat:
+            glob_patterns.append(pat)
+        else:
+            exact_names.append(pat)
+
+    if glob_patterns:
+        print(f"DEBUG: Using glob patterns: {glob_patterns}")
+    if exact_names:
+        print(f"DEBUG: Using exact names: {exact_names}")
+    if not args.patterns:
+        print("DEBUG: No patterns → pulling ALL parts")
 
     print("DEBUG: Fetching all parts...")
     parts = fetch_data(BASE_URL_PARTS, api_print=args.api_print)
-    all_parts = {part['pk']: part for part in parts if part.get('pk')}
+    all_parts = {p['pk']: p for p in parts if p.get('pk')}
 
     deps = defaultdict(list)
     for pk, part in all_parts.items():
@@ -266,38 +261,43 @@ def main() -> None:
     compared = 0
     for pk, part in all_parts.items():
         name = part.get("name")
-        raw_rev = part.get("revision")
-        cat_pk = part.get("category")
-        if not (name and cat_pk):
+        if not name:
             continue
 
+        # Match logic
+        if exact_names and name not in exact_names:
+            continue
+        if glob_patterns:
+            if not any(fnmatch.fnmatch(name, pat) for pat in glob_patterns):
+                continue
+
         san_name = sanitize_part_name(name)
-        if patterns and not any(p.search(san_name) for p in patterns):
+        cat_pk = part.get("category")
+        if not cat_pk:
             continue
 
         pathstring = pk_to_path.get(cat_pk)
         if not pathstring:
-            print(f"WARNING: Part '{name}' (pk {pk}) has no category, skipping.")
+            print(f"WARNING: Part '{name}' has no category path")
             continue
 
         dir_parts = [sanitize_category_name(p) for p in pathstring.split("/")]
         level = level_memo.get(pk, 1)
         level_dir = os.path.join(root_dir, str(level), *dir_parts)
 
-        revision = sanitize_revision(raw_rev)
+        revision = sanitize_revision(part.get("revision"))
         rev_suffix = f".{revision}" if revision else ""
         base_name = f"{san_name}{rev_suffix}"
         json_path = os.path.join(level_dir, f"{base_name}.json")
 
+        # Build current data
         variant_of_full = None
         if part.get("variant_of"):
-            variant_pk = part["variant_of"]
-            variant_part = all_parts.get(variant_pk)
-            if variant_part:
-                v_name = sanitize_part_name(variant_part.get("name", ""))
-                v_rev = sanitize_revision(variant_part.get("revision"))
-                v_rev_suffix = f".{v_rev}" if v_rev else ""
-                variant_of_full = f"{v_name}{v_rev_suffix}"
+            vp = all_parts.get(part["variant_of"])
+            if vp:
+                v_name = sanitize_part_name(vp.get("name", ""))
+                v_rev = sanitize_revision(vp.get("revision"))
+                variant_of_full = f"{v_name}.{v_rev}" if v_rev else v_name
 
         current_data = {
             "name": san_name,
@@ -324,41 +324,42 @@ def main() -> None:
         if args.dry_diff:
             if os.path.exists(json_path):
                 with open(json_path, "r", encoding="utf-8") as f:
-                    local_data = json.load(f)
-                diff = DeepDiff(local_data, current_data, ignore_order=True)
+                    local = json.load(f)
+                diff = DeepDiff(local, current_data, ignore_order=True)
                 if diff:
                     print(f"\nDIFF: {json_path}")
                     print(diff.pretty())
                 else:
-                    print(f"OK: {json_path} (identical)")
+                    print(f"OK: {json_path}")
             else:
-                print(f"NEW: {json_path} (would be created)")
+                print(f"NEW: {json_path}")
             compared += 1
         else:
             save_to_file(current_data, json_path)
 
+        # BOM
         bom_tree = part.get('bom_tree', [])
         if bom_tree:
             bom_path = os.path.join(level_dir, f"{base_name}.bom.json")
             if args.dry_diff:
                 if os.path.exists(bom_path):
-                    with open(bom_path, "r", encoding="utf-8") as f:
+                    with open(bom_path, "r") as f:
                         local_bom = json.load(f)
                     diff = DeepDiff(local_bom, bom_tree, ignore_order=True)
                     if diff:
                         print(f"\nDIFF BOM: {bom_path}")
                         print(diff.pretty())
                     else:
-                        print(f"OK BOM: {bom_path} (identical)")
+                        print(f"OK BOM: {bom_path}")
                 else:
-                    print(f"NEW BOM: {bom_path} (would be created)")
+                    print(f"NEW BOM: {bom_path}")
             else:
                 save_to_file(bom_tree, bom_path)
 
     if args.dry_diff:
         print(f"\nDRY-DIFF: Compared {compared} parts")
     else:
-        print(f"SUMMARY: Pulled {compared} parts + BOMs to {root_dir}/<level>/")
+        print(f"SUMMARY: Pulled {compared} parts")
 
 def get_level(pk: int, memo: Dict[int, int], deps: Dict[int, List[int]]) -> int:
     if pk in memo:
@@ -366,9 +367,10 @@ def get_level(pk: int, memo: Dict[int, int], deps: Dict[int, List[int]]) -> int:
     if not deps.get(pk):
         memo[pk] = 1
         return 1
-    max_dep_level = max((get_level(dep_pk, memo, deps) for dep_pk in deps[pk]), default=0)
-    memo[pk] = 1 + max_dep_level
+    max_dep = max((get_level(d, memo, deps) for d in deps[pk]), default=0)
+    memo[pk] = 1 + max_dep
     return memo[pk]
 
 if __name__ == "__main__":
+    import fnmatch  # ← Added for glob matching
     main()
