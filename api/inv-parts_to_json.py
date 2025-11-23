@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-parts_to_json.py
-# version: 2025-11-23-v7
+# version: 2025-11-23-v8
 # --------------------------------------------------------------
 # Pull from inventree all parts (templates, assemblies, real parts)
 # -> data/parts/<level>/<category_path>/
@@ -36,7 +36,8 @@
 # python3 ./api/inv-parts_to_json.py "*_Table"
 # --------------------------------------------------------------
 # Changelog:
-#   fix --dry-diff zero comparisons reported
+#   safe_ipn() function guarantees IPN is always "" (empty string) instead of 
+#   null, both in the main part JSON and inside any BOM sub-part entries.
 
 import requests
 import json
@@ -91,6 +92,10 @@ def sanitize_revision(rev: Optional[str]) -> str:
         return ""
     return re.sub(r'[<>:"/\\|?*]', '_', str(rev).strip())
 
+# Helper to guarantee IPN is always a string (empty if null/None)
+def safe_ipn(value: Any) -> str:
+    return str(value) if value not in (None, "", "null") else ""
+
 # ----------------------------------------------------------------------
 # Fetch + print
 # ----------------------------------------------------------------------
@@ -108,10 +113,10 @@ def fetch_data(url: str, params=None, api_print: bool = False) -> List[Any]:
             if isinstance(data, dict) and "results" in data:
                 c = len(data["results"])
                 s = json.dumps(data["results"][:2] if c else [], default=str)[:200]
-                print(f"       -> {r.status_code} [{c} items] sample: {s}...")
+                print(f" -> {r.status_code} [{c} items] sample: {s}...")
             else:
                 preview = json.dumps(data, default=str)[:200]
-                print(f"       -> {r.status_code} {preview}...")
+                print(f" -> {r.status_code} {preview}...")
         if isinstance(data, dict) and "results" in data:
             items.extend(data["results"])
             url = data.get("next")
@@ -142,13 +147,9 @@ def build_category_maps(categories: List[Dict]) -> Dict[int, str]:
         raw_path = cat.get("pathstring")
         if pk and raw_path:
             path_parts = raw_path.split("/")
-            san_parts = [sanitize_category_name(p) for p in path_parts]
+            san_parts = [sanitize_category_name(p) for p in path_parts if p]
             pk_to_path[pk] = "/".join(san_parts)
     return pk_to_path
-
-def write_category_files(root_dir: str, pk_to_path: Dict[int, str], dry_diff: bool = False) -> None:
-    # Simplified – only used for dry-diff simulation
-    pass
 
 # ----------------------------------------------------------------------
 # BOM fetcher
@@ -164,7 +165,7 @@ def fetch_bom(part_pk: int, api_print: bool = False) -> tuple[List[Dict], List[i
         raw_sub_pks.append(sub_pk)
         sub_part = requests.get(f"{BASE_URL_PARTS}{sub_pk}/", headers=HEADERS).json()
         sub_name = sanitize_part_name(sub_part.get("name", ""))
-        sub_ipn = sub_part.get("IPN", "")
+        sub_ipn = safe_ipn(sub_part.get("IPN"))  # ← ensured string
         node = {
             "quantity": item.get("quantity"),
             "note": item.get("note", ""),
@@ -186,13 +187,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Pull parts from InvenTree -> data/parts/ (with diff mode)"
     )
-    parser.add_argument("patterns", nargs="*", help='Path or name (e.g. "2/Furniture/Tables/Round_Table", "Round_Table", "*_Table")')
-    parser.add_argument("--dry-diff", action="store_true", help="Compare local vs live")
+    parser.add_argument("patterns", nargs="*", help='Name or glob patterns (e.g. "Round_Table", "*_Table", "**/*" for all)')
+    parser.add_argument("--dry-diff", action="store_true", help="Compare local vs live (no write)")
     parser.add_argument("--api-print", action="store_true", help="Show API calls")
     args = parser.parse_args()
 
     root_dir = "data/parts"
-
     print("DEBUG: Fetching categories...")
     categories = fetch_data(BASE_URL_CATEGORIES, api_print=args.api_print)
     pk_to_path = build_category_maps(categories)
@@ -211,7 +211,7 @@ def main() -> None:
             all_parts[pk]['bom_tree'] = bom_tree
             deps[pk].extend(sub_pks)
 
-    # Level calculation
+    # Level calculation (memoized)
     level_memo = {}
     def get_level(pk: int) -> int:
         if pk in level_memo:
@@ -222,47 +222,29 @@ def main() -> None:
         max_dep = max((get_level(d) for d in deps[pk]), default=0)
         level_memo[pk] = 1 + max_dep
         return level_memo[pk]
+
     for pk in all_parts:
         get_level(pk)
 
     # Resolve target parts from patterns
     target_parts = set()
-    for pattern in args.patterns or []:
-        pattern = pattern.strip()
-        if not pattern:
-            continue
+    import fnmatch
 
-        # Try as full path: level/category/part
-        if re.match(r"^\d+/", pattern):
-            try:
-                level_str, rest = pattern.split("/", 1)
-                level = int(level_str)
-                # Find part by path
-                for pk, part in all_parts.items():
-                    cat_pk = part.get("category")
-                    if not cat_pk:
-                        continue
-                    path = pk_to_path.get(cat_pk, "")
-                    expected_path = f"{level}/{path}"
-                    part_name = sanitize_part_name(part.get("name", ""))
-                    rev = sanitize_revision(part.get("revision"))
-                    rev_suffix = f".{rev}" if rev else ""
-                    full_path = f"{expected_path}/{part_name}{rev_suffix}".replace("//", "/")
-                    if full_path == pattern or full_path.endswith("/" + pattern.split("/")[-1]):
-                        target_parts.add(pk)
-            except:
-                pass
-
-        # Try as part name (exact or glob)
-        else:
-            import fnmatch
+    if not args.patterns or any(p.strip() in {"**/*", "*"} for p in args.patterns):
+        # Special case: pull everything
+        target_parts = set(all_parts.keys())
+    else:
+        for pattern in args.patterns:
+            pattern = pattern.strip()
+            if not pattern:
+                continue
             for pk, part in all_parts.items():
                 name = part.get("name", "")
                 if fnmatch.fnmatch(name, pattern) or name == pattern:
                     target_parts.add(pk)
 
     if not target_parts:
-        print("No parts matched your pattern")
+        print("No parts matched your pattern(s)")
         return
 
     print(f"Matched {len(target_parts)} part(s)")
@@ -277,7 +259,7 @@ def main() -> None:
 
         pathstring = pk_to_path.get(cat_pk, "")
         level = level_memo.get(pk, 1)
-        dir_parts = [sanitize_category_name(p) for p in pathstring.split("/")]
+        dir_parts = [sanitize_category_name(p) for p in pathstring.split("/") if p]
         level_dir = os.path.join(root_dir, str(level), *dir_parts)
 
         revision = sanitize_revision(part.get("revision"))
@@ -285,7 +267,7 @@ def main() -> None:
         base_name = f"{sanitize_part_name(name)}{rev_suffix}"
         json_path = os.path.join(level_dir, f"{base_name}.json")
 
-        # Build current data
+        # Resolve variant_of name
         variant_of_full = None
         if part.get("variant_of"):
             vp = all_parts.get(part["variant_of"])
@@ -294,10 +276,11 @@ def main() -> None:
                 v_rev = sanitize_revision(vp.get("revision"))
                 variant_of_full = f"{v_name}.{v_rev}" if v_rev else v_name
 
+        # Build current part data – IPN forced to empty string if missing
         current_data = {
             "name": sanitize_part_name(name),
             "revision": revision,
-            "IPN": part.get("IPN", ""),
+            "IPN": safe_ipn(part.get("IPN")),
             "description": part.get("description", ""),
             "keywords": part.get("keywords", ""),
             "units": part.get("units", ""),
@@ -313,12 +296,13 @@ def main() -> None:
             "validated_bom": part.get("validated_bom", False),
             "image": "",
             "thumbnail": "",
-            "suppliers": []
+            "suppliers": []  # you can extend this later if needed
         }
 
+        # Dry-diff or write main part JSON
         if args.dry_diff:
             if os.path.exists(json_path):
-                with open(json_path, "r") as f:
+                with open(json_path, "r", encoding="utf-8") as f:
                     local = json.load(f)
                 diff = DeepDiff(local, current_data, ignore_order=True)
                 if diff:
@@ -328,17 +312,16 @@ def main() -> None:
                     print(f"OK: {json_path}")
             else:
                 print(f"NEW: {json_path}")
-            compared += 1
         else:
             save_to_file(current_data, json_path)
 
-        # BOM
+        # BOM handling
         bom_tree = part.get('bom_tree', [])
         if bom_tree:
             bom_path = os.path.join(level_dir, f"{base_name}.bom.json")
             if args.dry_diff:
                 if os.path.exists(bom_path):
-                    with open(bom_path, "r") as f:
+                    with open(bom_path, "r", encoding="utf-8") as f:
                         local_bom = json.load(f)
                     diff = DeepDiff(local_bom, bom_tree, ignore_order=True)
                     if diff:
@@ -351,11 +334,10 @@ def main() -> None:
             else:
                 save_to_file(bom_tree, bom_path)
 
-    if args.dry_diff:
-        print(f"\nDRY-DIFF: Compared {compared} parts")
-    else:
-        print(f"SUMMARY: Processed {compared} parts")
+        compared += 1
+
+    mode = "DRY-DIFF" if args.dry_diff else "WRITE"
+    print(f"\n{mode}: Processed {compared} part(s)")
 
 if __name__ == "__main__":
-    import fnmatch
     main()
