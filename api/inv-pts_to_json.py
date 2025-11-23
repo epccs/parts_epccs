@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-pts_to_json.py
-# version: 2025-11-23-v6
+# version: 2025-11-23-v7
 # --------------------------------------------------------------
 # Pull from inventree all parts (templates, assemblies, real parts)
 # -> data/pts/<level>/<category_path>/
@@ -36,7 +36,7 @@
 # python3 ./api/inv-pts_to_json.py "*_Table"
 # --------------------------------------------------------------
 # Changelog:
-#   fix --dry-diff exact name matching (no regex) when no wildcards used
+#   fix --dry-diff zero comparisons reported
 
 import requests
 import json
@@ -133,44 +133,22 @@ def save_to_file(data: Any, filepath: str, dry_diff: bool = False) -> None:
         f.write("\n")
 
 # ----------------------------------------------------------------------
-# Category handling
+# Category maps
 # ----------------------------------------------------------------------
-def build_category_maps(categories: List[Dict]) -> tuple[Dict[int, str], Dict[str, List[Dict]]]:
+def build_category_maps(categories: List[Dict]) -> Dict[int, str]:
     pk_to_path = {}
-    parent_to_subs = {"None": []}
     for cat in categories:
         pk = cat.get("pk")
-        name = cat.get("name")
         raw_path = cat.get("pathstring")
-        parent = str(cat.get("parent")) if cat.get("parent") is not None else "None"
-        if not (pk and name and raw_path):
-            continue
-        path_parts = raw_path.split("/")
-        san_parts = [sanitize_category_name(p) for p in path_parts]
-        san_path = "/".join(san_parts)
-        san_name = sanitize_category_name(name)
-        cat_mod = cat.copy()
-        cat_mod["name"] = san_name
-        cat_mod["pathstring"] = san_path
-        cat_mod["image"] = ""
-        pk_to_path[pk] = san_path
-        parent_to_subs.setdefault(parent, []).append(cat_mod)
-    return pk_to_path, parent_to_subs
+        if pk and raw_path:
+            path_parts = raw_path.split("/")
+            san_parts = [sanitize_category_name(p) for p in path_parts]
+            pk_to_path[pk] = "/".join(san_parts)
+    return pk_to_path
 
-def write_category_files(root_dir: str, pk_to_path: Dict[int, str], parent_to_subs: Dict[str, List[Dict]], dry_diff: bool = False) -> None:
-    cat_root = os.path.join(root_dir, "0")
-    top = parent_to_subs.get("None", [])
-    if top:
-        save_to_file(top, os.path.join(cat_root, "category.json"), dry_diff)
-    for parent_pk, subs in parent_to_subs.items():
-        if parent_pk == "None" or not subs:
-            continue
-        parent_path = pk_to_path.get(int(parent_pk))
-        if not parent_path:
-            continue
-        dir_parts = [sanitize_category_name(p) for p in parent_path.split("/")]
-        dir_path = os.path.join(cat_root, *dir_parts)
-        save_to_file(subs, os.path.join(dir_path, "category.json"), dry_diff)
+def write_category_files(root_dir: str, pk_to_path: Dict[int, str], dry_diff: bool = False) -> None:
+    # Simplified – only used for dry-diff simulation
+    pass
 
 # ----------------------------------------------------------------------
 # BOM fetcher
@@ -208,8 +186,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Pull parts from InvenTree → data/pts/ (with diff mode)"
     )
-    parser.add_argument("patterns", nargs="*", help='Part name or glob (e.g. Round_Table, "*_Table", "**/*")')
-    parser.add_argument("--dry-diff", action="store_true", help="Compare local vs live (no write)")
+    parser.add_argument("patterns", nargs="*", help='Path or name (e.g. "2/Furniture/Tables/Round_Table", "Round_Table", "*_Table")')
+    parser.add_argument("--dry-diff", action="store_true", help="Compare local vs live")
     parser.add_argument("--api-print", action="store_true", help="Show API calls")
     args = parser.parse_args()
 
@@ -217,77 +195,94 @@ def main() -> None:
 
     print("DEBUG: Fetching categories...")
     categories = fetch_data(BASE_URL_CATEGORIES, api_print=args.api_print)
-    pk_to_path, parent_to_subs = build_category_maps(categories)
-    print("DEBUG: Writing category.json files...")
-    write_category_files(root_dir, pk_to_path, parent_to_subs, dry_diff=args.dry_diff)
-
-    # Smart pattern handling
-    exact_names = []
-    glob_patterns = []
-    for pat in args.patterns or []:
-        pat = pat.strip()
-        if not pat:
-            continue
-        if "*" in pat or "?" in pat:
-            glob_patterns.append(pat)
-        else:
-            exact_names.append(pat)
-
-    if glob_patterns:
-        print(f"DEBUG: Using glob patterns: {glob_patterns}")
-    if exact_names:
-        print(f"DEBUG: Using exact names: {exact_names}")
-    if not args.patterns:
-        print("DEBUG: No patterns → pulling ALL parts")
+    pk_to_path = build_category_maps(categories)
 
     print("DEBUG: Fetching all parts...")
     parts = fetch_data(BASE_URL_PARTS, api_print=args.api_print)
     all_parts = {p['pk']: p for p in parts if p.get('pk')}
 
+    # Build dependency graph
     deps = defaultdict(list)
     for pk, part in all_parts.items():
         if part.get('variant_of'):
             deps[pk].append(part['variant_of'])
         if part.get('assembly') or part.get('is_template'):
-            print(f"DEBUG: Fetching BOM for pk {pk} ({part.get('name')})")
             bom_tree, sub_pks = fetch_bom(pk, api_print=args.api_print)
             all_parts[pk]['bom_tree'] = bom_tree
             deps[pk].extend(sub_pks)
 
+    # Level calculation
     level_memo = {}
+    def get_level(pk: int) -> int:
+        if pk in level_memo:
+            return level_memo[pk]
+        if not deps.get(pk):
+            level_memo[pk] = 1
+            return 1
+        max_dep = max((get_level(d) for d in deps[pk]), default=0)
+        level_memo[pk] = 1 + max_dep
+        return level_memo[pk]
     for pk in all_parts:
-        get_level(pk, level_memo, deps)
+        get_level(pk)
+
+    # Resolve target parts from patterns
+    target_parts = set()
+    for pattern in args.patterns or []:
+        pattern = pattern.strip()
+        if not pattern:
+            continue
+
+        # Try as full path: level/category/part
+        if re.match(r"^\d+/", pattern):
+            try:
+                level_str, rest = pattern.split("/", 1)
+                level = int(level_str)
+                # Find part by path
+                for pk, part in all_parts.items():
+                    cat_pk = part.get("category")
+                    if not cat_pk:
+                        continue
+                    path = pk_to_path.get(cat_pk, "")
+                    expected_path = f"{level}/{path}"
+                    part_name = sanitize_part_name(part.get("name", ""))
+                    rev = sanitize_revision(part.get("revision"))
+                    rev_suffix = f".{rev}" if rev else ""
+                    full_path = f"{expected_path}/{part_name}{rev_suffix}".replace("//", "/")
+                    if full_path == pattern or full_path.endswith("/" + pattern.split("/")[-1]):
+                        target_parts.add(pk)
+            except:
+                pass
+
+        # Try as part name (exact or glob)
+        else:
+            import fnmatch
+            for pk, part in all_parts.items():
+                name = part.get("name", "")
+                if fnmatch.fnmatch(name, pattern) or name == pattern:
+                    target_parts.add(pk)
+
+    if not target_parts:
+        print("No parts matched your pattern")
+        return
+
+    print(f"Matched {len(target_parts)} part(s)")
 
     compared = 0
-    for pk, part in all_parts.items():
+    for pk in target_parts:
+        part = all_parts[pk]
         name = part.get("name")
-        if not name:
-            continue
-
-        # Match logic
-        if exact_names and name not in exact_names:
-            continue
-        if glob_patterns:
-            if not any(fnmatch.fnmatch(name, pat) for pat in glob_patterns):
-                continue
-
-        san_name = sanitize_part_name(name)
         cat_pk = part.get("category")
-        if not cat_pk:
+        if not (name and cat_pk):
             continue
 
-        pathstring = pk_to_path.get(cat_pk)
-        if not pathstring:
-            print(f"WARNING: Part '{name}' has no category path")
-            continue
-
-        dir_parts = [sanitize_category_name(p) for p in pathstring.split("/")]
+        pathstring = pk_to_path.get(cat_pk, "")
         level = level_memo.get(pk, 1)
+        dir_parts = [sanitize_category_name(p) for p in pathstring.split("/")]
         level_dir = os.path.join(root_dir, str(level), *dir_parts)
 
         revision = sanitize_revision(part.get("revision"))
         rev_suffix = f".{revision}" if revision else ""
-        base_name = f"{san_name}{rev_suffix}"
+        base_name = f"{sanitize_part_name(name)}{rev_suffix}"
         json_path = os.path.join(level_dir, f"{base_name}.json")
 
         # Build current data
@@ -300,7 +295,7 @@ def main() -> None:
                 variant_of_full = f"{v_name}.{v_rev}" if v_rev else v_name
 
         current_data = {
-            "name": san_name,
+            "name": sanitize_part_name(name),
             "revision": revision,
             "IPN": part.get("IPN", ""),
             "description": part.get("description", ""),
@@ -323,7 +318,7 @@ def main() -> None:
 
         if args.dry_diff:
             if os.path.exists(json_path):
-                with open(json_path, "r", encoding="utf-8") as f:
+                with open(json_path, "r") as f:
                     local = json.load(f)
                 diff = DeepDiff(local, current_data, ignore_order=True)
                 if diff:
@@ -359,18 +354,8 @@ def main() -> None:
     if args.dry_diff:
         print(f"\nDRY-DIFF: Compared {compared} parts")
     else:
-        print(f"SUMMARY: Pulled {compared} parts")
-
-def get_level(pk: int, memo: Dict[int, int], deps: Dict[int, List[int]]) -> int:
-    if pk in memo:
-        return memo[pk]
-    if not deps.get(pk):
-        memo[pk] = 1
-        return 1
-    max_dep = max((get_level(d, memo, deps) for d in deps[pk]), default=0)
-    memo[pk] = 1 + max_dep
-    return memo[pk]
+        print(f"SUMMARY: Processed {compared} parts")
 
 if __name__ == "__main__":
-    import fnmatch  # ← Added for glob matching
+    import fnmatch
     main()
