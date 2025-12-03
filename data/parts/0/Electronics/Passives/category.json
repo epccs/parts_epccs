@@ -1,53 +1,32 @@
 [
     {
-        "pk": 6,
         "name": "Capacitors",
         "description": "Capacitors",
         "default_location": null,
         "default_keywords": "passive capacitor",
-        "level": 2,
         "parent": 4,
-        "part_count": 12,
-        "subcategories": 0,
         "pathstring": "Electronics/Passives/Capacitors",
-        "starred": false,
-        "structural": false,
         "icon": "",
-        "parent_default_location": null,
         "image": ""
     },
     {
-        "pk": 7,
         "name": "Inductors",
         "description": "Inductors",
         "default_location": null,
         "default_keywords": null,
-        "level": 2,
         "parent": 4,
-        "part_count": 0,
-        "subcategories": 0,
         "pathstring": "Electronics/Passives/Inductors",
-        "starred": false,
-        "structural": false,
         "icon": "",
-        "parent_default_location": null,
         "image": ""
     },
     {
-        "pk": 5,
         "name": "Resistors",
         "description": "Resistors",
         "default_location": null,
         "default_keywords": "passive resistor",
-        "level": 2,
         "parent": 4,
-        "part_count": 48,
-        "subcategories": 0,
         "pathstring": "Electronics/Passives/Resistors",
-        "starred": false,
-        "structural": false,
         "icon": "",
-        "parent_default_location": null,
         "image": ""
     }
 ]

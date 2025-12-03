@@ -1,36 +1,22 @@
 [
     {
-        "pk": 9,
         "name": "Interface",
         "description": "Drivers, receivers, transceivers",
         "default_location": null,
         "default_keywords": null,
-        "level": 2,
         "parent": 8,
-        "part_count": 2,
-        "subcategories": 0,
         "pathstring": "Electronics/IC/Interface",
-        "starred": false,
-        "structural": false,
         "icon": "",
-        "parent_default_location": null,
         "image": ""
     },
     {
-        "pk": 11,
         "name": "MCU",
         "description": "Microcontrollers and processors",
         "default_location": null,
         "default_keywords": null,
-        "level": 2,
         "parent": 8,
-        "part_count": 0,
-        "subcategories": 0,
         "pathstring": "Electronics/IC/MCU",
-        "starred": false,
-        "structural": false,
         "icon": "",
-        "parent_default_location": null,
         "image": ""
     }
 ]
