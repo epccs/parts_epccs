@@ -121,7 +121,7 @@ def save_to_file(data, filepath):
         f.write("\n")
 
 # ----------------------------------------------------------------------
-# Category maps – only keep push-safe fields
+# Category maps - only keep push-safe fields
 # ----------------------------------------------------------------------
 def build_category_maps(categories):
     pk_to_path = {}
