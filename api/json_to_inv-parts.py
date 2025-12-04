@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-parts.py
-# version: 2025-12-04-v1
+# version: 2025-12-04-v2
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/parts/<level>/ to InvenTree, level by level.
 #
@@ -29,9 +29,7 @@
 # python3 ./api/json_to_inv-parts.py "**/*"
 # --------------------------------------------------------------
 # Changelog:
-#   - BOMs are now pushed per revision
-#   - Removed pre_validate_all_parts()
-#   - Works when no base revision exists
+#   - update the BOM resolver to use revision field
 # --------------------------------------------------------------
 
 import requests
@@ -192,7 +190,7 @@ def push_bom(part_pk, bom_path, cache=None, api_print=False, dry_run=False):
     if not os.path.exists(bom_path):
         return
 
-    print(f"Pushing BOM from {bom_path} → Part PK {part_pk}")
+    print(f"Pushing BOM from {bom_path} -> Part PK {part_pk}")
     with open(bom_path, "r", encoding="utf-8") as f:
         tree = json.load(f)
 
@@ -207,10 +205,15 @@ def push_bom(part_pk, bom_path, cache=None, api_print=False, dry_run=False):
         active = node.get("active", True)
         sub_name = node["sub_part"]["name"]
         sub_ipn = node["sub_part"].get("IPN", "")
+        sub_revision = node["sub_part"].get("revision", "")
 
-        sub_parts = [p for p in cache.get(sub_name, []) if p.get("IPN", "") == sub_ipn or not sub_ipn]
+        sub_parts = [
+            p for p in cache.get(sub_name, [])
+            if (p.get("IPN", "") == sub_ipn or not sub_ipn)
+            and (p.get("revision", "") == sub_revision or not sub_revision)
+        ]
         if not sub_parts:
-            print(f"  WARNING: Sub-part '{sub_name}' (IPN: {sub_ipn}) not found → skipping")
+            print(f"  WARNING: Sub-part '{sub_name}' (IPN: {sub_ipn}, Revision: {sub_revision}) not found -> skipping")
             all_found = False
             all_validated = False
             continue
@@ -241,10 +244,10 @@ def push_bom(part_pk, bom_path, cache=None, api_print=False, dry_run=False):
             all_validated = False
 
     if tree and all_found and all_validated:
-        print(f"  All BOM items validated → setting validated_bom = True on PK {part_pk}")
+        print(f"  All BOM items validated -> setting validated_bom = True on PK {part_pk}")
         api_patch(f"{BASE_URL_PARTS}{part_pk}/", {"validated_bom": True}, api_print, dry_run)
     elif tree:
-        print(f"  BOM has issues → leaving validated_bom = False")
+        print(f"  BOM has issues -> leaving validated_bom = False")
 
 # ----------------------------------------------------------------------
 # Push one revision (with optional BOM)
