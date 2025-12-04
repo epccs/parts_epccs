@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-parts_to_json.py
-# version: 2025-12-03-v2
+# version: 2025-12-03-v3
 # --------------------------------------------------------------
 # Pull from InvenTree **all parts** (templates, assemblies, real parts)
 # -> data/parts/<level>/<category_path>/
@@ -28,8 +28,8 @@
 # python3 ./api/inv-parts_to_json.py "*_Table"
 # --------------------------------------------------------------
 # Changelog:
-# 2025-12-03-v2
-# * IPN: now saved as "" instead of null -> fixes "This field may not be null." on push
+# 2025-12-03-v3
+# * Fetch full sub-part details including revision
 
 import requests
 import json
@@ -173,7 +173,7 @@ def write_category_files(root_dir, pk_to_path, parent_to_subs):
         save_to_file(subs, os.path.join(dir_path, "category.json"))
 
 # ----------------------------------------------------------------------
-# BOM fetcher
+# BOM fetcher - now includes sub-part revision, removes description
 # ----------------------------------------------------------------------
 def fetch_bom(part_pk):
     bom_items = fetch_data(f"{BASE_URL_BOM}?part={part_pk}")
@@ -184,9 +184,13 @@ def fetch_bom(part_pk):
         if not sub_pk:
             continue
         sub_pks.append(sub_pk)
+
+        # Fetch full sub-part details including revision
         sub_part = requests.get(f"{BASE_URL_PARTS}{sub_pk}/", headers=HEADERS).json()
         sub_name = sanitize_part_name(sub_part.get("name", ""))
         sub_ipn = sub_part.get("IPN", "")
+        sub_revision = sanitize_revision(sub_part.get("revision", "")) 
+
         node = {
             "quantity": item.get("quantity"),
             "note": item.get("note", ""),
@@ -194,8 +198,9 @@ def fetch_bom(part_pk):
             "active": item.get("active", True),
             "sub_part": {
                 "name": sub_name,
-                "IPN": sub_ipn if sub_ipn is not None else "",  # Ensure IPN in BOM is never null
-                "description": sub_part.get("description", "")
+                "IPN": sub_ipn,
+                "revision": sub_revision or None  # ← save revision, None if blank
+                # "description" removed — it's redundant and noisy
             }
         }
         tree.append(node)

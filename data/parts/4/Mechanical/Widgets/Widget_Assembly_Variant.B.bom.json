@@ -6,8 +6,8 @@
         "active": true,
         "sub_part": {
             "name": "R_10K_0805_1%",
-            "IPN": "",
-            "description": "10K resistor in 0805 SMD package"
+            "IPN": null,
+            "revision": null
         }
     },
     {
@@ -17,8 +17,8 @@
         "active": true,
         "sub_part": {
             "name": "M3x8_Torx",
-            "IPN": "",
-            "description": "Torx head screw, M3 thread, 8.0mm"
+            "IPN": null,
+            "revision": null
         }
     },
     {
@@ -29,7 +29,7 @@
         "sub_part": {
             "name": "Red_Widget",
             "IPN": "widget.red",
-            "description": "A red widget"
+            "revision": null
         }
     },
     {
@@ -40,7 +40,7 @@
         "sub_part": {
             "name": "Green_Widget",
             "IPN": "widget.green",
-            "description": "A green widget"
+            "revision": null
         }
     },
     {
@@ -51,7 +51,7 @@
         "sub_part": {
             "name": "Blue_Widget",
             "IPN": "widget.blue",
-            "description": "A blue widget"
+            "revision": null
         }
     },
     {
@@ -62,7 +62,7 @@
         "sub_part": {
             "name": "Pink_Widget",
             "IPN": "widget.pink",
-            "description": "A pink widget"
+            "revision": null
         }
     }
 ]

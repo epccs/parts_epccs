@@ -7,7 +7,7 @@
         "sub_part": {
             "name": "Widget_Assembly",
             "IPN": "WID-TEMPLATE",
-            "description": "An assembled widget"
+            "revision": null
         }
     },
     {
@@ -18,7 +18,7 @@
         "sub_part": {
             "name": "1551AGY",
             "IPN": "",
-            "description": "Plastic enclosure, grey"
+            "revision": null
         }
     },
     {
@@ -29,7 +29,7 @@
         "sub_part": {
             "name": "Doohickey",
             "IPN": "D.123",
-            "description": "Assembled electronics module which performs some unknown function"
+            "revision": null
         }
     },
     {
@@ -40,7 +40,7 @@
         "sub_part": {
             "name": "Widget_Board_(assembled)",
             "IPN": "002.01-PCBA",
-            "description": "Assembled PCB for converting electricity into magic smoke"
+            "revision": "REV-A"
         }
     },
     {
@@ -51,7 +51,7 @@
         "sub_part": {
             "name": "Test_Board_2",
             "IPN": "TB2",
-            "description": "Board with a lot of SMT parts on it, but slightly different"
+            "revision": null
         }
     },
     {
@@ -62,7 +62,7 @@
         "sub_part": {
             "name": "Test_Board_3",
             "IPN": "TB3",
-            "description": "Board with a lot of SMT parts on it, but even more slightly different"
+            "revision": null
         }
     },
     {
@@ -73,7 +73,7 @@
         "sub_part": {
             "name": "Silicon_Wire_10AWG_Red",
             "IPN": "",
-            "description": "Silicon wire, 10AWG, red"
+            "revision": null
         }
     },
     {
@@ -84,7 +84,7 @@
         "sub_part": {
             "name": "Silicon_Wire_10AWG_Red",
             "IPN": "",
-            "description": "Silicon wire, 10AWG, red"
+            "revision": null
         }
     },
     {
@@ -95,7 +95,7 @@
         "sub_part": {
             "name": "Silicon_Wire_12AWG_Black",
             "IPN": "",
-            "description": "Silicon wire, 12AWG, black"
+            "revision": null
         }
     },
     {
@@ -106,7 +106,7 @@
         "sub_part": {
             "name": "Test_Board_1",
             "IPN": "TB1",
-            "description": "Board with a lot of SMT parts on it"
+            "revision": null
         }
     }
 ]

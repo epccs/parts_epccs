@@ -6,8 +6,8 @@
         "active": true,
         "sub_part": {
             "name": "R_10R_0402_1%",
-            "IPN": "",
-            "description": "10R resistor in 0402 SMD package"
+            "IPN": null,
+            "revision": null
         }
     },
     {
@@ -17,8 +17,8 @@
         "active": true,
         "sub_part": {
             "name": "R_100K_0805_1%",
-            "IPN": "",
-            "description": "100K resistor in 0805 SMD package"
+            "IPN": null,
+            "revision": null
         }
     },
     {
@@ -28,8 +28,8 @@
         "active": true,
         "sub_part": {
             "name": "R_220K_0603_1%",
-            "IPN": "",
-            "description": "220K resistor in 0603 SMD package"
+            "IPN": null,
+            "revision": null
         }
     },
     {
@@ -39,8 +39,8 @@
         "active": true,
         "sub_part": {
             "name": "C_1uF_0402",
-            "IPN": "",
-            "description": "Ceramic capacitor, 1uF in 0402 SMD package"
+            "IPN": null,
+            "revision": null
         }
     },
     {
@@ -50,8 +50,8 @@
         "active": true,
         "sub_part": {
             "name": "C_100nF_0603",
-            "IPN": "",
-            "description": "Ceramic capacitor, 100nF in 0603 SMD package"
+            "IPN": null,
+            "revision": null
         }
     },
     {
@@ -61,8 +61,8 @@
         "active": true,
         "sub_part": {
             "name": "MAX232IDR",
-            "IPN": "",
-            "description": "Dual RS232 transceiver in SOIC-16 package"
+            "IPN": null,
+            "revision": null
         }
     },
     {
@@ -73,7 +73,7 @@
         "sub_part": {
             "name": "Widget_Board",
             "IPN": "002.01-PCB",
-            "description": "Small board for converting electricity into magic smoke"
+            "revision": "A"
         }
     },
     {
@@ -84,7 +84,7 @@
         "sub_part": {
             "name": "Widget_Board",
             "IPN": "002.01-PCB",
-            "description": "Small board for converting electricity into magic smoke"
+            "revision": "A"
         }
     },
     {
@@ -95,7 +95,7 @@
         "sub_part": {
             "name": "Widget_Board",
             "IPN": "002.01-PCB",
-            "description": "Small board for converting electricity into magic smoke"
+            "revision": "A"
         }
     },
     {
@@ -106,7 +106,7 @@
         "sub_part": {
             "name": "530470210",
             "IPN": "",
-            "description": "1.25mm Pitch, PicoBlade PCB Header, Single Row, Vertical, Through Hole, Tin Plating, Friction Lock, 2 Circuits, Tray, 2.30mm PC Tail Length"
+            "revision": null
         }
     },
     {
@@ -117,7 +117,7 @@
         "sub_part": {
             "name": "Widget_Template",
             "IPN": "",
-            "description": "A template widget part"
+            "revision": null
         }
     }
 ]

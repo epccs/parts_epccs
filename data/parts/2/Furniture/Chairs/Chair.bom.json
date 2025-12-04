@@ -7,7 +7,7 @@
         "sub_part": {
             "name": "Wood_Screw",
             "IPN": "",
-            "description": "Screw for fixing wood to other wood"
+            "revision": null
         }
     },
     {
@@ -18,7 +18,7 @@
         "sub_part": {
             "name": "Leg",
             "IPN": "",
-            "description": "Leg for a chair or a table"
+            "revision": null
         }
     }
 ]

@@ -7,7 +7,7 @@
         "sub_part": {
             "name": "Blue_Round_Table",
             "IPN": "",
-            "description": "A round table - with blue paint"
+            "revision": null
         }
     },
     {
@@ -18,7 +18,7 @@
         "sub_part": {
             "name": "Blue_Chair",
             "IPN": "",
-            "description": "A chair - with blue paint"
+            "revision": null
         }
     }
 ]
