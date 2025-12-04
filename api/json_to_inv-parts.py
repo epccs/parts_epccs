@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-parts.py
-# version: 2025-11-23-v3
+# version: 2025-12-04-v1
 # --------------------------------------------------------------
 # Push all parts (templates, assemblies, real) from data/parts/<level>/ to InvenTree, level by level.
 #
@@ -25,10 +25,13 @@
 # python3 ./api/json_to_inv-parts.py "1/Furniture/Leg"
 # python3 ./api/json_to_inv-parts.py "1/Furniture/*_Top"
 # python3 ./api/json_to_inv-parts.py "2/Furniture/Tables/*_Table" --api-print
+# python3 ./api/json_to_inv-parts.py "2/Electronics/PCBA/Widget_Board_(assembled).REV-A" --api-print
 # python3 ./api/json_to_inv-parts.py "**/*"
 # --------------------------------------------------------------
 # Changelog:
-#   - InvenTree will silently downgrade BOM validation durring push and this can not be fixed
+#   - BOMs are now pushed per revision
+#   - Removed pre_validate_all_parts()
+#   - Works when no base revision exists
 # --------------------------------------------------------------
 
 import requests
@@ -48,7 +51,6 @@ if not BASE_URL:
     print("Error: INVENTREE_URL not set")
     sys.exit(1)
 BASE_URL = BASE_URL.rstrip("/")
-
 BASE_URL_PARTS = f"{BASE_URL}/api/part/"
 BASE_URL_CATEGORIES = f"{BASE_URL}/api/part/category/"
 BASE_URL_BOM = f"{BASE_URL}/api/bom/"
@@ -69,7 +71,7 @@ HEADERS = {
 }
 
 # ----------------------------------------------------------------------
-# API helpers - support dry-run
+# API helpers
 # ----------------------------------------------------------------------
 def fetch_all(url, api_print=False, dry_run=False):
     if dry_run and api_print:
@@ -83,14 +85,9 @@ def fetch_all(url, api_print=False, dry_run=False):
         if r.status_code != 200:
             raise Exception(f"API error {r.status_code}: {r.text}")
         data = r.json()
-        if api_print:
-            if isinstance(data, dict) and "results" in data:
-                count = len(data["results"])
-                sample = json.dumps(data["results"][:2] if count else [], default=str)[:200]
-                print(f"       -> {r.status_code} [{count} items] sample: {sample}...")
-            else:
-                preview = json.dumps(data, default=str)[:200]
-                print(f"       -> {r.status_code} {preview}...")
+        if api_print and data:
+            preview = json.dumps(data if isinstance(data, list) else data.get("results", [])[:2], default=str)[:200]
+            print(f" -> {r.status_code} [{len(items)} fetched] sample: {preview}...")
         if isinstance(data, dict) and "results" in data:
             items.extend(data["results"])
             url = data.get("next")
@@ -127,7 +124,6 @@ def api_patch(url, payload, api_print=False, dry_run=False):
     if r.status_code not in (200, 201):
         print(f"ERROR {r.status_code}: {r.text}")
         sys.exit(1)
-    return r.json()
 
 def api_delete(url, api_print=False, dry_run=False):
     if dry_run:
@@ -141,24 +137,23 @@ def api_delete(url, api_print=False, dry_run=False):
         print(f"ERROR {r.status_code}: {r.text}")
 
 # ----------------------------------------------------------------------
-# Helpers
+# Category & variant helpers
 # ----------------------------------------------------------------------
 def check_category_exists(name, parent_pk=None):
     params = {"name": name}
     if parent_pk is not None:
         params["parent"] = parent_pk
-    data = requests.get(BASE_URL_CATEGORIES, headers=HEADERS, params=params).json()
-    return data.get("results", data) if isinstance(data, dict) else data
+    r = requests.get(BASE_URL_CATEGORIES, headers=HEADERS, params=params)
+    if r.status_code != 200:
+        return []
+    data = r.json()
+    return data.get("results", []) if isinstance(data, dict) else data
 
 def create_category_hierarchy(folder_path, root_dir, parent_pk=None):
     rel_path = os.path.relpath(folder_path, root_dir)
-    parts = rel_path.split(os.sep)
-    if parts and parts[0].isdigit():
-        parts = parts[1:]
+    parts = [p for p in rel_path.split(os.sep) if p and not p.isdigit()]
     cur = parent_pk
     for name in parts:
-        if not name or name == ".":
-            continue
         existing = check_category_exists(name, cur)
         if existing:
             cur = existing[0]["pk"]
@@ -191,166 +186,47 @@ def resolve_variant_target(variant_str, cache):
     return None
 
 # ----------------------------------------------------------------------
-# Pre-validate all parts (THE FINAL FIX)
+# BOM push - per revision, with correct validation
 # ----------------------------------------------------------------------
-def pre_validate_all_parts(cache, api_print=False, dry_run=False):
-    print("PRE-VALIDATION PASS: Setting validated_bom = True on all parts...")
-    processed = set()
-    def validate_part(name):
-        if name in processed:
-            return
-        for part in cache.get(name, []):
-            pk = part["pk"]
-            if not part.get("validated_bom", False):
-                if dry_run:
-                    print(f"[DRY-RUN] Would set validated_bom = True on {name} (PK {pk})")
-                else:
-                    if api_print:
-                        print(f"Setting validated_bom = True on {name} (PK {pk})")
-                    api_patch(f"{BASE_URL_PARTS}{pk}/", {"validated_bom": True}, api_print, dry_run)
-            processed.add(name)
-    for name in cache:
-        validate_part(name)
+def push_bom(part_pk, bom_path, cache=None, api_print=False, dry_run=False):
+    if not os.path.exists(bom_path):
+        return
 
-# ----------------------------------------------------------------------
-# Push one base part + revisions
-# ----------------------------------------------------------------------
-def push_base_part(grouped_files, force_ipn=False, force=False, clean=False, force_price=False,
-                   api_print=False, dry_run=False, root_dir=None, cache=None, all_price_breaks=None):
-    first_path, _ = grouped_files[0]
-    name, _ = parse_filename(first_path)
-    print(f"DEBUG: Pushing base part '{name}' with {len(grouped_files)} revision(s)")
-
-    with open(first_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    if isinstance(data, list):
-        data = data[0]
-
-    payload = {k: data.get(k) for k in [
-        "name", "description", "IPN", "keywords", "units",
-        "minimum_stock", "assembly", "component", "trackable",
-        "purchaseable", "salable", "virtual", "is_template"
-    ] if k in data}
-    payload["name"] = name
-    payload["active"] = True
-
-    if force_ipn and (not payload.get("IPN") or payload["IPN"].strip() == ""):
-        payload["IPN"] = name[:50]
-
-    payload["category"] = create_category_hierarchy(os.path.dirname(first_path), root_dir)
-
-    variant_target = data.get("variant_of")
-    if variant_target:
-        variant_pk = resolve_variant_target(variant_target, cache)
-        if variant_pk:
-            payload["variant_of"] = variant_pk
-
-    if data.get("validated_bom", False):
-        payload["validated_bom"] = True
-
-    existing_base = [p for p in cache.get(name, []) if p.get("revision", "") == "" or p.get("revision") is None]
-    if existing_base and force:
-        for p in existing_base:
-            api_delete(f"{BASE_URL_PARTS}{p['pk']}/", api_print, dry_run)
-            cache[name] = [c for c in cache[name] if c["pk"] != p["pk"]]
-
-    if existing_base and not force:
-        base_pk = existing_base[0]["pk"]
-        if data.get("validated_bom", False):
-            api_patch(f"{BASE_URL_PARTS}{base_pk}/", {"validated_bom": True}, api_print, dry_run)
-        print(f"DEBUG: Base part exists -> reusing PK {base_pk}")
-    else:
-        new = api_post(BASE_URL_PARTS, payload, api_print, dry_run)
-        base_pk = new["pk"] if not dry_run else "DRY-RUN"
-        print(f"DEBUG: Created base part '{name}' (PK {base_pk})")
-        if not dry_run:
-            cache[name].append(new)
-
-    for file_path, rev in grouped_files:
-        print(f"DEBUG: Processing revision '{rev or '(default)'}' from {file_path}")
-        with open(file_path, "r", encoding="utf-8") as f:
-            rev_data = json.load(f)
-        if isinstance(rev_data, list):
-            rev_data = rev_data[0]
-
-        rev_payload = {"name": name, "revision": rev or "", "active": True}
-        if rev_data.get("variant_of"):
-            variant_pk = resolve_variant_target(rev_data["variant_of"], cache)
-            if variant_pk:
-                rev_payload["variant_of"] = variant_pk
-        if rev_data.get("validated_bom", False):
-            rev_payload["validated_bom"] = True
-
-        existing_rev = [p for p in cache.get(name, []) if p.get("revision", "") == (rev or "")]
-        if existing_rev and force:
-            for p in existing_rev:
-                api_delete(f"{BASE_URL_PARTS}{p['pk']}/", api_print, dry_run)
-                cache[name] = [c for c in cache[name] if c["pk"] != p["pk"]]
-            existing_rev = []
-
-        if existing_rev:
-            rev_pk = existing_rev[0]["pk"]
-            if rev_data.get("validated_bom", False):
-                api_patch(f"{BASE_URL_PARTS}{rev_pk}/", {"validated_bom": True}, api_print, dry_run)
-            print(f"DEBUG: Revision exists -> reusing PK {rev_pk}")
-        else:
-            new_rev = api_post(BASE_URL_PARTS, rev_payload, api_print, dry_run)
-            rev_pk = new_rev["pk"] if not dry_run else "DRY-RUN"
-            print(f"DEBUG: Created revision (PK {rev_pk})")
-            if not dry_run:
-                cache[name].append(new_rev)
-
-        push_revision_content(rev_pk, rev_data, file_path, force_price, api_print, dry_run, cache, all_price_breaks)
-
-# ----------------------------------------------------------------------
-# Push suppliers, pricing, BOM
-# ----------------------------------------------------------------------
-def push_revision_content(part_pk, data, file_path, force_price, api_print, dry_run, cache, all_price_breaks):
-    if data.get("purchaseable", False):
-        # Suppliers & pricing unchanged
-        pass
-
-    bom_path = file_path[:-5] + ".bom.json"
-    if os.path.exists(bom_path):
-        print(f"DEBUG: Pushing BOM from {bom_path}")
-        push_bom(part_pk, bom_path, cache=cache, api_print=api_print, dry_run=dry_run)
-
-# ----------------------------------------------------------------------
-# BOM push - now works 100%
-# ----------------------------------------------------------------------
-def push_bom(parent_pk, bom_path, level=0, cache=None, api_print=False, dry_run=False):
-    indent = " " * level
+    print(f"Pushing BOM from {bom_path} → Part PK {part_pk}")
     with open(bom_path, "r", encoding="utf-8") as f:
         tree = json.load(f)
 
-    existing_boms = fetch_all(f"{BASE_URL_BOM}?part={parent_pk}", api_print=api_print, dry_run=dry_run)
-    all_subparts_validated = True
+    existing_boms = fetch_all(f"{BASE_URL_BOM}?part={part_pk}", api_print=api_print, dry_run=dry_run)
+    all_validated = True
+    all_found = True
 
     for node in tree:
         qty = node.get("quantity", 1)
         note = node.get("note", "")
         validated = node.get("validated", False)
         active = node.get("active", True)
-
         sub_name = node["sub_part"]["name"]
         sub_ipn = node["sub_part"].get("IPN", "")
+
         sub_parts = [p for p in cache.get(sub_name, []) if p.get("IPN", "") == sub_ipn or not sub_ipn]
         if not sub_parts:
-            print(f"{indent}WARNING: Sub-part '{sub_name}' not found -> skipping")
-            all_subparts_validated = False
+            print(f"  WARNING: Sub-part '{sub_name}' (IPN: {sub_ipn}) not found → skipping")
+            all_found = False
+            all_validated = False
             continue
 
         sub_pk = sub_parts[0]["pk"]
-
         existing = [b for b in existing_boms if b.get("sub_part") == sub_pk]
+
         payload = {
-            "part": parent_pk,
+            "part": part_pk,
             "sub_part": sub_pk,
             "quantity": qty,
             "note": note,
             "validated": validated,
             "active": active
         }
+
         if existing:
             api_patch(f"{BASE_URL_BOM}{existing[0]['pk']}/", payload, api_print, dry_run)
             action = "UPDATED"
@@ -359,11 +235,85 @@ def push_bom(parent_pk, bom_path, level=0, cache=None, api_print=False, dry_run=
             action = "CREATED"
 
         status = " (VALIDATED)" if validated else ""
-        print(f"{indent}{action} BOM: {qty} x {sub_name}{status} (sub_pk {sub_pk})")
+        print(f"  {action} BOM: {qty} × {sub_name}{status}")
 
-    if all_subparts_validated and tree:
-        print(f"{indent}Setting parent part.validated_bom = True (PK {parent_pk})")
-        api_patch(f"{BASE_URL_PARTS}{parent_pk}/", {"validated_bom": True}, api_print, dry_run)
+        if not validated:
+            all_validated = False
+
+    if tree and all_found and all_validated:
+        print(f"  All BOM items validated → setting validated_bom = True on PK {part_pk}")
+        api_patch(f"{BASE_URL_PARTS}{part_pk}/", {"validated_bom": True}, api_print, dry_run)
+    elif tree:
+        print(f"  BOM has issues → leaving validated_bom = False")
+
+# ----------------------------------------------------------------------
+# Push one revision (with optional BOM)
+# ----------------------------------------------------------------------
+def push_revision(part_pk, data, file_path, force, api_print, dry_run, cache):
+    bom_path = file_path[:-5] + ".bom.json"
+    if os.path.exists(bom_path):
+        push_bom(part_pk, bom_path, cache=cache, api_print=api_print, dry_run=dry_run)
+
+# ----------------------------------------------------------------------
+# Main push logic
+# ----------------------------------------------------------------------
+def push_part_group(name, files, force, force_ipn, api_print, dry_run, root_dir, cache):
+    print(f"\nPushing part group: '{name}' ({len(files)} revision(s))")
+
+    for file_path, revision in files:
+        print(f"Processing: {os.path.basename(file_path)} (revision: {revision or 'default'})")
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            if isinstance(data, list):
+                data = data[0]
+
+        # Build payload
+        payload = {k: data.get(k, "") for k in [
+            "description", "IPN", "keywords", "units", "minimum_stock",
+            "assembly", "component", "trackable", "purchaseable",
+            "salable", "virtual", "is_template"
+        ]}
+        payload["name"] = name
+        payload["revision"] = revision or ""
+        payload["active"] = True
+
+        if force_ipn and (not payload.get("IPN")):
+            payload["IPN"] = name[:50]
+
+        payload["category"] = create_category_hierarchy(os.path.dirname(file_path), root_dir)
+
+        if data.get("variant_of"):
+            variant_pk = resolve_variant_target(data["variant_of"], cache)
+            if variant_pk:
+                payload["variant_of"] = variant_pk
+
+        # Check if exists
+        key = (name, payload.get("IPN", ""), revision or "")
+        existing = [p for p in cache.get(name, []) if
+                    p.get("IPN", "") == payload.get("IPN", "") and
+                    p.get("revision", "") == (revision or "")]
+
+        if existing and force:
+            for p in existing:
+                api_delete(f"{BASE_URL_PARTS}{p['pk']}/", api_print, dry_run)
+            existing = []
+
+        if existing:
+            part_pk = existing[0]["pk"]
+            print(f"  Reusing existing part PK {part_pk}")
+            api_patch(f"{BASE_URL_PARTS}{part_pk}/", payload, api_print, dry_run)
+        else:
+            result = api_post(BASE_URL_PARTS, payload, api_print, dry_run)
+            part_pk = result["pk"] if not dry_run else "DRY-RUN"
+            print(f"  Created new part PK {part_pk}")
+
+        if not dry_run:
+            cache[name].append(result if 'result' in locals() else existing[0])
+
+        # Push BOM if exists for this revision
+        bom_path = file_path[:-5] + ".bom.json"
+        if os.path.exists(bom_path):
+            push_bom(part_pk, bom_path, cache=cache, api_print=api_print, dry_run=dry_run)
 
 # ----------------------------------------------------------------------
 # Main
@@ -371,25 +321,17 @@ def push_bom(parent_pk, bom_path, level=0, cache=None, api_print=False, dry_run=
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("patterns", nargs="*", default=["**/*"])
+    parser.add_argument("--force", action="store_true", help="Delete and recreate parts")
     parser.add_argument("--force-ipn", action="store_true")
-    parser.add_argument("--force", action="store_true")
-    parser.add_argument("--clean-dependencies", action="store_true")
-    parser.add_argument("--force-price", action="store_true")
     parser.add_argument("--api-print", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
-    print("DEBUG: Building part cache...")
+    print("Building part cache...")
     all_parts = fetch_all(BASE_URL_PARTS, api_print=args.api_print, dry_run=args.dry_run)
     cache = defaultdict(list)
     for p in all_parts:
         cache[p["name"]].append(p)
-
-    print("DEBUG: Fetching all price breaks...")
-    all_price_breaks = fetch_all(BASE_URL_PRICE_BREAK, api_print=args.api_print, dry_run=args.dry_run)
-
-    # CRITICAL: Pre-validate all parts FIRST
-    pre_validate_all_parts(cache, api_print=args.api_print, dry_run=args.dry_run)
 
     root = "data/parts"
     files = []
@@ -397,7 +339,10 @@ def main():
         files.extend(glob.glob(os.path.join(root, pat), recursive=True))
         files.extend(glob.glob(os.path.join(root, pat + ".*json"), recursive=True))
 
-    files = sorted({f for f in files if f.endswith(".json") and not f.endswith(".bom.json") and "category.json" not in f})
+    files = sorted({
+        f for f in files
+        if f.endswith(".json") and not f.endswith(".bom.json") and "category.json" not in f
+    })
 
     grouped = defaultdict(list)
     for f in files:
@@ -406,8 +351,10 @@ def main():
             grouped[name].append((f, rev))
 
     for name, group in grouped.items():
-        push_base_part(group, args.force_ipn, args.force, args.clean_dependencies,
-                       args.force_price, args.api_print, args.dry_run, root, cache, all_price_breaks)
+        push_part_group(name, group, args.force, args.force_ipn,
+                        args.api_print, args.dry_run, root, cache)
+
+    print("\nPush complete!")
 
 if __name__ == "__main__":
     main()
