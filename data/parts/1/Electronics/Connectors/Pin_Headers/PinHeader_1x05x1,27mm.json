@@ -1,7 +1,7 @@
 {
     "name": "PinHeader_1x05x1,27mm",
     "revision": "",
-    "IPN": null,
+    "IPN": "",
     "description": "Male pin header connector, 1 rows, 5 positions, 1.27mm pitch, vertical",
     "keywords": "pin header connector",
     "units": "",

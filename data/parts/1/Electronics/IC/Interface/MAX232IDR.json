@@ -1,7 +1,7 @@
 {
     "name": "MAX232IDR",
     "revision": "",
-    "IPN": null,
+    "IPN": "",
     "description": "Dual RS232 transceiver in SOIC-16 package",
     "keywords": null,
     "units": null,

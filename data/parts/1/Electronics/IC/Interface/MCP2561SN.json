@@ -1,7 +1,7 @@
 {
     "name": "MCP2561SN",
     "revision": "",
-    "IPN": null,
+    "IPN": "",
     "description": "High speed CAN transceiver in SOIC-8 package",
     "keywords": null,
     "units": null,

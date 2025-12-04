@@ -1,7 +1,7 @@
 {
     "name": "C_100nF_0603",
     "revision": "",
-    "IPN": null,
+    "IPN": "",
     "description": "Ceramic capacitor, 100nF in 0603 SMD package",
     "keywords": "cap smd ceramic",
     "units": "",

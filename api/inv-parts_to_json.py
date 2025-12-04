@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-parts_to_json.py
-# version: 2025-12-03-v1
+# version: 2025-12-03-v2
 # --------------------------------------------------------------
 # Pull from InvenTree **all parts** (templates, assemblies, real parts)
 # -> data/parts/<level>/<category_path>/
@@ -28,10 +28,8 @@
 # python3 ./api/inv-parts_to_json.py "*_Table"
 # --------------------------------------------------------------
 # Changelog:
-# 2025-12-03-v1
-# * category.json now excludes pk, part_count, subcategories, level, starred, structural, etc.
-#   -> safe for round-trip push without polluting the target instance
-# * Minor comment updates
+# 2025-12-03-v2
+# * IPN: now saved as "" instead of null -> fixes "This field may not be null." on push
 
 import requests
 import json
@@ -127,7 +125,6 @@ def build_category_maps(categories):
     pk_to_path = {}
     parent_to_subs = {"None": []}
 
-    # Fields we deliberately keep for category.json (safe to push)
     safe_fields = {
         "name", "description", "parent", "pathstring",
         "default_location", "default_keywords", "icon", "image"
@@ -147,11 +144,10 @@ def build_category_maps(categories):
         san_path = "/".join(san_parts)
         san_name = sanitize_category_name(name)
 
-        # Build minimal category object
         cat_mod = {k: v for k, v in cat.items() if k in safe_fields}
         cat_mod["name"] = san_name
         cat_mod["pathstring"] = san_path
-        cat_mod["image"] = ""  # always blank in export
+        cat_mod["image"] = ""
         cat_mod.setdefault("description", "")
         cat_mod.setdefault("icon", "")
 
@@ -159,7 +155,6 @@ def build_category_maps(categories):
         parent_to_subs.setdefault(parent, []).append(cat_mod)
 
     return pk_to_path, parent_to_subs
-
 
 def write_category_files(root_dir, pk_to_path, parent_to_subs):
     cat_root = os.path.join(root_dir, "0")
@@ -177,9 +172,8 @@ def write_category_files(root_dir, pk_to_path, parent_to_subs):
         dir_path = os.path.join(cat_root, *dir_parts)
         save_to_file(subs, os.path.join(dir_path, "category.json"))
 
-
 # ----------------------------------------------------------------------
-# BOM fetcher - includes active + validated
+# BOM fetcher
 # ----------------------------------------------------------------------
 def fetch_bom(part_pk):
     bom_items = fetch_data(f"{BASE_URL_BOM}?part={part_pk}")
@@ -200,16 +194,15 @@ def fetch_bom(part_pk):
             "active": item.get("active", True),
             "sub_part": {
                 "name": sub_name,
-                "IPN": sub_ipn,
+                "IPN": sub_ipn if sub_ipn is not None else "",  # Ensure IPN in BOM is never null
                 "description": sub_part.get("description", "")
             }
         }
         tree.append(node)
     return tree, sub_pks
 
-
 # ----------------------------------------------------------------------
-# Supplier fetcher - quiet about duplicates
+# Supplier fetcher
 # ----------------------------------------------------------------------
 def fetch_suppliers(part_pk, part_name):
     supplier_parts = fetch_data(BASE_URL_SUPPLIER_PARTS, params={"part": part_pk})
@@ -250,7 +243,6 @@ def fetch_suppliers(part_pk, part_name):
         suppliers_list.append(sp_details)
     return suppliers_list
 
-
 # ----------------------------------------------------------------------
 # Level computation
 # ----------------------------------------------------------------------
@@ -263,7 +255,6 @@ def get_level(pk, memo, deps):
     max_dep_level = max((get_level(dep_pk, memo, deps) for dep_pk in deps[pk]), default=0)
     memo[pk] = 1 + max_dep_level
     return memo[pk]
-
 
 # ----------------------------------------------------------------------
 # Main
@@ -290,7 +281,6 @@ def main():
     print("DEBUG: Writing category.json files (push-safe only)...")
     write_category_files(root_dir, pk_to_path, parent_to_subs)
 
-    # Special case: "**/*" or no patterns -> pull everything
     patterns = []
     if args.patterns and not any(p in ["**/*", "*"] for p in args.patterns):
         for raw in args.patterns:
@@ -331,7 +321,6 @@ def main():
 
         san_name = sanitize_part_name(name)
 
-        # Apply filter only if patterns exist and it's not the "pull all" case
         if patterns and not any(p.search(san_name) for p in patterns):
             continue
 
@@ -349,7 +338,6 @@ def main():
 
         suppliers = fetch_suppliers(pk, name) if part.get("purchaseable", False) else []
 
-        # Resolve variant_of with revision
         variant_of_full = None
         if part.get("variant_of"):
             variant_pk = part["variant_of"]
@@ -365,10 +353,14 @@ def main():
                 v_rev_suffix = f".{v_rev}" if v_rev else ""
                 variant_of_full = f"{v_name}{v_rev_suffix}"
 
+        # CRITICAL FIX: Ensure IPN is never null in exported JSON
+        raw_ipn = part.get("IPN")
+        ipn_value = raw_ipn if raw_ipn is not None else ""
+
         part_clean = {
             "name": san_name,
             "revision": revision,
-            "IPN": part.get("IPN", ""),
+            "IPN": ipn_value,  # ← Now guaranteed to be string (empty if null)
             "description": part.get("description", ""),
             "keywords": part.get("keywords", ""),
             "units": part.get("units", ""),
@@ -395,13 +387,11 @@ def main():
             bom_path = os.path.join(level_dir, f"{base_name}.bom.json")
             save_to_file(bom_tree, bom_path)
             print(f"DEBUG: Saved BOM to {bom_path}")
-        else:
-            print(f"DEBUG: No BOM saved for {base_name}")
 
         exported += 1
 
-    print(f"SUMMARY: Pulled {exported} parts + BOMs (when applicable) to {root_dir}/<level>/")
-    print("NOTE: category.json files are now clean and safe for pushing to another instance.")
+    print(f"SUMMARY: Pulled {exported} parts + BOMs to {root_dir}/<level>/")
+    print("NOTE: IPN is now saved as empty string (not null) -> safe for pushing!")
 
 if __name__ == "__main__":
     main()

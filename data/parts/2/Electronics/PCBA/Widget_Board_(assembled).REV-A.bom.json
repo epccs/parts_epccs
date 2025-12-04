@@ -6,7 +6,7 @@
         "active": true,
         "sub_part": {
             "name": "R_10R_0402_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "10R resistor in 0402 SMD package"
         }
     },
@@ -17,7 +17,7 @@
         "active": true,
         "sub_part": {
             "name": "R_100K_0805_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "100K resistor in 0805 SMD package"
         }
     },
@@ -28,7 +28,7 @@
         "active": true,
         "sub_part": {
             "name": "R_220K_0603_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "220K resistor in 0603 SMD package"
         }
     },
@@ -39,7 +39,7 @@
         "active": true,
         "sub_part": {
             "name": "C_1uF_0402",
-            "IPN": null,
+            "IPN": "",
             "description": "Ceramic capacitor, 1uF in 0402 SMD package"
         }
     },
@@ -50,7 +50,7 @@
         "active": true,
         "sub_part": {
             "name": "C_100nF_0603",
-            "IPN": null,
+            "IPN": "",
             "description": "Ceramic capacitor, 100nF in 0603 SMD package"
         }
     },
@@ -61,7 +61,7 @@
         "active": true,
         "sub_part": {
             "name": "MAX232IDR",
-            "IPN": null,
+            "IPN": "",
             "description": "Dual RS232 transceiver in SOIC-16 package"
         }
     },

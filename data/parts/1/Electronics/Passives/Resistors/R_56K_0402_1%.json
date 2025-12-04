@@ -1,7 +1,7 @@
 {
     "name": "R_56K_0402_1%",
     "revision": "",
-    "IPN": null,
+    "IPN": "",
     "description": "56K resistor in 0402 SMD package",
     "keywords": "resistor smd 0402",
     "units": "",

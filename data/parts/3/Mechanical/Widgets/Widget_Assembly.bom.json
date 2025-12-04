@@ -6,7 +6,7 @@
         "active": true,
         "sub_part": {
             "name": "R_10K_0805_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "10K resistor in 0805 SMD package"
         }
     },
@@ -17,7 +17,7 @@
         "active": true,
         "sub_part": {
             "name": "C_1uF_0805",
-            "IPN": null,
+            "IPN": "",
             "description": "Ceramic capacitor, 1uF in 0805 SMD package"
         }
     },
@@ -28,7 +28,7 @@
         "active": true,
         "sub_part": {
             "name": "M3x8_Torx",
-            "IPN": null,
+            "IPN": "",
             "description": "Torx head screw, M3 thread, 8.0mm"
         }
     },

@@ -1,7 +1,7 @@
 {
     "name": "M3x10_Torx",
     "revision": "",
-    "IPN": null,
+    "IPN": "",
     "description": "Torx head screw, M3 thread, 10.0mm",
     "keywords": "screw",
     "units": null,

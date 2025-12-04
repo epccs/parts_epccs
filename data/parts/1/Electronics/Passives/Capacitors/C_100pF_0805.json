@@ -1,7 +1,7 @@
 {
     "name": "C_100pF_0805",
     "revision": "",
-    "IPN": null,
+    "IPN": "",
     "description": "Ceramic capacitor, 100pF in 0805 SMD package",
     "keywords": "cap smd ceramic",
     "units": "",

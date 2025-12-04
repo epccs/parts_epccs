@@ -1,7 +1,7 @@
 {
     "name": "R_68K_0603_1%",
     "revision": "",
-    "IPN": null,
+    "IPN": "",
     "description": "68K resistor in 0603 SMD package",
     "keywords": "resistor smd 0603",
     "units": "",

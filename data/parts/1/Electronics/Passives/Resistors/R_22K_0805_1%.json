@@ -1,7 +1,7 @@
 {
     "name": "R_22K_0805_1%",
     "revision": "",
-    "IPN": null,
+    "IPN": "",
     "description": "22K resistor in 0805 SMD package",
     "keywords": "resistor smd 0805",
     "units": "",

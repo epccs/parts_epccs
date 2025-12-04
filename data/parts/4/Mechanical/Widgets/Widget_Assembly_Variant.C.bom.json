@@ -6,7 +6,7 @@
         "active": true,
         "sub_part": {
             "name": "M3x8_Torx",
-            "IPN": null,
+            "IPN": "",
             "description": "Torx head screw, M3 thread, 8.0mm"
         }
     },

@@ -1,7 +1,7 @@
 {
     "name": "C_1uF_0603",
     "revision": "",
-    "IPN": null,
+    "IPN": "",
     "description": "Ceramic capacitor, 1uF in 0603 SMD package",
     "keywords": "cap smd ceramic",
     "units": "",

@@ -1,7 +1,7 @@
 {
     "name": "PinHeader_1x02x2,54mm",
     "revision": "",
-    "IPN": null,
+    "IPN": "",
     "description": "Male pin header connector, 1 rows, 2 positions, 2.54mm pitch, vertical",
     "keywords": "pin header connector",
     "units": "",

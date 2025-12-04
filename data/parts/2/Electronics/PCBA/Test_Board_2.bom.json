@@ -6,7 +6,7 @@
         "active": true,
         "sub_part": {
             "name": "R_470R_0805_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "470R resistor in 0805 SMD package"
         }
     },
@@ -17,7 +17,7 @@
         "active": true,
         "sub_part": {
             "name": "R_550R_0402_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "550R resistor in 0402 SMD package"
         }
     },
@@ -39,7 +39,7 @@
         "active": true,
         "sub_part": {
             "name": "R_220K_0805_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "220K resistor in 0805 SMD package"
         }
     },
@@ -50,7 +50,7 @@
         "active": true,
         "sub_part": {
             "name": "R_100K_0603_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "100K resistor in 0603 SMD package"
         }
     },
@@ -61,7 +61,7 @@
         "active": true,
         "sub_part": {
             "name": "C_100pF_0603",
-            "IPN": null,
+            "IPN": "",
             "description": "Ceramic capacitor, 100pF in 0603 SMD package"
         }
     },
@@ -72,7 +72,7 @@
         "active": true,
         "sub_part": {
             "name": "R_220K_0402_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "220K resistor in 0402 SMD package"
         }
     },
@@ -83,7 +83,7 @@
         "active": true,
         "sub_part": {
             "name": "C_100nF_0603",
-            "IPN": null,
+            "IPN": "",
             "description": "Ceramic capacitor, 100nF in 0603 SMD package"
         }
     },
@@ -94,7 +94,7 @@
         "active": true,
         "sub_part": {
             "name": "C_10uF_0805",
-            "IPN": null,
+            "IPN": "",
             "description": "Ceramic capacitor, 10uF in 0805 SMD package"
         }
     },
@@ -105,7 +105,7 @@
         "active": true,
         "sub_part": {
             "name": "C_1uF_0805",
-            "IPN": null,
+            "IPN": "",
             "description": "Ceramic capacitor, 1uF in 0805 SMD package"
         }
     },
@@ -116,7 +116,7 @@
         "active": true,
         "sub_part": {
             "name": "C_100pF_0805",
-            "IPN": null,
+            "IPN": "",
             "description": "Ceramic capacitor, 100pF in 0805 SMD package"
         }
     },
@@ -127,7 +127,7 @@
         "active": true,
         "sub_part": {
             "name": "C_100pF_0402",
-            "IPN": null,
+            "IPN": "",
             "description": "Ceramic capacitor, 100pF in 0402 SMD package"
         }
     },
@@ -138,7 +138,7 @@
         "active": true,
         "sub_part": {
             "name": "C_10uF_0603",
-            "IPN": null,
+            "IPN": "",
             "description": "Ceramic capacitor, 10uF in 0603 SMD package"
         }
     },
@@ -149,7 +149,7 @@
         "active": true,
         "sub_part": {
             "name": "C_1uF_0603",
-            "IPN": null,
+            "IPN": "",
             "description": "Ceramic capacitor, 1uF in 0603 SMD package"
         }
     },
@@ -160,7 +160,7 @@
         "active": true,
         "sub_part": {
             "name": "C_10uF_0402",
-            "IPN": null,
+            "IPN": "",
             "description": "Ceramic capacitor, 10uF in 0402 SMD package"
         }
     },
@@ -171,7 +171,7 @@
         "active": true,
         "sub_part": {
             "name": "C_1uF_0402",
-            "IPN": null,
+            "IPN": "",
             "description": "Ceramic capacitor, 1uF in 0402 SMD package"
         }
     },
@@ -182,7 +182,7 @@
         "active": true,
         "sub_part": {
             "name": "C_100nF_0402",
-            "IPN": null,
+            "IPN": "",
             "description": "Ceramic capacitor, 100nF in 0402 SMD package"
         }
     },
@@ -193,7 +193,7 @@
         "active": true,
         "sub_part": {
             "name": "C_100nF_0805",
-            "IPN": null,
+            "IPN": "",
             "description": "Ceramic capacitor, 100nF in 0805 SMD package"
         }
     },
@@ -204,7 +204,7 @@
         "active": true,
         "sub_part": {
             "name": "R_100K_0402_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "100K resistor in 0402 SMD package"
         }
     },
@@ -215,7 +215,7 @@
         "active": true,
         "sub_part": {
             "name": "R_68K_0805_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "68K resistor in 0805 SMD package"
         }
     },
@@ -226,7 +226,7 @@
         "active": true,
         "sub_part": {
             "name": "R_220K_0603_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "220K resistor in 0603 SMD package"
         }
     },
@@ -237,7 +237,7 @@
         "active": true,
         "sub_part": {
             "name": "R_100K_0805_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "100K resistor in 0805 SMD package"
         }
     },
@@ -248,7 +248,7 @@
         "active": true,
         "sub_part": {
             "name": "R_68K_0402_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "68K resistor in 0402 SMD package"
         }
     },
@@ -259,7 +259,7 @@
         "active": true,
         "sub_part": {
             "name": "R_22K_0805_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "22K resistor in 0805 SMD package"
         }
     },
@@ -270,7 +270,7 @@
         "active": true,
         "sub_part": {
             "name": "R_10R_0402_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "10R resistor in 0402 SMD package"
         }
     },
@@ -281,7 +281,7 @@
         "active": true,
         "sub_part": {
             "name": "R_10K_0603_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "10K resistor in 0603 SMD package"
         }
     },
@@ -292,7 +292,7 @@
         "active": true,
         "sub_part": {
             "name": "R_4,7K_0805_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "4.7K resistor in 0805 SMD package"
         }
     },
@@ -303,7 +303,7 @@
         "active": true,
         "sub_part": {
             "name": "R_2,2K_0603_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "2.2K resistor in 0603 SMD package"
         }
     },
@@ -314,7 +314,7 @@
         "active": true,
         "sub_part": {
             "name": "R_220R_0402_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "220R resistor in 0402 SMD package"
         }
     },
@@ -325,7 +325,7 @@
         "active": true,
         "sub_part": {
             "name": "R_56K_0603_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "56K resistor in 0603 SMD package"
         }
     },
@@ -336,7 +336,7 @@
         "active": true,
         "sub_part": {
             "name": "R_56K_0402_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "56K resistor in 0402 SMD package"
         }
     },
@@ -347,7 +347,7 @@
         "active": true,
         "sub_part": {
             "name": "R_47K_0805_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "47K resistor in 0805 SMD package"
         }
     },
@@ -358,7 +358,7 @@
         "active": true,
         "sub_part": {
             "name": "R_47K_0603_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "47K resistor in 0603 SMD package"
         }
     },
@@ -369,7 +369,7 @@
         "active": true,
         "sub_part": {
             "name": "R_47K_0402_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "47K resistor in 0402 SMD package"
         }
     },
@@ -380,7 +380,7 @@
         "active": true,
         "sub_part": {
             "name": "R_22K_0402_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "22K resistor in 0402 SMD package"
         }
     },
@@ -391,7 +391,7 @@
         "active": true,
         "sub_part": {
             "name": "R_68K_0603_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "68K resistor in 0603 SMD package"
         }
     },
@@ -413,7 +413,7 @@
         "active": true,
         "sub_part": {
             "name": "R_5,6K_0805_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "5.6K resistor in 0805 SMD package"
         }
     },
@@ -424,7 +424,7 @@
         "active": true,
         "sub_part": {
             "name": "R_5,6K_0603_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "5.6K resistor in 0603 SMD package"
         }
     },
@@ -435,7 +435,7 @@
         "active": true,
         "sub_part": {
             "name": "R_5,6K_0402_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "5.6K resistor in 0402 SMD package"
         }
     },
@@ -468,7 +468,7 @@
         "active": true,
         "sub_part": {
             "name": "R_10K_0805_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "10K resistor in 0805 SMD package"
         }
     },
@@ -479,7 +479,7 @@
         "active": true,
         "sub_part": {
             "name": "R_56K_0805_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "56K resistor in 0805 SMD package"
         }
     },
@@ -490,7 +490,7 @@
         "active": true,
         "sub_part": {
             "name": "R_1K_0805_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "1K resistor in 0805 SMD package"
         }
     },
@@ -501,7 +501,7 @@
         "active": true,
         "sub_part": {
             "name": "R_1K_0603_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "1K resistor in 0603 SMD package"
         }
     },
@@ -512,7 +512,7 @@
         "active": true,
         "sub_part": {
             "name": "R_1K_0402_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "1K resistor in 0402 SMD package"
         }
     },
@@ -523,7 +523,7 @@
         "active": true,
         "sub_part": {
             "name": "R_470R_0603_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "470R resistor in 0603 SMD package"
         }
     },
@@ -534,7 +534,7 @@
         "active": true,
         "sub_part": {
             "name": "R_550R_0805_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "550R resistor in 0805 SMD package"
         }
     },
@@ -545,7 +545,7 @@
         "active": true,
         "sub_part": {
             "name": "R_550R_0603_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "550R resistor in 0603 SMD package"
         }
     },
@@ -556,7 +556,7 @@
         "active": true,
         "sub_part": {
             "name": "R_470R_0402_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "470R resistor in 0402 SMD package"
         }
     },
@@ -567,7 +567,7 @@
         "active": true,
         "sub_part": {
             "name": "R_220R_0805_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "220R resistor in 0805 SMD package"
         }
     },
@@ -578,7 +578,7 @@
         "active": true,
         "sub_part": {
             "name": "R_220R_0603_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "220R resistor in 0603 SMD package"
         }
     },
@@ -589,7 +589,7 @@
         "active": true,
         "sub_part": {
             "name": "R_2,2K_0402_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "2.2K resistor in 0402 SMD package"
         }
     },
@@ -600,7 +600,7 @@
         "active": true,
         "sub_part": {
             "name": "R_100R_0805_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "100R resistor in 0805 SMD package"
         }
     },
@@ -611,7 +611,7 @@
         "active": true,
         "sub_part": {
             "name": "R_10R_0805_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "10R resistor in 0805 SMD package"
         }
     },
@@ -622,7 +622,7 @@
         "active": true,
         "sub_part": {
             "name": "R_100R_0603_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "100R resistor in 0603 SMD package"
         }
     },
@@ -633,7 +633,7 @@
         "active": true,
         "sub_part": {
             "name": "R_100R_0402_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "100R resistor in 0402 SMD package"
         }
     },
@@ -644,7 +644,7 @@
         "active": true,
         "sub_part": {
             "name": "R_10R_0603_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "10R resistor in 0603 SMD package"
         }
     },
@@ -655,7 +655,7 @@
         "active": true,
         "sub_part": {
             "name": "R_22K_0603_1%",
-            "IPN": null,
+            "IPN": "",
             "description": "22K resistor in 0603 SMD package"
         }
     }

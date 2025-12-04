@@ -1,7 +1,7 @@
 {
     "name": "PinHeader_2x10x1,27mm",
     "revision": "",
-    "IPN": null,
+    "IPN": "",
     "description": "Male pin header connector, 2 rows, 10 positions, 1.27mm pitch, vertical",
     "keywords": "pin header connector",
     "units": "",
