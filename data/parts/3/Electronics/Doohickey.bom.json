@@ -6,8 +6,8 @@
         "active": true,
         "sub_part": {
             "name": "M3x8_Torx",
-            "IPN": null,
-            "revision": null
+            "IPN": "",
+            "revision": ""
         }
     },
     {
@@ -17,8 +17,8 @@
         "active": true,
         "sub_part": {
             "name": "M3x10_Torx",
-            "IPN": null,
-            "revision": null
+            "IPN": "",
+            "revision": ""
         }
     },
     {
@@ -29,7 +29,7 @@
         "sub_part": {
             "name": "1551ABK",
             "IPN": "",
-            "revision": null
+            "revision": ""
         }
     },
     {

@@ -6,8 +6,8 @@
         "active": true,
         "sub_part": {
             "name": "R_10K_0805_1%",
-            "IPN": null,
-            "revision": null
+            "IPN": "",
+            "revision": ""
         }
     },
     {
@@ -17,8 +17,8 @@
         "active": true,
         "sub_part": {
             "name": "C_1uF_0805",
-            "IPN": null,
-            "revision": null
+            "IPN": "",
+            "revision": ""
         }
     },
     {
@@ -28,8 +28,8 @@
         "active": true,
         "sub_part": {
             "name": "M3x8_Torx",
-            "IPN": null,
-            "revision": null
+            "IPN": "",
+            "revision": ""
         }
     },
     {
@@ -40,7 +40,7 @@
         "sub_part": {
             "name": "Red_Widget",
             "IPN": "widget.red",
-            "revision": null
+            "revision": ""
         }
     },
     {
@@ -51,7 +51,7 @@
         "sub_part": {
             "name": "Green_Widget",
             "IPN": "widget.green",
-            "revision": null
+            "revision": ""
         }
     },
     {
@@ -62,7 +62,7 @@
         "sub_part": {
             "name": "Blue_Widget",
             "IPN": "widget.blue",
-            "revision": null
+            "revision": ""
         }
     },
     {
@@ -73,7 +73,7 @@
         "sub_part": {
             "name": "Pink_Widget",
             "IPN": "widget.pink",
-            "revision": null
+            "revision": ""
         }
     }
 ]

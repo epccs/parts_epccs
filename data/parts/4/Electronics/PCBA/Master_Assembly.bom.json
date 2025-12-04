@@ -7,7 +7,7 @@
         "sub_part": {
             "name": "Widget_Assembly",
             "IPN": "WID-TEMPLATE",
-            "revision": null
+            "revision": ""
         }
     },
     {
@@ -18,7 +18,7 @@
         "sub_part": {
             "name": "1551AGY",
             "IPN": "",
-            "revision": null
+            "revision": ""
         }
     },
     {
@@ -29,7 +29,7 @@
         "sub_part": {
             "name": "Doohickey",
             "IPN": "D.123",
-            "revision": null
+            "revision": ""
         }
     },
     {
@@ -51,7 +51,7 @@
         "sub_part": {
             "name": "Test_Board_2",
             "IPN": "TB2",
-            "revision": null
+            "revision": ""
         }
     },
     {
@@ -62,7 +62,7 @@
         "sub_part": {
             "name": "Test_Board_3",
             "IPN": "TB3",
-            "revision": null
+            "revision": ""
         }
     },
     {
@@ -73,7 +73,7 @@
         "sub_part": {
             "name": "Silicon_Wire_10AWG_Red",
             "IPN": "",
-            "revision": null
+            "revision": ""
         }
     },
     {
@@ -84,7 +84,7 @@
         "sub_part": {
             "name": "Silicon_Wire_10AWG_Red",
             "IPN": "",
-            "revision": null
+            "revision": ""
         }
     },
     {
@@ -95,7 +95,7 @@
         "sub_part": {
             "name": "Silicon_Wire_12AWG_Black",
             "IPN": "",
-            "revision": null
+            "revision": ""
         }
     },
     {
@@ -106,7 +106,7 @@
         "sub_part": {
             "name": "Test_Board_1",
             "IPN": "TB1",
-            "revision": null
+            "revision": ""
         }
     }
 ]

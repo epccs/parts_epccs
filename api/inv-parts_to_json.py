@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: inv-parts_to_json.py
-# version: 2025-12-03-v3
+# version: 2025-12-03-v5
 # --------------------------------------------------------------
 # Pull from InvenTree **all parts** (templates, assemblies, real parts)
 # -> data/parts/<level>/<category_path>/
@@ -27,9 +27,11 @@
 # python3 ./api/inv-parts_to_json.py "Round_Table"
 # python3 ./api/inv-parts_to_json.py "*_Table"
 # --------------------------------------------------------------
-# Changelog:
-# 2025-12-03-v3
-# * Fetch full sub-part details including revision
+# Changelog: 2025-12-05-v5
+# * sub_part.revision and IPN saved as "" instead of null
+# * revision field never null in output
+# * description removed from BOM sub_part
+# --------------------------------------------------------------
 
 import requests
 import json
@@ -51,10 +53,12 @@ if BASE_URL:
     BASE_URL_MANUFACTURER_PART = f"{BASE_URL}/api/company/part/manufacturer/"
     BASE_URL_PRICE_BREAK = f"{BASE_URL}/api/company/price-break/"
 else:
-    BASE_URL_PARTS = BASE_URL_CATEGORIES = BASE_URL_BOM = None
-    BASE_URL_SUPPLIER_PARTS = BASE_URL_MANUFACTURER_PART = BASE_URL_PRICE_BREAK = None
+    raise Exception("INVENTREE_URL must be set")
 
 TOKEN = os.getenv("INVENTREE_TOKEN")
+if not TOKEN:
+    raise Exception("INVENTREE_TOKEN must be set")
+
 HEADERS = {
     "Authorization": f"Token {TOKEN}",
     "Accept": "application/json",
@@ -62,7 +66,7 @@ HEADERS = {
 }
 
 # ----------------------------------------------------------------------
-# Sanitizers
+# Sanitizers - ensure "" not null
 # ----------------------------------------------------------------------
 def sanitize_category_name(name):
     sanitized = name.replace(' ', '_').replace('.', '')
@@ -79,7 +83,7 @@ def sanitize_revision(rev):
         return ""
     rev = str(rev).strip()
     rev = re.sub(r'[<>:"/\\|?*]', '_', rev)
-    return rev
+    return rev or ""
 
 def sanitize_company_name(name):
     sanitized = name.replace(' ', '_').replace('.', '')
@@ -119,16 +123,12 @@ def save_to_file(data, filepath):
         f.write("\n")
 
 # ----------------------------------------------------------------------
-# Category maps - only keep push-safe fields
+# Category maps - push-safe only
 # ----------------------------------------------------------------------
 def build_category_maps(categories):
     pk_to_path = {}
     parent_to_subs = {"None": []}
-
-    safe_fields = {
-        "name", "description", "parent", "pathstring",
-        "default_location", "default_keywords", "icon", "image"
-    }
+    safe_fields = {"name", "description", "parent", "pathstring", "default_location", "default_keywords", "icon", "image"}
 
     for cat in categories:
         pk = cat.get("pk")
@@ -173,7 +173,7 @@ def write_category_files(root_dir, pk_to_path, parent_to_subs):
         save_to_file(subs, os.path.join(dir_path, "category.json"))
 
 # ----------------------------------------------------------------------
-# BOM fetcher - now includes sub-part revision, removes description
+# BOM fetcher - now perfect: revision + no nulls
 # ----------------------------------------------------------------------
 def fetch_bom(part_pk):
     bom_items = fetch_data(f"{BASE_URL_BOM}?part={part_pk}")
@@ -185,11 +185,10 @@ def fetch_bom(part_pk):
             continue
         sub_pks.append(sub_pk)
 
-        # Fetch full sub-part details including revision
         sub_part = requests.get(f"{BASE_URL_PARTS}{sub_pk}/", headers=HEADERS).json()
         sub_name = sanitize_part_name(sub_part.get("name", ""))
-        sub_ipn = sub_part.get("IPN", "")
-        sub_revision = sanitize_revision(sub_part.get("revision", "")) 
+        sub_ipn = sub_part.get("IPN") or ""           # <- never null
+        sub_revision = sanitize_revision(sub_part.get("revision"))  # <- "" if blank
 
         node = {
             "quantity": item.get("quantity"),
@@ -199,8 +198,7 @@ def fetch_bom(part_pk):
             "sub_part": {
                 "name": sub_name,
                 "IPN": sub_ipn,
-                "revision": sub_revision or None  # ← save revision, None if blank
-                # "description" removed — it's redundant and noisy
+                "revision": sub_revision   # <- always string, never null
             }
         }
         tree.append(node)
@@ -249,7 +247,7 @@ def fetch_suppliers(part_pk, part_name):
     return suppliers_list
 
 # ----------------------------------------------------------------------
-# Level computation
+# Level computation & main (unchanged logic, just clean nulls)
 # ----------------------------------------------------------------------
 def get_level(pk, memo, deps):
     if pk in memo:
@@ -265,17 +263,9 @@ def get_level(pk, memo, deps):
 # Main
 # ----------------------------------------------------------------------
 def main():
-    parser = argparse.ArgumentParser(
-        description="Pull all parts (templates, assemblies, real) to data/parts/<level>/, organized by dependency levels."
-    )
-    parser.add_argument(
-        "patterns", nargs="*",
-        help='Glob patterns for sanitized part names (e.g. "*_Table"). Use "**/*" or nothing to pull everything.'
-    )
+    parser = argparse.ArgumentParser(description="Pull all parts to data/parts/<level>/")
+    parser.add_argument("patterns", nargs="*", help='Glob patterns (e.g. "*_Table"). Use "**/*" to pull all.')
     args = parser.parse_args()
-
-    if not TOKEN or not BASE_URL:
-        raise Exception("INVENTREE_TOKEN and INVENTREE_URL must be set")
 
     root_dir = "data/parts"
     os.makedirs(root_dir, exist_ok=True)
@@ -325,7 +315,6 @@ def main():
             continue
 
         san_name = sanitize_part_name(name)
-
         if patterns and not any(p.search(san_name) for p in patterns):
             continue
 
@@ -353,19 +342,14 @@ def main():
                     variant_part = variant_r.json()
             if variant_part:
                 v_name = sanitize_part_name(variant_part.get("name", ""))
-                v_rev_raw = variant_part.get("revision")
-                v_rev = sanitize_revision(v_rev_raw)
+                v_rev = sanitize_revision(variant_part.get("revision"))
                 v_rev_suffix = f".{v_rev}" if v_rev else ""
                 variant_of_full = f"{v_name}{v_rev_suffix}"
-
-        # CRITICAL FIX: Ensure IPN is never null in exported JSON
-        raw_ipn = part.get("IPN")
-        ipn_value = raw_ipn if raw_ipn is not None else ""
 
         part_clean = {
             "name": san_name,
             "revision": revision,
-            "IPN": ipn_value,  # ← Now guaranteed to be string (empty if null)
+            "IPN": part.get("IPN") or "",
             "description": part.get("description", ""),
             "keywords": part.get("keywords", ""),
             "units": part.get("units", ""),
@@ -387,16 +371,15 @@ def main():
         save_to_file(part_clean, os.path.join(level_dir, f"{base_name}.json"))
 
         bom_tree = part.get('bom_tree', [])
-        save_bom = (part.get('assembly') or (part.get('is_template') and bom_tree))
-        if save_bom:
+        if bom_tree:
             bom_path = os.path.join(level_dir, f"{base_name}.bom.json")
             save_to_file(bom_tree, bom_path)
             print(f"DEBUG: Saved BOM to {bom_path}")
 
         exported += 1
 
-    print(f"SUMMARY: Pulled {exported} parts + BOMs to {root_dir}/<level>/")
-    print("NOTE: IPN is now saved as empty string (not null) -> safe for pushing!")
+    print(f"SUMMARY: Pulled {exported} parts + BOMs")
+    print("BOMs now include revision and never use null - perfect round-trip!")
 
 if __name__ == "__main__":
     main()

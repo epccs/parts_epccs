@@ -6,8 +6,8 @@
         "active": true,
         "sub_part": {
             "name": "R_10R_0402_1%",
-            "IPN": null,
-            "revision": null
+            "IPN": "",
+            "revision": ""
         }
     },
     {
@@ -17,8 +17,8 @@
         "active": true,
         "sub_part": {
             "name": "R_100K_0805_1%",
-            "IPN": null,
-            "revision": null
+            "IPN": "",
+            "revision": ""
         }
     },
     {
@@ -28,8 +28,8 @@
         "active": true,
         "sub_part": {
             "name": "R_220K_0603_1%",
-            "IPN": null,
-            "revision": null
+            "IPN": "",
+            "revision": ""
         }
     },
     {
@@ -39,8 +39,8 @@
         "active": true,
         "sub_part": {
             "name": "C_1uF_0402",
-            "IPN": null,
-            "revision": null
+            "IPN": "",
+            "revision": ""
         }
     },
     {
@@ -50,8 +50,8 @@
         "active": true,
         "sub_part": {
             "name": "C_100nF_0603",
-            "IPN": null,
-            "revision": null
+            "IPN": "",
+            "revision": ""
         }
     },
     {
@@ -61,8 +61,8 @@
         "active": true,
         "sub_part": {
             "name": "MAX232IDR",
-            "IPN": null,
-            "revision": null
+            "IPN": "",
+            "revision": ""
         }
     },
     {
@@ -106,7 +106,7 @@
         "sub_part": {
             "name": "530470210",
             "IPN": "",
-            "revision": null
+            "revision": ""
         }
     },
     {
@@ -117,7 +117,7 @@
         "sub_part": {
             "name": "Widget_Template",
             "IPN": "",
-            "revision": null
+            "revision": ""
         }
     }
 ]

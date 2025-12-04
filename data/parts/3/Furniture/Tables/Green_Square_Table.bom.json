@@ -7,7 +7,7 @@
         "sub_part": {
             "name": "Wood_Screw",
             "IPN": "",
-            "revision": null
+            "revision": ""
         }
     },
     {
@@ -18,7 +18,7 @@
         "sub_part": {
             "name": "Square_Top",
             "IPN": "",
-            "revision": null
+            "revision": ""
         }
     },
     {
@@ -29,7 +29,7 @@
         "sub_part": {
             "name": "Leg",
             "IPN": "",
-            "revision": null
+            "revision": ""
         }
     },
     {
@@ -40,7 +40,7 @@
         "sub_part": {
             "name": "Green_Paint",
             "IPN": "",
-            "revision": null
+            "revision": ""
         }
     }
 ]
