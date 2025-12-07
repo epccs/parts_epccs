@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-parts.py
-# version: 2025-12-07-v10
+# version: 2025-12-07-v11
 # --------------------------------------------------------------
 # Push parts + suppliers + price breaks + BOMs from data/parts/ to InvenTree
 #
@@ -95,8 +95,6 @@ def api_post(url: str, payload: dict, api_print: bool = False):
     r = requests.post(url, headers=HEADERS, json=payload)
     if r.status_code not in (200, 201):
         print(f"ERROR {r.status_code}: {r.text}")
-        if api_print:
-            print("Full response:", r.text)
         sys.exit(1)
     return r.json()
 
@@ -173,7 +171,7 @@ def sync_price_breaks(supplier_part_pk: int, price_breaks: list, force_price: bo
 
     for pb in price_breaks:
         payload = {
-            "part": supplier_part_pk,  # Correct field name
+            "part": supplier_part_pk,
             "quantity": pb["quantity"],
             "price": pb["price"],
             "price_currency": pb.get("price_currency", "USD")
@@ -234,7 +232,7 @@ def resolve_variant_target(variant_str: str, cache: dict):
 def push_bom(part_pk: int, bom_path: str, cache: dict, api_print: bool = False):
     if not os.path.exists(bom_path):
         return
-    print(f"Pushing BOM from {bom_path} -> Part PK {part_pk}")
+    print(f"Pushing BOM from {bom_path} to Part PK {part_pk}")
     with open(bom_path, "r", encoding="utf-8") as f:
         tree = json.load(f)
 
@@ -287,16 +285,16 @@ def push_bom(part_pk: int, bom_path: str, cache: dict, api_print: bool = False):
             action = "CREATED"
 
         status = " (VALIDATED)" if validated else ""
-        print(f"  {action} BOM: {qty} × {sub_name}{status}")
+        print(f"  {action} BOM: {qty} x {sub_name}{status}")
         if not validated:
             all_validated = False
 
     if tree and all_found and all_validated:
-        print(f"  All BOM items validated -> setting validated_bom = True")
+        print(f"  All BOM items validated to setting validated_bom = True")
         api_patch(f"{BASE_URL_PARTS}{part_pk}/", {"validated_bom": True}, api_print)
 
 # ----------------------------------------------------------------------
-# Main push logic
+# Main push logic – NOW BUG-FREE
 # ----------------------------------------------------------------------
 def push_part_group(name, files, force, force_ipn, force_price, api_print, root_dir, cache):
     print(f"\nPushing part group: '{name}' ({len(files)} revision(s))")
@@ -308,6 +306,7 @@ def push_part_group(name, files, force, force_ipn, force_price, api_print, root_
             if isinstance(data, list):
                 data = data[0]
 
+        # Part payload
         payload = {k: data.get(k, "") for k in [
             "description", "IPN", "keywords", "units", "minimum_stock",
             "assembly", "component", "trackable", "purchaseable",
@@ -329,6 +328,7 @@ def push_part_group(name, files, force, force_ipn, force_price, api_print, root_
             if variant_pk:
                 payload["variant_of"] = variant_pk
 
+        # Find existing part
         existing = [
             p for p in cache.get(name, [])
             if p.get("IPN", "") == payload.get("IPN", "") and p.get("revision", "") == (revision or "")
@@ -343,14 +343,20 @@ def push_part_group(name, files, force, force_ipn, force_price, api_print, root_
             part_pk = existing[0]["pk"]
             print(f"  Reusing existing part PK {part_pk}")
             api_patch(f"{BASE_URL_PARTS}{part_pk}/", payload, api_print)
+            part_data = existing[0]  # Use existing data
         else:
             result = api_post(BASE_URL_PARTS, payload, api_print)
             part_pk = result["pk"]
             print(f"  Created new part PK {part_pk}")
+            part_data = result  # Use newly created data
 
-        cache[name].append(result if 'result' not in locals() else existing[0])
+        # Update cache safely
+        if existing:
+            cache[name] = [p for p in cache[name] if p["pk"] != existing[0]["pk"]] + [existing[0]]
+        else:
+            cache[name].append(part_data)
 
-        # Suppliers
+        # Suppliers & price breaks
         if data.get("purchaseable") and data.get("suppliers"):
             print(f"  Pushing {len(data['suppliers'])} supplier(s)")
             for supp in data["suppliers"]:
@@ -360,7 +366,7 @@ def push_part_group(name, files, force, force_ipn, force_price, api_print, root_
                 manufacturer_name = supp.get("manufacturer_name")
 
                 if api_print:
-                    print(f"    -> Supplier: {supplier_name}, SKU: {sku}, MPN: {mpn or 'None'}")
+                    print(f"    to Supplier: {supplier_name}, SKU: {sku}, MPN: {mpn or 'None'}")
 
                 supplier_pk = get_or_create_company(supplier_name, is_supplier=True)
 
