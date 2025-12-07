@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-parts.py
-# version: 2025-12-07-v6
+# version: 2025-12-07-v8
 # --------------------------------------------------------------
 # Push parts + suppliers + price breaks + BOMs from data/parts/ to InvenTree
 #
@@ -52,8 +52,7 @@ BASE_URL_PARTS = f"{BASE_URL}/api/part/"
 BASE_URL_CATEGORIES = f"{BASE_URL}/api/part/category/"
 BASE_URL_BOM = f"{BASE_URL}/api/bom/"
 BASE_URL_COMPANY = f"{BASE_URL}/api/company/"
-BASE_URL_SUPPLIER_PARTS = f"{BASE_URL}/api/company/part/supplier/"
-BASE_URL_MANUFACTURER_PART = f"{BASE_URL}/api/company/part/manufacturer/"
+BASE_URL_SUPPLIER_PARTS = f"{BASE_URL}/api/company/part/"           # Correct endpoint
 BASE_URL_PRICE_BREAK = f"{BASE_URL}/api/company/price-break/"
 
 TOKEN = os.getenv("INVENTREE_TOKEN")
@@ -126,13 +125,17 @@ def get_or_create_company(name, is_supplier=True):
     return api_post(BASE_URL_COMPANY, payload)["pk"]
 
 def get_or_create_supplier_part(part_pk, supplier_pk, sku, mpn=None, manufacturer_pk=None):
-    existing = fetch_all(f"{BASE_URL_SUPPLIER_PARTS}?part={part_pk}&supplier={supplier_pk}&SKU={requests.utils.quote(sku)}")
+    filters = f"?part={part_pk}&supplier={supplier_pk}"
+    if sku:
+        filters += f"&SKU={requests.utils.quote(sku)}"
+    existing = fetch_all(BASE_URL_SUPPLIER_PARTS + filters)
     if existing:
         return existing[0]["pk"]
+
     payload = {
         "part": part_pk,
         "supplier": supplier_pk,
-        "SKU": sku,
+        "SKU": sku or "",
     }
     if mpn and manufacturer_pk:
         payload["MPN"] = mpn
@@ -144,9 +147,10 @@ def sync_price_breaks(supplier_part_pk, price_breaks, force_price=False, api_pri
         existing = fetch_all(f"{BASE_URL_PRICE_BREAK}?supplier_part={supplier_part_pk}")
         for pb in existing:
             api_delete(f"{BASE_URL_PRICE_BREAK}{pb['pk']}/", api_print)
+
     for pb in price_breaks:
         payload = {
-            "supplier_part": supplier_part_pk,
+            "part": supplier_part_pk,           # This is the correct field name!
             "quantity": pb["quantity"],
             "price": pb["price"],
             "price_currency": pb.get("price_currency", "USD")
@@ -154,7 +158,7 @@ def sync_price_breaks(supplier_part_pk, price_breaks, force_price=False, api_pri
         api_post(BASE_URL_PRICE_BREAK, payload, api_print)
 
 # ----------------------------------------------------------------------
-# Category helpers – now safe for list responses
+# Category helpers
 # ----------------------------------------------------------------------
 def check_category_exists(name, parent_pk=None):
     params = {"name": name}
@@ -169,7 +173,7 @@ def check_category_exists(name, parent_pk=None):
 
 def create_category_hierarchy(folder_path, root_dir):
     rel_path = os.path.relpath(folder_path, root_dir)
-    parts = [p for p in rel_path.split(os.sep) if p and not p != "." and not p.isdigit()]
+    parts = [p for p in rel_path.split(os.sep) if p and not p.isdigit()]
     cur = None
     for name in parts:
         existing = check_category_exists(name, cur)
@@ -236,7 +240,7 @@ def push_bom(part_pk, bom_path, cache, api_print=False):
             sub_parts = [p for p in candidates if p.get("IPN", "") == sub_ipn or not sub_ipn]
 
         if not sub_parts:
-            print(f"  WARNING: Sub-part '{sub_name}' (IPN={sub_ipn}, Rev={sub_revision}) not found")
+            print(f"  WARNING: Sub-part '{sub_name}' not found")
             all_found = False
             all_validated = False
             continue
@@ -282,7 +286,6 @@ def push_part_group(name, files, force, force_ipn, force_price, api_print, root_
             if isinstance(data, list):
                 data = data[0]
 
-        # Part payload
         payload = {k: data.get(k, "") for k in [
             "description", "IPN", "keywords", "units", "minimum_stock",
             "assembly", "component", "trackable", "purchaseable",
@@ -304,7 +307,6 @@ def push_part_group(name, files, force, force_ipn, force_price, api_print, root_
             if variant_pk:
                 payload["variant_of"] = variant_pk
 
-        # Find or create part
         existing = [
             p for p in cache.get(name, [])
             if p.get("IPN", "") == payload.get("IPN", "") and p.get("revision", "") == (revision or "")
@@ -324,7 +326,6 @@ def push_part_group(name, files, force, force_ipn, force_price, api_print, root_
             part_pk = result["pk"]
             print(f"  Created new part PK {part_pk}")
 
-        # Update cache
         if existing:
             cache[name] = [p for p in cache[name] if p["pk"] != existing[0]["pk"]] + [existing[0]]
         else:
@@ -354,11 +355,11 @@ def push_part_group(name, files, force, force_ipn, force_price, api_print, root_
 # ----------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(description="Push parts + suppliers + BOMs to InvenTree")
-    parser.add_argument("patterns", nargs="*", default=["**/*"], help="Glob patterns")
-    parser.add_argument("--force", action="store_true", help="Delete and recreate parts")
-    parser.add_argument("--force-ipn", action="store_true", help="Generate IPN from name if missing")
-    parser.add_argument("--force-price", action="store_true", help="Delete existing price breaks")
-    parser.add_argument("--api-print", action="store_true", help="Print all API calls")
+    parser.add_argument("patterns", nargs="*", default=["**/*"])
+    parser.add_argument("--force", action="store_true")
+    parser.add_argument("--force-ipn", action="store_true")
+    parser.add_argument("--force-price", action="store_true")
+    parser.add_argument("--api-print", action="store_true")
     args = parser.parse_args()
 
     print("Building part cache...")
