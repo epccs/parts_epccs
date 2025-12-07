@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-parts.py
-# version: 2025-12-07-v11
+# version: 2025-12-07-v12
 # --------------------------------------------------------------
 # Push parts + suppliers + price breaks + BOMs from data/parts/ to InvenTree
 #
@@ -30,6 +30,8 @@
 # changelog: 
 #            full supplier / working supplier & price-break push
 #            add debug output for supplier part creation
+#            Survives 502/503/504/429 and connection drops
+#            3 retries with exponential backoff
 
 import requests
 import json
@@ -38,6 +40,7 @@ import glob
 import argparse
 import sys
 import re
+import time
 from collections import defaultdict
 
 # ----------------------------------------------------------------------
@@ -69,16 +72,51 @@ HEADERS = {
 }
 
 # ----------------------------------------------------------------------
-# API helpers
+# Robust request with retry
 # ----------------------------------------------------------------------
+def robust_request(method, url, api_print=False, **kwargs):
+    max_retries = 5
+    base_delay = 1.0
+
+    for attempt in range(max_retries):
+        try:
+            if api_print and method.upper() in ("GET", "POST", "PATCH", "DELETE"):
+                print(f"API {method.upper()}: {url}")
+                if "json" in kwargs:
+                    print(json.dumps(kwargs["json"], indent=4))
+
+            r = requests.request(method, url, headers=HEADERS, timeout=30, **kwargs)
+
+            # Success
+            if r.status_code in (200, 201, 204):
+                return r
+
+            # Retry on transient errors
+            if r.status_code in (502, 503, 504, 429) or r.status_code >= 500:
+                delay = base_delay * (2 ** attempt)
+                print(f"Transient error {r.status_code}, retry {attempt + 1}/{max_retries} in {delay}s...")
+                time.sleep(delay)
+                continue
+
+            # Don't retry client errors
+            print(f"API error {r.status_code}: {r.text}")
+            sys.exit(1)
+
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+            if attempt == max_retries - 1:
+                print(f"Connection failed after {max_retries} attempts: {e}")
+                sys.exit(1)
+            delay = base_delay * (2 ** attempt)
+            print(f"Connection error, retry {attempt + 1}/{max_retries} in {delay}s...")
+            time.sleep(delay)
+
+    # Should never reach here
+    sys.exit(1)
+
 def fetch_all(url: str, api_print: bool = False) -> list:
     items = []
     while url:
-        if api_print:
-            print(f"API GET: {url}")
-        r = requests.get(url, headers=HEADERS)
-        if r.status_code != 200:
-            raise Exception(f"API error {r.status_code}: {r.text}")
+        r = robust_request("GET", url, api_print=api_print)
         data = r.json()
         if isinstance(data, dict) and "results" in data:
             items.extend(data["results"])
@@ -89,30 +127,14 @@ def fetch_all(url: str, api_print: bool = False) -> list:
     return items
 
 def api_post(url: str, payload: dict, api_print: bool = False):
-    if api_print:
-        print(f"API POST: {url}")
-        print(json.dumps(payload, indent=4))
-    r = requests.post(url, headers=HEADERS, json=payload)
-    if r.status_code not in (200, 201):
-        print(f"ERROR {r.status_code}: {r.text}")
-        sys.exit(1)
+    r = robust_request("POST", url, api_print=api_print, json=payload)
     return r.json()
 
 def api_patch(url: str, payload: dict, api_print: bool = False):
-    if api_print:
-        print(f"API PATCH: {url}")
-        print(json.dumps(payload, indent=4))
-    r = requests.patch(url, headers=HEADERS, json=payload)
-    if r.status_code not in (200, 201):
-        print(f"ERROR {r.status_code}: {r.text}")
-        sys.exit(1)
+    robust_request("PATCH", url, api_print=api_print, json=payload)
 
 def api_delete(url: str, api_print: bool = False):
-    if api_print:
-        print(f"API DELETE: {url}")
-    r = requests.delete(url, headers=HEADERS)
-    if r.status_code not in (200, 201, 204):
-        print(f"ERROR {r.status_code}: {r.text}")
+    robust_request("DELETE", url, api_print=api_print)
 
 # ----------------------------------------------------------------------
 # Company & ManufacturerPart helpers
