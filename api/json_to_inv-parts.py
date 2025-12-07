@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-parts.py
-# version: 2025-12-07-v8
+# version: 2025-12-07-v10
 # --------------------------------------------------------------
 # Push parts + suppliers + price breaks + BOMs from data/parts/ to InvenTree
 #
@@ -10,10 +10,10 @@
 # * BOM validation (validated_bom = True only when all items validated)
 # * Supports Part_Name[.revision].json + [Part_Name[.revision].bom.json]
 # * Handles parts with only revisions (no base part)
-# * --force          → delete & recreate part
-# * --force-price    → delete all existing price breaks first
-# * --force-ipn      → generate IPN from name if missing
-# * --api-print      → show every API call
+# * --force          -> delete & recreate part
+# * --force-price    -> delete all existing price breaks first
+# * --force-ipn      -> generate IPN from name if missing
+# * --api-print      -> show every API call
 #
 # This is the final, battle-tested version after months of real-world use.
 # Perfect round-trip with inv-parts_to_json.py
@@ -29,6 +29,7 @@
 # --------------------------------------------------------------
 # changelog: 
 #            full supplier / working supplier & price-break push
+#            add debug output for supplier part creation
 
 import requests
 import json
@@ -52,7 +53,8 @@ BASE_URL_PARTS = f"{BASE_URL}/api/part/"
 BASE_URL_CATEGORIES = f"{BASE_URL}/api/part/category/"
 BASE_URL_BOM = f"{BASE_URL}/api/bom/"
 BASE_URL_COMPANY = f"{BASE_URL}/api/company/"
-BASE_URL_SUPPLIER_PARTS = f"{BASE_URL}/api/company/part/"           # Correct endpoint
+BASE_URL_SUPPLIER_PARTS = f"{BASE_URL}/api/company/part/"
+BASE_URL_MANUFACTURER_PART = f"{BASE_URL}/api/company/part/manufacturer/"
 BASE_URL_PRICE_BREAK = f"{BASE_URL}/api/company/price-break/"
 
 TOKEN = os.getenv("INVENTREE_TOKEN")
@@ -69,7 +71,7 @@ HEADERS = {
 # ----------------------------------------------------------------------
 # API helpers
 # ----------------------------------------------------------------------
-def fetch_all(url, api_print=False):
+def fetch_all(url: str, api_print: bool = False) -> list:
     items = []
     while url:
         if api_print:
@@ -86,17 +88,19 @@ def fetch_all(url, api_print=False):
             url = None
     return items
 
-def api_post(url, payload, api_print=False):
+def api_post(url: str, payload: dict, api_print: bool = False):
     if api_print:
         print(f"API POST: {url}")
         print(json.dumps(payload, indent=4))
     r = requests.post(url, headers=HEADERS, json=payload)
     if r.status_code not in (200, 201):
         print(f"ERROR {r.status_code}: {r.text}")
+        if api_print:
+            print("Full response:", r.text)
         sys.exit(1)
     return r.json()
 
-def api_patch(url, payload, api_print=False):
+def api_patch(url: str, payload: dict, api_print: bool = False):
     if api_print:
         print(f"API PATCH: {url}")
         print(json.dumps(payload, indent=4))
@@ -105,7 +109,7 @@ def api_patch(url, payload, api_print=False):
         print(f"ERROR {r.status_code}: {r.text}")
         sys.exit(1)
 
-def api_delete(url, api_print=False):
+def api_delete(url: str, api_print: bool = False):
     if api_print:
         print(f"API DELETE: {url}")
     r = requests.delete(url, headers=HEADERS)
@@ -113,9 +117,9 @@ def api_delete(url, api_print=False):
         print(f"ERROR {r.status_code}: {r.text}")
 
 # ----------------------------------------------------------------------
-# Company helpers
+# Company & ManufacturerPart helpers
 # ----------------------------------------------------------------------
-def get_or_create_company(name, is_supplier=True):
+def get_or_create_company(name: str, is_supplier: bool = True):
     kind = "supplier" if is_supplier else "manufacturer"
     url = f"{BASE_URL_COMPANY}?name={requests.utils.quote(name)}&is_{kind}=true"
     companies = fetch_all(url)
@@ -124,12 +128,28 @@ def get_or_create_company(name, is_supplier=True):
     payload = {"name": name, f"is_{kind}": True}
     return api_post(BASE_URL_COMPANY, payload)["pk"]
 
-def get_or_create_supplier_part(part_pk, supplier_pk, sku, mpn=None, manufacturer_pk=None):
+def get_or_create_manufacturer_part(part_pk: int, manufacturer_pk: int, mpn: str):
+    if not mpn:
+        return None
+    existing = fetch_all(f"{BASE_URL_MANUFACTURER_PART}?part={part_pk}&MPN={requests.utils.quote(mpn)}")
+    for mp in existing:
+        if mp.get("manufacturer") == manufacturer_pk:
+            return mp["pk"]
+    payload = {
+        "part": part_pk,
+        "manufacturer": manufacturer_pk,
+        "MPN": mpn,
+    }
+    return api_post(BASE_URL_MANUFACTURER_PART, payload)["pk"]
+
+def get_or_create_supplier_part(part_pk: int, supplier_pk: int, sku: str, manufacturer_part_pk: int = None, api_print: bool = False):
     filters = f"?part={part_pk}&supplier={supplier_pk}"
     if sku:
         filters += f"&SKU={requests.utils.quote(sku)}"
-    existing = fetch_all(BASE_URL_SUPPLIER_PARTS + filters)
+    existing = fetch_all(BASE_URL_SUPPLIER_PARTS + filters, api_print)
     if existing:
+        if api_print:
+            print(f"  Found existing SupplierPart PK {existing[0]['pk']}")
         return existing[0]["pk"]
 
     payload = {
@@ -137,12 +157,15 @@ def get_or_create_supplier_part(part_pk, supplier_pk, sku, mpn=None, manufacture
         "supplier": supplier_pk,
         "SKU": sku or "",
     }
-    if mpn and manufacturer_pk:
-        payload["MPN"] = mpn
-        payload["manufacturer"] = manufacturer_pk
-    return api_post(BASE_URL_SUPPLIER_PARTS, payload)["pk"]
+    if manufacturer_part_pk:
+        payload["manufacturer_part"] = manufacturer_part_pk
 
-def sync_price_breaks(supplier_part_pk, price_breaks, force_price=False, api_print=False):
+    if api_print:
+        print(f"  Creating new SupplierPart for SKU '{sku}'")
+
+    return api_post(BASE_URL_SUPPLIER_PARTS, payload, api_print)["pk"]
+
+def sync_price_breaks(supplier_part_pk: int, price_breaks: list, force_price: bool = False, api_print: bool = False):
     if force_price:
         existing = fetch_all(f"{BASE_URL_PRICE_BREAK}?supplier_part={supplier_part_pk}")
         for pb in existing:
@@ -150,7 +173,7 @@ def sync_price_breaks(supplier_part_pk, price_breaks, force_price=False, api_pri
 
     for pb in price_breaks:
         payload = {
-            "part": supplier_part_pk,           # This is the correct field name!
+            "part": supplier_part_pk,  # Correct field name
             "quantity": pb["quantity"],
             "price": pb["price"],
             "price_currency": pb.get("price_currency", "USD")
@@ -160,7 +183,7 @@ def sync_price_breaks(supplier_part_pk, price_breaks, force_price=False, api_pri
 # ----------------------------------------------------------------------
 # Category helpers
 # ----------------------------------------------------------------------
-def check_category_exists(name, parent_pk=None):
+def check_category_exists(name: str, parent_pk: int = None):
     params = {"name": name}
     if parent_pk is not None:
         params["parent"] = parent_pk
@@ -168,10 +191,9 @@ def check_category_exists(name, parent_pk=None):
     if r.status_code != 200:
         return []
     data = r.json()
-    results = data.get("results", []) if isinstance(data, dict) else data
-    return results
+    return data.get("results", []) if isinstance(data, dict) else data
 
-def create_category_hierarchy(folder_path, root_dir):
+def create_category_hierarchy(folder_path: str, root_dir: str):
     rel_path = os.path.relpath(folder_path, root_dir)
     parts = [p for p in rel_path.split(os.sep) if p and not p.isdigit()]
     cur = None
@@ -184,7 +206,7 @@ def create_category_hierarchy(folder_path, root_dir):
         cur = api_post(BASE_URL_CATEGORIES, payload)["pk"]
     return cur
 
-def parse_filename(filepath):
+def parse_filename(filepath: str):
     basename = os.path.basename(filepath)
     if not basename.endswith(".json"):
         return None, None
@@ -194,7 +216,7 @@ def parse_filename(filepath):
         return name, rev
     return name_part, None
 
-def resolve_variant_target(variant_str, cache):
+def resolve_variant_target(variant_str: str, cache: dict):
     if not variant_str or variant_str == "null":
         return None
     if "." in variant_str:
@@ -209,10 +231,10 @@ def resolve_variant_target(variant_str, cache):
 # ----------------------------------------------------------------------
 # BOM push
 # ----------------------------------------------------------------------
-def push_bom(part_pk, bom_path, cache, api_print=False):
+def push_bom(part_pk: int, bom_path: str, cache: dict, api_print: bool = False):
     if not os.path.exists(bom_path):
         return
-    print(f"Pushing BOM from {bom_path} → Part PK {part_pk}")
+    print(f"Pushing BOM from {bom_path} -> Part PK {part_pk}")
     with open(bom_path, "r", encoding="utf-8") as f:
         tree = json.load(f)
 
@@ -270,7 +292,7 @@ def push_bom(part_pk, bom_path, cache, api_print=False):
             all_validated = False
 
     if tree and all_found and all_validated:
-        print(f"  All BOM items validated → setting validated_bom = True")
+        print(f"  All BOM items validated -> setting validated_bom = True")
         api_patch(f"{BASE_URL_PARTS}{part_pk}/", {"validated_bom": True}, api_print)
 
 # ----------------------------------------------------------------------
@@ -326,23 +348,28 @@ def push_part_group(name, files, force, force_ipn, force_price, api_print, root_
             part_pk = result["pk"]
             print(f"  Created new part PK {part_pk}")
 
-        if existing:
-            cache[name] = [p for p in cache[name] if p["pk"] != existing[0]["pk"]] + [existing[0]]
-        else:
-            cache[name].append(result)
+        cache[name].append(result if 'result' not in locals() else existing[0])
 
-        # Suppliers & price breaks
+        # Suppliers
         if data.get("purchaseable") and data.get("suppliers"):
+            print(f"  Pushing {len(data['suppliers'])} supplier(s)")
             for supp in data["suppliers"]:
                 supplier_name = supp["supplier_name"]
                 sku = supp["SKU"]
                 mpn = supp.get("MPN")
                 manufacturer_name = supp.get("manufacturer_name")
 
-                supplier_pk = get_or_create_company(supplier_name, is_supplier=True)
-                manufacturer_pk = get_or_create_company(manufacturer_name, is_supplier=False) if manufacturer_name else None
+                if api_print:
+                    print(f"    -> Supplier: {supplier_name}, SKU: {sku}, MPN: {mpn or 'None'}")
 
-                sp_pk = get_or_create_supplier_part(part_pk, supplier_pk, sku, mpn, manufacturer_pk)
+                supplier_pk = get_or_create_company(supplier_name, is_supplier=True)
+
+                manufacturer_part_pk = None
+                if manufacturer_name and mpn:
+                    manufacturer_pk = get_or_create_company(manufacturer_name, is_supplier=False)
+                    manufacturer_part_pk = get_or_create_manufacturer_part(part_pk, manufacturer_pk, mpn)
+
+                sp_pk = get_or_create_supplier_part(part_pk, supplier_pk, sku, manufacturer_part_pk, api_print)
                 sync_price_breaks(sp_pk, supp["price_breaks"], force_price, api_print)
 
         # BOM
