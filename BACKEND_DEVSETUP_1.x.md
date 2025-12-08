@@ -182,11 +182,11 @@ mkdir -p ~/samba/inventree-backup
 - <https://docs.inventree.org/en/stable/develop/contributing/>
 
 ```bash
-# 1. Clone the repository
+# 1. Clone the repository (look at inventree/demo-dataset to decide if you want the stable or master branch)
 cd ~
 mkdir -p ~/git
 cd ~/git
-git clone --branch stable https://github.com/inventree/InvenTree.git ~/git/InvenTree
+git clone --branch master https://github.com/inventree/InvenTree.git ~/git/InvenTree
 cd ~/git/InvenTree
 
 # 2. Install Python dependencies
@@ -242,13 +242,15 @@ git reset --hard origin/stable
 git stash pop
 git status # show all the output to Grok so you can see any other needed steps, but be ready to nuke and plow
 
-# 1. Stop everything
+# 1. Stop everything and clear previous build (which can block)
 sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml down
+sudo rm -rf src/frontend/node_modules
+sudo rm src/frontend/yarn.lock
 
-# 2. Pull base images (only postgres)
-sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml pull
+# 2. Pull base images (only postgres, e.g. service inventree-dev-db)
+sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml pull inventree-dev-db
 
-# 3. Build the dev image (inventree-dev-server is not required  >=1.1.3 but did no harm)
+# 3. Build the dev (worker and server) image for local use
 sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml build inventree-dev-worker
 sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml build inventree-dev-server
 
