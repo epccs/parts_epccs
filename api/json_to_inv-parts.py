@@ -134,7 +134,12 @@ def api_patch(url: str, payload: dict, api_print: bool = False):
     robust_request("PATCH", url, api_print=api_print, json=payload)
 
 def api_delete(url: str, api_print: bool = False):
-    robust_request("DELETE", url, api_print=api_print)
+    if api_print:
+        print(f"  DELETE {url}")
+    r = robust_request("DELETE", url, api_print=False)  # don't double-print
+    if api_print:
+        status = "OK (204)" if r.status_code == 204 else f"{r.status_code}"
+        print(f"    -> {status}")
 
 # ----------------------------------------------------------------------
 # Company & ManufacturerPart helpers
@@ -186,11 +191,46 @@ def get_or_create_supplier_part(part_pk: int, supplier_pk: int, sku: str, manufa
     return api_post(BASE_URL_SUPPLIER_PARTS, payload, api_print)["pk"]
 
 def sync_price_breaks(supplier_part_pk: int, price_breaks: list, force_price: bool = False, api_print: bool = False):
-    if force_price:
-        existing = fetch_all(f"{BASE_URL_PRICE_BREAK}?supplier_part={supplier_part_pk}")
-        for pb in existing:
-            api_delete(f"{BASE_URL_PRICE_BREAK}{pb['pk']}/", api_print)
+    if not force_price:
+        # Normal mode: just add new ones (no delete)
+        for pb in price_breaks:
+            payload = {
+                "part": supplier_part_pk,
+                "quantity": pb["quantity"],
+                "price": pb["price"],
+                "price_currency": pb.get("price_currency", "USD")
+            }
+            api_post(BASE_URL_PRICE_BREAK, payload, api_print)
+        return
 
+    # --- DANGER ZONE: --force-price enabled ---
+    existing = fetch_all(f"{BASE_URL_PRICE_BREAK}?supplier_part={supplier_part_pk}")
+    if not existing:
+        print(f"  No existing price breaks to delete for SupplierPart {supplier_part_pk}")
+    else:
+        print(f"\n  [WARNING] --force-price enabled!")
+        print(f"  About to DELETE {len(existing)} existing price break(s) for SupplierPart {supplier_part_pk}")
+        if api_print:
+            for pb in existing:
+                print(f"      → PK {pb['pk']} | Qty: {pb['quantity']} @ ${pb['price']} {pb.get('price_currency', 'USD')}")
+
+        # SAFETY PAUSE — YOU MUST TYPE 'yes' TO CONTINUE
+        print("\n  [SAFETY] Type 'yes' to confirm deletion, anything else to SKIP this supplier:")
+        confirm = input("  → ").strip().lower()
+        if confirm != "yes":
+            print("  Skipping price break deletion for this supplier.\n")
+            return  # Skip deletion, but still create new ones below
+
+        # Confirmed — proceed with deletion
+        print(f"  Deleting {len(existing)} price break(s)...")
+        for pb in existing:
+            pb_pk = pb["pk"]
+            if api_print:
+                print(f"  DELETE {BASE_URL_PRICE_BREAK}{pb_pk}/")
+            api_delete(f"{BASE_URL_PRICE_BREAK}{pb_pk}/", api_print)
+
+    # Always create the new ones
+    print(f"  Creating {len(price_breaks)} new price break(s)...") if api_print else None
     for pb in price_breaks:
         payload = {
             "part": supplier_part_pk,
@@ -198,7 +238,10 @@ def sync_price_breaks(supplier_part_pk: int, price_breaks: list, force_price: bo
             "price": pb["price"],
             "price_currency": pb.get("price_currency", "USD")
         }
-        api_post(BASE_URL_PRICE_BREAK, payload, api_print)
+        result = api_post(BASE_URL_PRICE_BREAK, payload, api_print)
+        if api_print:
+            new_pk = result.get("pk", "??")
+            print(f"    Created PK {new_pk} → Qty: {pb['quantity']} @ ${pb['price']} {pb.get('price_currency', 'USD')}")
 
 # ----------------------------------------------------------------------
 # Category helpers
