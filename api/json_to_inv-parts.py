@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-parts.py
-# version: 2025-12-07-v12
+# version: 2025-12-08-v3
 # --------------------------------------------------------------
 # Push parts + suppliers + price breaks + BOMs from data/parts/ to InvenTree
 #
@@ -32,6 +32,8 @@
 #            add debug output for supplier part creation
 #            Survives 502/503/504/429 and connection drops
 #            3 retries with exponential backoff
+#            adjust --api-print output for clarity
+#            fix bug in manufacturer part lookup
 
 import requests
 import json
@@ -116,8 +118,20 @@ def robust_request(method, url, api_print=False, **kwargs):
 def fetch_all(url: str, api_print: bool = False) -> list:
     items = []
     while url:
-        r = robust_request("GET", url, api_print=api_print)
+        if api_print:
+            print(f"API GET: {url}")
+        r = robust_request("GET", url, api_print=False)
         data = r.json()
+        
+        if api_print:
+            # Show first few results for clarity
+            preview = data.get("results", data)[:3] if isinstance(data, dict) else data[:3]
+            print(f"    -> {r.status_code} | Count: {len(data.get('results', data) if isinstance(data, dict) else data)}")
+            for item in preview:
+                print(f"        {item}")
+            if len(data.get("results", data) if isinstance(data, dict) else data) > 3:
+                print(f"        ... and {len(data.get('results', data) if isinstance(data, dict) else data) - 3} more")
+        
         if isinstance(data, dict) and "results" in data:
             items.extend(data["results"])
             url = data.get("next")
@@ -171,10 +185,23 @@ def get_or_create_supplier_part(part_pk: int, supplier_pk: int, sku: str, manufa
     filters = f"?part={part_pk}&supplier={supplier_pk}"
     if sku:
         filters += f"&SKU={requests.utils.quote(sku)}"
-    existing = fetch_all(BASE_URL_SUPPLIER_PARTS + filters, api_print)
+    
+    url = BASE_URL_SUPPLIER_PARTS + filters
+    
+    if api_print:
+        print(f"  API GET: {url}")
+    
+    existing = fetch_all(url, api_print=False)  # we will print raw response below
+    
+    if api_print:
+        if existing:
+            print(f"    -> Found {len(existing)} SupplierPart(s):")
+            for sp in existing:
+                print(f"        PK {sp['pk']} | SKU: '{sp.get('SKU')}' | MPN: {sp.get('MPN','None')} | ManufacturerPart: {sp.get('manufacturer_part')}")
+        else:
+            print("    -> No existing SupplierPart found")
+    
     if existing:
-        if api_print:
-            print(f"  Found existing SupplierPart PK {existing[0]['pk']}")
         return existing[0]["pk"]
 
     payload = {
@@ -192,7 +219,7 @@ def get_or_create_supplier_part(part_pk: int, supplier_pk: int, sku: str, manufa
 
 def sync_price_breaks(supplier_part_pk: int, price_breaks: list, force_price: bool = False, api_print: bool = False):
     if not force_price:
-        # Normal mode: just add new ones (no delete)
+        # Just add new ones
         for pb in price_breaks:
             payload = {
                 "part": supplier_part_pk,
@@ -203,25 +230,30 @@ def sync_price_breaks(supplier_part_pk: int, price_breaks: list, force_price: bo
             api_post(BASE_URL_PRICE_BREAK, payload, api_print)
         return
 
-    # --- DANGER ZONE: --force-price enabled ---
-    existing = fetch_all(f"{BASE_URL_PRICE_BREAK}?supplier_part={supplier_part_pk}")
+    # --- DANGER ZONE: --force-price ---
+    print(f"\n  [WARNING] --force-price: fetching ALL price breaks for Part (not just this supplier)...")
+    all_price_breaks = fetch_all(f"{BASE_URL_PRICE_BREAK}?part_detail=true")  # get all
+
+    # CLIENT-SIDE FILTER - this is the only safe way
+    existing = [pb for pb in all_price_breaks if pb.get("supplier_part") == supplier_part_pk]
+
     if not existing:
-        print(f"  No existing price breaks to delete for SupplierPart {supplier_part_pk}")
+        print(f"  No existing price breaks found for SupplierPart {supplier_part_pk}")
     else:
-        print(f"\n  [WARNING] --force-price enabled!")
-        print(f"  About to DELETE {len(existing)} existing price break(s) for SupplierPart {supplier_part_pk}")
+        print(f"  Found {len(existing)} price break(s) belonging to SupplierPart {supplier_part_pk}")
         if api_print:
             for pb in existing:
-                print(f"      → PK {pb['pk']} | Qty: {pb['quantity']} @ ${pb['price']} {pb.get('price_currency', 'USD')}")
+                qty = pb.get("quantity")
+                price = pb.get("price")
+                curr = pb.get("price_currency", "USD")
+                print(f"      -> PK {pb['pk']} | Qty: {qty} @ ${price} {curr}")
 
-        # SAFETY PAUSE — YOU MUST TYPE 'yes' TO CONTINUE
-        print("\n  [SAFETY] Type 'yes' to confirm deletion, anything else to SKIP this supplier:")
-        confirm = input("  → ").strip().lower()
+        print("\n  [SAFETY] Type 'yes' to DELETE these and continue, anything else to SKIP:")
+        confirm = input("  -> ").strip().lower()
         if confirm != "yes":
-            print("  Skipping price break deletion for this supplier.\n")
-            return  # Skip deletion, but still create new ones below
+            print("  Skipping deletion - keeping existing price breaks.\n")
+            return
 
-        # Confirmed — proceed with deletion
         print(f"  Deleting {len(existing)} price break(s)...")
         for pb in existing:
             pb_pk = pb["pk"]
@@ -229,8 +261,8 @@ def sync_price_breaks(supplier_part_pk: int, price_breaks: list, force_price: bo
                 print(f"  DELETE {BASE_URL_PRICE_BREAK}{pb_pk}/")
             api_delete(f"{BASE_URL_PRICE_BREAK}{pb_pk}/", api_print)
 
-    # Always create the new ones
-    print(f"  Creating {len(price_breaks)} new price break(s)...") if api_print else None
+    # Now safely create the new ones
+    print(f"  Creating {len(price_breaks)} new price break(s)...")
     for pb in price_breaks:
         payload = {
             "part": supplier_part_pk,
@@ -240,8 +272,7 @@ def sync_price_breaks(supplier_part_pk: int, price_breaks: list, force_price: bo
         }
         result = api_post(BASE_URL_PRICE_BREAK, payload, api_print)
         if api_print:
-            new_pk = result.get("pk", "??")
-            print(f"    Created PK {new_pk} → Qty: {pb['quantity']} @ ${pb['price']} {pb.get('price_currency', 'USD')}")
+            print(f"    -> Created PK {result.get('pk')} | Qty: {pb['quantity']} @ ${pb['price']} {pb.get('price_currency', 'USD')}")
 
 # ----------------------------------------------------------------------
 # Category helpers
