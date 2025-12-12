@@ -10,7 +10,7 @@
 # * BOM validation (validated_bom = True only when all items validated)
 # * Supports Part_Name[.revision].json + [Part_Name[.revision].bom.json]
 # * Handles parts with only revisions (no base part)
-# * --force          -> delete & recreate part
+# * --force          -> delete & recreate part (todo: part must be inactive before delete)
 # * --force-price    -> delete all existing price breaks first
 # * --force-ipn      -> generate IPN from name if missing
 # * --api-print      -> show every API call
@@ -29,6 +29,9 @@
 # --------------------------------------------------------------
 # changelog: 
 #            Now with full SupplierPart & ManufacturerPart description/link support
+# todo: 
+#    --force is not working -> API error 400: {"non_field_errors":["Cannot delete this part as it is still active"]}
+
 
 import requests
 import json
