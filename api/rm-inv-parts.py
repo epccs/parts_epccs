@@ -75,17 +75,16 @@ def fetch_all(base_url: str, params=None, api_print=False) -> list:
         r = requests.get(url, headers=HEADERS, params=params or {})
         if r.status_code != 200:
             if api_print:
-                print(f" -> ERROR {r.status_code}: {r.text[:200]}")
+                print(f" ERROR {r.status_code}: {r.text[:200]}")
             break
 
         try:
             data = r.json()
         except json.JSONDecodeError:
             if api_print:
-                print(f" -> Non-JSON response: {r.text[:200]}")
+                print(f" Non-JSON response: {r.text[:200]}")
             break
 
-        # Handle both paginated dict and raw list responses
         if isinstance(data, list):
             results = data
         elif isinstance(data, dict):
@@ -96,7 +95,7 @@ def fetch_all(base_url: str, params=None, api_print=False) -> list:
         items.extend(results)
 
         if api_print and results:
-            print(f" -> Page has {len(results)} items. First few:")
+            print(f" Page has {len(results)} items. First few:")
             for item in results[:5]:
                 if "sub_part" in item:
                     print(f"     BOM: {item.get('quantity')} × PK {item.get('sub_part')} -> Assembly PK {item.get('part')}")
@@ -108,7 +107,7 @@ def fetch_all(base_url: str, params=None, api_print=False) -> list:
                 print(f"     ... and {len(results)-5} more")
 
         url = data.get("next") if isinstance(data, dict) else None
-        params = None  # next URL already includes params
+        params = None
         first = False
 
     return items
@@ -152,7 +151,7 @@ def find_part_exact(name_san, revision_san="", ipn="", api_print=False):
     return [p for p in results if p["name"] == name_san and (p.get("revision") or "") == revision_san]
 
 # ----------------------------------------------------------------------
-# Dependency handling - SAFE & VERBOSE
+# Dependency handling
 # ----------------------------------------------------------------------
 def check_dependencies(part_pk, api_print=False):
     total = 0
@@ -281,13 +280,13 @@ def main():
     parser = argparse.ArgumentParser(description="Safe InvenTree part deletion")
     parser.add_argument("patterns", nargs="*", default=["**/*"])
     parser.add_argument("--clean-dependencies", action="store_true", help="Interactive dependency deletion")
-    parser.add_argument("--clean-yes", action="store_true", help="Delete dependencies without asking")
+    parser.add_argument("--clean-dependencies-yes", action="store_true", help="Delete dependencies without asking")
     parser.add_argument("--remove-json", action="store_true")
     parser.add_argument("--api-print", action="store_true")
     args = parser.parse_args()
 
-    if args.clean and args.clean_yes:
-        print("Error: --clean and --clean-yes are mutually exclusive")
+    if args.clean_dependencies and args.clean_dependencies_yes:
+        print("Error: --clean-dependencies and --clean-dependencies-yes are mutually exclusive")
         sys.exit(1)
 
     files = []
@@ -302,8 +301,8 @@ def main():
     for f in files:
         delete_part_from_file(
             f,
-            clean_deps=args.clean,
-            clean_deps_yes=args.clean_yes,
+            clean_deps=args.clean_dependencies,
+            clean_deps_yes=args.clean_dependencies_yes,
             remove_json=args.remove_json,
             api_print=args.api_print
         )
