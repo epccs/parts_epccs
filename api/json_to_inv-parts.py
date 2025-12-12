@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # file name: json_to_inv-parts.py
-# version: 2025-12-08-v3
+# version: 2025-12-12-v1
 # --------------------------------------------------------------
 # Push parts + suppliers + price breaks + BOMs from data/parts/ to InvenTree
 #
@@ -28,7 +28,7 @@
 # python3 ./api/json_to_inv-parts.py "**/*"
 # --------------------------------------------------------------
 # changelog: 
-#            Refactor price break synchronization logic
+#            Now with full SupplierPart & ManufacturerPart description/link support
 
 import requests
 import json
@@ -36,7 +36,6 @@ import os
 import glob
 import argparse
 import sys
-import re
 import time
 from collections import defaultdict
 
@@ -48,7 +47,6 @@ if not BASE_URL:
     print("Error: INVENTREE_URL not set")
     sys.exit(1)
 BASE_URL = BASE_URL.rstrip("/")
-
 BASE_URL_PARTS = f"{BASE_URL}/api/part/"
 BASE_URL_CATEGORIES = f"{BASE_URL}/api/part/category/"
 BASE_URL_BOM = f"{BASE_URL}/api/bom/"
@@ -74,31 +72,22 @@ HEADERS = {
 def robust_request(method, url, api_print=False, **kwargs):
     max_retries = 5
     base_delay = 1.0
-
     for attempt in range(max_retries):
         try:
             if api_print and method.upper() in ("GET", "POST", "PATCH", "DELETE"):
                 print(f"API {method.upper()}: {url}")
                 if "json" in kwargs:
                     print(json.dumps(kwargs["json"], indent=4))
-
             r = requests.request(method, url, headers=HEADERS, timeout=30, **kwargs)
-
-            # Success
             if r.status_code in (200, 201, 204):
                 return r
-
-            # Retry on transient errors
             if r.status_code in (502, 503, 504, 429) or r.status_code >= 500:
                 delay = base_delay * (2 ** attempt)
                 print(f"Transient error {r.status_code}, retry {attempt + 1}/{max_retries} in {delay}s...")
                 time.sleep(delay)
                 continue
-
-            # Don't retry client errors
             print(f"API error {r.status_code}: {r.text}")
             sys.exit(1)
-
         except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
             if attempt == max_retries - 1:
                 print(f"Connection failed after {max_retries} attempts: {e}")
@@ -106,8 +95,6 @@ def robust_request(method, url, api_print=False, **kwargs):
             delay = base_delay * (2 ** attempt)
             print(f"Connection error, retry {attempt + 1}/{max_retries} in {delay}s...")
             time.sleep(delay)
-
-    # Should never reach here
     sys.exit(1)
 
 def fetch_all(url: str, api_print: bool = False) -> list:
@@ -117,16 +104,13 @@ def fetch_all(url: str, api_print: bool = False) -> list:
             print(f"API GET: {url}")
         r = robust_request("GET", url, api_print=False)
         data = r.json()
-        
         if api_print:
-            # Show first few results for clarity
             preview = data.get("results", data)[:3] if isinstance(data, dict) else data[:3]
-            print(f"    -> {r.status_code} | Count: {len(data.get('results', data) if isinstance(data, dict) else data)}")
+            print(f" -> {r.status_code} | Count: {len(data.get('results', data) if isinstance(data, dict) else data)}")
             for item in preview:
-                print(f"        {item}")
+                print(f"  {item}")
             if len(data.get("results", data) if isinstance(data, dict) else data) > 3:
-                print(f"        ... and {len(data.get('results', data) if isinstance(data, dict) else data) - 3} more")
-        
+                print(f"  ... and {len(data.get('results', data) if isinstance(data, dict) else data) - 3} more")
         if isinstance(data, dict) and "results" in data:
             items.extend(data["results"])
             url = data.get("next")
@@ -144,96 +128,114 @@ def api_patch(url: str, payload: dict, api_print: bool = False):
 
 def api_delete(url: str, api_print: bool = False):
     if api_print:
-        print(f"  DELETE {url}")
-    r = robust_request("DELETE", url, api_print=False)  # don't double-print
+        print(f" DELETE {url}")
+    r = robust_request("DELETE", url, api_print=False)
     if api_print:
         status = "OK (204)" if r.status_code == 204 else f"{r.status_code}"
-        print(f"    -> {status}")
+        print(f" -> {status}")
 
 # ----------------------------------------------------------------------
-# Company & ManufacturerPart helpers
+# Company & Part helpers
 # ----------------------------------------------------------------------
 def get_or_create_company(name: str, is_supplier: bool = True):
     kind = "supplier" if is_supplier else "manufacturer"
-    url = f"{BASE_URL_COMPANY}?name={requests.utils.quote(name)}&is_{kind}=true"
+    url = f"{BASE_URL_COMPANY}?name={requests.utils.quote(name)}&is_{kind}=true"  # Fixed here
     companies = fetch_all(url)
     if companies:
         return companies[0]["pk"]
     payload = {"name": name, f"is_{kind}": True}
     return api_post(BASE_URL_COMPANY, payload)["pk"]
 
-def get_or_create_manufacturer_part(part_pk: int, manufacturer_pk: int, mpn: str):
+def get_or_create_manufacturer_part(part_pk: int, manufacturer_pk: int, mpn: str,
+                                   description: str = "", link: str = "", api_print: bool = False):
     if not mpn:
         return None
     existing = fetch_all(f"{BASE_URL_MANUFACTURER_PART}?part={part_pk}&MPN={requests.utils.quote(mpn)}")
     for mp in existing:
         if mp.get("manufacturer") == manufacturer_pk:
+            # Update if needed
+            payload = {}
+            if description and mp.get("description", "") != description:
+                payload["description"] = description
+            if link and mp.get("link", "") != link:
+                payload["link"] = link
+            if payload:
+                api_patch(f"{BASE_URL_MANUFACTURER_PART}{mp['pk']}/", payload, api_print)
             return mp["pk"]
+
+    # Create new
     payload = {
         "part": part_pk,
         "manufacturer": manufacturer_pk,
         "MPN": mpn,
+        "description": description or "",
+        "link": link or "",
     }
-    return api_post(BASE_URL_MANUFACTURER_PART, payload)["pk"]
+    return api_post(BASE_URL_MANUFACTURER_PART, payload, api_print)["pk"]
 
-def get_or_create_supplier_part(part_pk: int, supplier_pk: int, sku: str, manufacturer_part_pk: int = None, api_print: bool = False):
+def get_or_create_supplier_part(part_pk: int, supplier_dict: dict, manufacturer_part_pk: int = None, api_print: bool = False):
+    """
+    supplier_dict keys used:
+        supplier_name, SKU, description, link, packaging, note
+    """
+    supplier_name = supplier_dict["supplier_name"]
+    sku = supplier_dict.get("SKU", "")
+    description = supplier_dict.get("description", "")
+    link = supplier_dict.get("link", "")
+    packaging = supplier_dict.get("packaging", "")
+    note = supplier_dict.get("note", "")
+
+    supplier_pk = get_or_create_company(supplier_name, is_supplier=True)
+
     filters = f"?part={part_pk}&supplier={supplier_pk}"
     if sku:
         filters += f"&SKU={requests.utils.quote(sku)}"
-    
-    url = BASE_URL_SUPPLIER_PARTS + filters
-    
-    if api_print:
-        print(f"  API GET: {url}")
-    
-    existing = fetch_all(url, api_print=False)  # we will print raw response below
-    
-    if api_print:
-        if existing:
-            print(f"    -> Found {len(existing)} SupplierPart(s):")
-            for sp in existing:
-                print(f"        PK {sp['pk']} | SKU: '{sp.get('SKU')}' | MPN: {sp.get('MPN','None')} | ManufacturerPart: {sp.get('manufacturer_part')}")
-        else:
-            print("    -> No existing SupplierPart found")
-    
-    if existing:
-        return existing[0]["pk"]
+    existing = fetch_all(BASE_URL_SUPPLIER_PARTS + filters)
 
+    if existing:
+        sp = existing[0]
+        payload = {}
+        for field, value in [
+            ("description", description),
+            ("link", link),
+            ("packaging", packaging),
+            ("note", note),
+        ]:
+            if value and sp.get(field, "") != value:
+                payload[field] = value
+        if manufacturer_part_pk and sp.get("manufacturer_part") != manufacturer_part_pk:
+            payload["manufacturer_part"] = manufacturer_part_pk
+        if payload:
+            api_patch(f"{BASE_URL_SUPPLIER_PARTS}{sp['pk']}/", payload, api_print)
+        return sp["pk"]
+
+    # Create new
     payload = {
         "part": part_pk,
         "supplier": supplier_pk,
-        "SKU": sku or "",
+        "SKU": sku,
+        "description": description,
+        "link": link,
+        "packaging": packaging,
+        "note": note,
     }
     if manufacturer_part_pk:
         payload["manufacturer_part"] = manufacturer_part_pk
 
-    if api_print:
-        print(f"  Creating new SupplierPart for SKU '{sku}'")
-
     return api_post(BASE_URL_SUPPLIER_PARTS, payload, api_print)["pk"]
 
 def sync_price_breaks(supplier_part_pk: int, price_breaks: list, force_price: bool = False, api_print: bool = False):
-    """
-    Use the CORRECT filter: ?part= (which means SupplierPart PK)
-    This is the only way that actually works.
-    """
     if force_price:
-        print(f"  [FORCE-PRICE] Deleting all price breaks for SupplierPart {supplier_part_pk}")
+        print(f" [FORCE-PRICE] Deleting all price breaks for SupplierPart {supplier_part_pk}")
         existing = fetch_all(f"{BASE_URL_PRICE_BREAK}?part={supplier_part_pk}", api_print)
         if existing:
-            if api_print:
-                print(f"    Found {len(existing)} price break(s) to delete")
-            confirm = input("  Type 'YES' to confirm deletion: ") if sys.stdin.isatty() else "YES"
+            confirm = input(" Type 'YES' to confirm deletion: ") if sys.stdin.isatty() else "YES"
             if confirm != "YES":
-                print("  Skipping deletion")
+                print(" Skipping deletion")
                 return
             for pb in existing:
                 api_delete(f"{BASE_URL_PRICE_BREAK}{pb['pk']}/", api_print)
-        else:
-            if api_print:
-                print("  No existing price breaks")
 
-    # Now create (or skip duplicates)
     existing_keys = set()
     if not force_price:
         current = fetch_all(f"{BASE_URL_PRICE_BREAK}?part={supplier_part_pk}")
@@ -244,9 +246,8 @@ def sync_price_breaks(supplier_part_pk: int, price_breaks: list, force_price: bo
         key = (pb["quantity"], pb["price"], pb.get("price_currency", "USD"))
         if key in existing_keys:
             if api_print:
-                print(f"    Already exists → Qty: {pb['quantity']} @ ${pb['price']}")
+                print(f" Already exists: Qty {pb['quantity']} @ ${pb['price']}")
             continue
-
         payload = {
             "part": supplier_part_pk,
             "quantity": pb["quantity"],
@@ -256,10 +257,9 @@ def sync_price_breaks(supplier_part_pk: int, price_breaks: list, force_price: bo
         result = api_post(BASE_URL_PRICE_BREAK, payload, api_print)
         created += 1
         if api_print:
-            print(f"    Created PK {result.get('pk')} → Qty: {pb['quantity']} @ ${pb['price']}")
-
-    if api_print:
-        print(f"  → {created} price break(s) created")
+            print(f" Created PK {result.get('pk')} Qty: {pb['quantity']} @ ${pb['price']}")
+    if api_print and created:
+        print(f" {created} price break(s) created")
 
 # ----------------------------------------------------------------------
 # Category helpers
@@ -318,21 +318,17 @@ def push_bom(part_pk: int, bom_path: str, cache: dict, api_print: bool = False):
     print(f"Pushing BOM from {bom_path} to Part PK {part_pk}")
     with open(bom_path, "r", encoding="utf-8") as f:
         tree = json.load(f)
-
     existing_boms = fetch_all(f"{BASE_URL_BOM}?part={part_pk}")
     all_validated = True
     all_found = True
-
     for node in tree:
         qty = node.get("quantity", 1)
         note = node.get("note", "")
         validated = node.get("validated", False)
         active = node.get("active", True)
-
         sub_name = node["sub_part"]["name"]
         sub_ipn = node["sub_part"].get("IPN", "")
         sub_revision = node["sub_part"].get("revision", "")
-
         candidates = cache.get(sub_name, [])
         sub_parts = [
             p for p in candidates
@@ -341,16 +337,13 @@ def push_bom(part_pk: int, bom_path: str, cache: dict, api_print: bool = False):
         ]
         if not sub_parts and sub_revision:
             sub_parts = [p for p in candidates if p.get("IPN", "") == sub_ipn or not sub_ipn]
-
         if not sub_parts:
-            print(f"  WARNING: Sub-part '{sub_name}' not found")
+            print(f" WARNING: Sub-part '{sub_name}' not found")
             all_found = False
             all_validated = False
             continue
-
         sub_pk = sub_parts[0]["pk"]
         existing = [b for b in existing_boms if b.get("sub_part") == sub_pk]
-
         payload = {
             "part": part_pk,
             "sub_part": sub_pk,
@@ -359,29 +352,25 @@ def push_bom(part_pk: int, bom_path: str, cache: dict, api_print: bool = False):
             "validated": validated,
             "active": active
         }
-
         if existing:
             api_patch(f"{BASE_URL_BOM}{existing[0]['pk']}/", payload, api_print)
             action = "UPDATED"
         else:
             api_post(BASE_URL_BOM, payload, api_print)
             action = "CREATED"
-
         status = " (VALIDATED)" if validated else ""
-        print(f"  {action} BOM: {qty} x {sub_name}{status}")
+        print(f" {action} BOM: {qty} x {sub_name}{status}")
         if not validated:
             all_validated = False
-
     if tree and all_found and all_validated:
-        print(f"  All BOM items validated to setting validated_bom = True")
+        print(f" All BOM items validated setting validated_bom = True")
         api_patch(f"{BASE_URL_PARTS}{part_pk}/", {"validated_bom": True}, api_print)
 
 # ----------------------------------------------------------------------
-# Main push logic – NOW BUG-FREE
+# Main push logic
 # ----------------------------------------------------------------------
 def push_part_group(name, files, force, force_ipn, force_price, api_print, root_dir, cache):
     print(f"\nPushing part group: '{name}' ({len(files)} revision(s))")
-
     for file_path, revision in files:
         print(f"Processing: {os.path.basename(file_path)} (revision: {revision or 'default'})")
         with open(file_path, "r", encoding="utf-8") as f:
@@ -389,7 +378,6 @@ def push_part_group(name, files, force, force_ipn, force_price, api_print, root_
             if isinstance(data, list):
                 data = data[0]
 
-        # Part payload
         payload = {k: data.get(k, "") for k in [
             "description", "IPN", "keywords", "units", "minimum_stock",
             "assembly", "component", "trackable", "purchaseable",
@@ -400,10 +388,8 @@ def push_part_group(name, files, force, force_ipn, force_price, api_print, root_
             "revision": revision or "",
             "active": True,
         })
-
         if force_ipn and not payload.get("IPN"):
             payload["IPN"] = name[:50]
-
         payload["category"] = create_category_hierarchy(os.path.dirname(file_path), root_dir)
 
         if data.get("variant_of"):
@@ -416,7 +402,6 @@ def push_part_group(name, files, force, force_ipn, force_price, api_print, root_
             p for p in cache.get(name, [])
             if p.get("IPN", "") == payload.get("IPN", "") and p.get("revision", "") == (revision or "")
         ]
-
         if existing and force:
             for p in existing:
                 api_delete(f"{BASE_URL_PARTS}{p['pk']}/", api_print)
@@ -424,42 +409,52 @@ def push_part_group(name, files, force, force_ipn, force_price, api_print, root_
 
         if existing:
             part_pk = existing[0]["pk"]
-            print(f"  Reusing existing part PK {part_pk}")
+            print(f" Reusing existing part PK {part_pk}")
             api_patch(f"{BASE_URL_PARTS}{part_pk}/", payload, api_print)
-            part_data = existing[0]  # Use existing data
+            part_data = existing[0]
         else:
             result = api_post(BASE_URL_PARTS, payload, api_print)
             part_pk = result["pk"]
-            print(f"  Created new part PK {part_pk}")
-            part_data = result  # Use newly created data
+            print(f" Created new part PK {part_pk}")
+            part_data = result
 
-        # Update cache safely
+        # Update cache
+        if name not in cache:
+            cache[name] = []
         if existing:
             cache[name] = [p for p in cache[name] if p["pk"] != existing[0]["pk"]] + [existing[0]]
         else:
             cache[name].append(part_data)
 
-        # Suppliers & price breaks
+        # Suppliers
         if data.get("purchaseable") and data.get("suppliers"):
-            print(f"  Pushing {len(data['suppliers'])} supplier(s)")
+            print(f" Pushing {len(data['suppliers'])} supplier(s)")
             for supp in data["suppliers"]:
-                supplier_name = supp["supplier_name"]
-                sku = supp["SKU"]
-                mpn = supp.get("MPN")
-                manufacturer_name = supp.get("manufacturer_name")
-
                 if api_print:
-                    print(f"    to Supplier: {supplier_name}, SKU: {sku}, MPN: {mpn or 'None'}")
+                    print(f" → Supplier: {supp['supplier_name']}, SKU: {supp.get('SKU','<none>')}, MPN: {supp.get('MPN','<none>')}")
 
-                supplier_pk = get_or_create_company(supplier_name, is_supplier=True)
+                supplier_pk = get_or_create_company(supp["supplier_name"], is_supplier=True)
 
                 manufacturer_part_pk = None
-                if manufacturer_name and mpn:
-                    manufacturer_pk = get_or_create_company(manufacturer_name, is_supplier=False)
-                    manufacturer_part_pk = get_or_create_manufacturer_part(part_pk, manufacturer_pk, mpn)
+                if supp.get("manufacturer_name") and supp.get("MPN"):
+                    mfg_pk = get_or_create_company(supp["manufacturer_name"], is_supplier=False)
+                    manufacturer_part_pk = get_or_create_manufacturer_part(
+                        part_pk=part_pk,
+                        manufacturer_pk=mfg_pk,
+                        mpn=supp["MPN"],
+                        description=supp.get("mp_description", ""),
+                        link=supp.get("mp_link", ""),
+                        api_print=api_print
+                    )
 
-                sp_pk = get_or_create_supplier_part(part_pk, supplier_pk, sku, manufacturer_part_pk, api_print)
-                sync_price_breaks(sp_pk, supp["price_breaks"], force_price, api_print)
+                sp_pk = get_or_create_supplier_part(
+                    part_pk=part_pk,
+                    supplier_dict=supp,
+                    manufacturer_part_pk=manufacturer_part_pk,
+                    api_print=api_print
+                )
+
+                sync_price_breaks(sp_pk, supp.get("price_breaks", []), force_price, api_print)
 
         # BOM
         bom_path = file_path[:-5] + ".bom.json"
@@ -470,12 +465,12 @@ def push_part_group(name, files, force, force_ipn, force_price, api_print, root_
 # Main
 # ----------------------------------------------------------------------
 def main():
-    parser = argparse.ArgumentParser(description="Push parts + suppliers + BOMs to InvenTree")
+    parser = argparse.ArgumentParser(description="Push parts + suppliers + BOMs + rich metadata to InvenTree")
     parser.add_argument("patterns", nargs="*", default=["**/*"])
-    parser.add_argument("--force", action="store_true")
-    parser.add_argument("--force-ipn", action="store_true")
-    parser.add_argument("--force-price", action="store_true")
-    parser.add_argument("--api-print", action="store_true")
+    parser.add_argument("--force", action="store_true", help="Delete and recreate parts")
+    parser.add_argument("--force-ipn", action="store_true", help="Generate IPN from name if missing")
+    parser.add_argument("--force-price", action="store_true", help="Delete all existing price breaks first")
+    parser.add_argument("--api-print", action="store_true", help="Print every API call")
     args = parser.parse_args()
 
     print("Building part cache...")
