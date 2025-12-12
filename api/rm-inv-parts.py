@@ -23,7 +23,7 @@
 #   python3 ./api/rm-inv-parts.py "1/Furniture/*_Top"
 # --------------------------------------------------------------
 # Changelog:
-#   pagination and better logging
+#   pagination + robust response handling
 
 import requests
 import json
@@ -32,7 +32,6 @@ import glob
 import sys
 import argparse
 import re
-from urllib.parse import urljoin
 
 # ----------------------------------------------------------------------
 # API & Auth
@@ -61,58 +60,80 @@ HEADERS = {
 }
 
 # ----------------------------------------------------------------------
-# Robust paginated GET
+# Robust paginated fetch - handles list OR dict responses
 # ----------------------------------------------------------------------
-def fetch_all(url: str, params=None, api_print=False) -> list:
+def fetch_all(base_url: str, params=None, api_print=False) -> list:
     items = []
+    url = base_url
+    first = True
+
     while url:
         if api_print:
-            param_str = f"?{requests.compat.urlencode(params or {})}" if params else ""
+            param_str = f"?{requests.compat.urlencode(params or {})}" if params and first else ""
             print(f"API GET: {url}{param_str}")
+
         r = requests.get(url, headers=HEADERS, params=params or {})
         if r.status_code != 200:
             if api_print:
-                print(f" → ERROR {r.status_code}: {r.text[:200]}")
-            return items
-        data = r.json()
-        results = data.get("results", data if isinstance(data, list) else [])
+                print(f" -> ERROR {r.status_code}: {r.text[:200]}")
+            break
+
+        try:
+            data = r.json()
+        except json.JSONDecodeError:
+            if api_print:
+                print(f" -> Non-JSON response: {r.text[:200]}")
+            break
+
+        # Handle both paginated dict and raw list responses
+        if isinstance(data, list):
+            results = data
+        elif isinstance(data, dict):
+            results = data.get("results", [])
+        else:
+            results = []
+
         items.extend(results)
 
         if api_print and results:
-            print(f" → Page has {len(results)} items. First few:")
+            print(f" -> Page has {len(results)} items. First few:")
             for item in results[:5]:
-                # Show relevant fields for BOM/stock/supplier
                 if "sub_part" in item:
-                    print(f"     BOM: {item.get('quantity')} × Part PK {item.get('sub_part')} → Assembly PK {item.get('part')}")
+                    print(f"     BOM: {item.get('quantity')} × PK {item.get('sub_part')} -> Assembly PK {item.get('part')}")
                 elif "part" in item and "supplier" in item:
                     print(f"     SupplierPart PK {item['pk']} | Part {item.get('part')} | SKU {item.get('SKU','<none>')}")
                 else:
                     print(f"     {json.dumps(item, default=str)[:300]}")
             if len(results) > 5:
-                print(f"     ... and {len(results)-5} more on this page")
+                print(f"     ... and {len(results)-5} more")
 
-        url = data.get("next")
-        params = None  # next URL already has params
+        url = data.get("next") if isinstance(data, dict) else None
+        params = None  # next URL already includes params
+        first = False
+
     return items
 
+# ----------------------------------------------------------------------
+# API helpers
+# ----------------------------------------------------------------------
 def api_delete(url, api_print=False):
     if api_print:
         print(f"API DELETE: {url}")
     r = requests.delete(url, headers=HEADERS)
     if api_print:
-        print(f" → {r.status_code}")
+        print(f" -> {r.status_code}")
     return r
 
 def api_patch(url, payload, api_print=False):
     if api_print:
-        print(f"API PATCH: {url} → {payload}")
+        print(f"API PATCH: {url} -> {payload}")
     r = requests.patch(url, headers=HEADERS, json=payload)
     if api_print:
-        print(f" → {r.status_code}")
+        print(f" -> {r.status_code}")
     return r
 
 # ----------------------------------------------------------------------
-# Sanitizers & helpers
+# Part lookup
 # ----------------------------------------------------------------------
 def sanitize_part_name(name):
     return re.sub(r'[<>:"/\\|?*]', '_', name.replace(' ', '_').replace('.', ',')).strip()
@@ -126,36 +147,33 @@ def find_part_exact(name_san, revision_san="", ipn="", api_print=False):
         params["revision"] = revision_san
     if ipn:
         params["IPN"] = ipn
+
     results = fetch_all(BASE_URL_PARTS, params, api_print)
     return [p for p in results if p["name"] == name_san and (p.get("revision") or "") == revision_san]
 
 # ----------------------------------------------------------------------
-# Dependency handling – NOW SAFE
+# Dependency handling - SAFE & VERBOSE
 # ----------------------------------------------------------------------
 def check_dependencies(part_pk, api_print=False):
     total = 0
 
     # SupplierParts
-    supplier_parts = fetch_all(BASE_URL_SUPPLIER_PARTS, {"part__pk": part_pk}, api_print)
-    total += len(supplier_parts)
-    for sp in supplier_parts:
-        price_breaks = fetch_all(BASE_URL_PRICE_BREAK, {"part": sp["pk"]}, False)
-        total += len(price_breaks)
+    sps = fetch_all(BASE_URL_SUPPLIER_PARTS, {"part__pk": part_pk}, api_print)
+    total += len(sps)
+    for sp in sps:
+        total += len(fetch_all(BASE_URL_PRICE_BREAK, {"part": sp["pk"]}))
 
     # Stock
-    stock = fetch_all(f"{BASE_URL_STOCK}?part={part_pk}", api_print=api_print)
-    total += len(stock)
+    total += len(fetch_all(f"{BASE_URL_STOCK}?part={part_pk}", api_print=api_print))
 
-    # BOM usages (only where THIS part is the sub_part)
-    bom_items = fetch_all(f"{BASE_URL_BOM}?sub_part={part_pk}", api_print=api_print)
-    total += len(bom_items)
+    # BOM usages
+    total += len(fetch_all(f"{BASE_URL_BOM}?sub_part={part_pk}", api_print=api_print))
 
     return total
 
 def delete_all_dependencies(part_pk, api_print=False):
-    # SupplierParts + PriceBreaks
-    supplier_parts = fetch_all(BASE_URL_SUPPLIER_PARTS, {"part__pk": part_pk}, api_print)
-    for sp in supplier_parts:
+    # SupplierParts
+    for sp in fetch_all(BASE_URL_SUPPLIER_PARTS, {"part__pk": part_pk}, api_print):
         sp_pk = sp["pk"]
         if api_print:
             print(f"  Deleting SupplierPart PK {sp_pk}")
@@ -167,18 +185,17 @@ def delete_all_dependencies(part_pk, api_print=False):
     for item in fetch_all(f"{BASE_URL_STOCK}?part={part_pk}"):
         api_delete(f"{BASE_URL_STOCK}{item['pk']}/", api_print)
 
-    # BOM items – now safe + verbose
-    bom_items = fetch_all(f"{BASE_URL_BOM}?sub_part={part_pk}", api_print)
-    for bom in bom_items:
-        assembly_pk = bom.get("part")
-        sub_part_pk = bom.get("sub_part")
+    # BOM items
+    for bom in fetch_all(f"{BASE_URL_BOM}?sub_part={part_pk}", api_print):
+        assembly = bom.get("part")
         qty = bom.get("quantity")
+        sub = bom.get("sub_part")
         if api_print:
-            print(f"  Deleting BOM: {qty} × Part PK {sub_part_pk} from Assembly PK {assembly_pk}")
+            print(f"  Deleting BOM: {qty} × PK {sub} from Assembly PK {assembly}")
         api_delete(f"{BASE_URL_BOM}{bom['pk']}/", api_print)
 
 # ----------------------------------------------------------------------
-# Pattern → files
+# Pattern resolution
 # ----------------------------------------------------------------------
 def resolve_pattern_to_files(pattern):
     root = "data/parts"
@@ -213,13 +230,13 @@ def delete_part_from_file(json_path, clean_deps=False, clean_deps_yes=False, rem
     ipn = data.get("IPN", "")
 
     if not name_raw:
-        print("  No name → skip")
+        print("  No name -> skip")
         return
 
     name_san = sanitize_part_name(name_raw)
     revision_san = sanitize_revision(revision_raw)
 
-    print(f"  Looking for: '{name_raw}' | Rev: '{revision_raw or '(none)'}' | IPN: {ipn or '(none)'}")
+    print(f"  Looking for: '{name_raw}' | Rev: '{revision_raw or '(none)'}' IPN: {ipn or '(none)'}")
     candidates = find_part_exact(name_san, revision_san, ipn, api_print)
 
     if not candidates:
@@ -263,14 +280,14 @@ def delete_part_from_file(json_path, clean_deps=False, clean_deps_yes=False, rem
 def main():
     parser = argparse.ArgumentParser(description="Safe InvenTree part deletion")
     parser.add_argument("patterns", nargs="*", default=["**/*"])
-    parser.add_argument("--clean-dependencies", action="store_true")
-    parser.add_argument("--clean-dependencies-yes", action="store_true")
+    parser.add_argument("--clean-dependencies", action="store_true", help="Interactive dependency deletion")
+    parser.add_argument("--clean-yes", action="store_true", help="Delete dependencies without asking")
     parser.add_argument("--remove-json", action="store_true")
     parser.add_argument("--api-print", action="store_true")
     args = parser.parse_args()
 
-    if args.clean_dependencies and args.clean_dependencies_yes:
-        print("Error: conflicting flags")
+    if args.clean and args.clean_yes:
+        print("Error: --clean and --clean-yes are mutually exclusive")
         sys.exit(1)
 
     files = []
@@ -283,7 +300,13 @@ def main():
 
     print(f"Found {len(files)} part(s) to process\n")
     for f in files:
-        delete_part_from_file(f, args.clean_dependencies, args.clean_dependencies_yes, args.remove_json, args.api_print)
+        delete_part_from_file(
+            f,
+            clean_deps=args.clean,
+            clean_deps_yes=args.clean_yes,
+            remove_json=args.remove_json,
+            api_print=args.api_print
+        )
     print("\nFinished safely.")
 
 if __name__ == "__main__":
