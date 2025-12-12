@@ -19,9 +19,9 @@
 # Perfect round-trip with inv-parts_to_json.py
 # --------------------------------------------------------------
 # example usage:
-# python3 ./api/json_to_inv-parts.py "1/Mechanical/Fasteners/Wood_Screw"
-# python3 ./api/json_to_inv-parts.py "1/Furniture/Leg"
-# python3 ./api/json_to_inv-parts.py "1/Furniture/*_Top"
+# python3 ./api/json_to_inv-parts.py "1/Mechanical/Fasteners/Wood_Screw" --api-print
+# python3 ./api/json_to_inv-parts.py "1/Furniture/Leg" --api-print
+# python3 ./api/json_to_inv-parts.py "1/Furniture/*_Top" --api-print
 # python3 ./api/json_to_inv-parts.py "2/Furniture/Tables/*_Table" --api-print
 # python3 ./api/json_to_inv-parts.py "1/Electronics/IC/Interface/MAX232IDR" --api-print
 # python3 ./api/json_to_inv-parts.py "2/PCBA/*" --force-price
