@@ -167,7 +167,7 @@ sudo nano /etc/fstab
 ```
 
 ```conf
-//INVENTREE-SRV/Samba-Inventree /home/rsutherland/samba cifs credentials=/etc/samba/samba_credentials.conf,noauto,x-systemd.automount,uid=1000,gid=1000,file_mode=0664,dir_mode=0775,vers=3.0 0 0
+//inventree/Samba-Inventree /home/rsutherland/samba cifs credentials=/etc/samba/samba_credentials.conf,noauto,x-systemd.automount,uid=1000,gid=1000,file_mode=0664,dir_mode=0775 0 0
 ```
 
 Create a file to store your credentials. A good location is in a secure system location. E.g., /etc/samba/samba_credentials.conf for a system-wide mount.
