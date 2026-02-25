@@ -186,7 +186,7 @@ mkdir -p ~/samba/inventree-backup
 cd ~
 mkdir -p ~/git
 cd ~/git
-git clone --branch master https://github.com/inventree/InvenTree.git ~/git/InvenTree
+git clone --branch stable https://github.com/inventree/InvenTree.git ~/git/InvenTree
 cd ~/git/InvenTree
 
 # 2. Install Python dependencies
@@ -231,6 +231,8 @@ sudo docker compose --project-directory . -f contrib/container/dev-docker-compos
 
 ### d. Update Containers
 
+Updates are not working with dev just goto Nuke and remove everything (e.g., rm -rf InvenTree) then back to Clone form github.
+
 ```bash
 cd ~/git/InvenTree
 
@@ -238,9 +240,15 @@ cd ~/git/InvenTree
 git stash save "Local modifications before sync"
 git fetch origin
 git reset --hard origin/stable
-# git pull
 git stash pop
 git status # show all the output to Grok so you can see any other needed steps, but be ready to nuke and plow
+
+# above did not work 
+git restore --staged .
+git checkout -- .
+git stash drop
+git checkout --track origin/stable
+git pull
 
 # 1. Stop everything and clear previous build (which can block)
 sudo docker compose --project-directory . -f contrib/container/dev-docker-compose.yml down
