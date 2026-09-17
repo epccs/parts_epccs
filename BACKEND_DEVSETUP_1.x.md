@@ -1,6 +1,6 @@
 # Inventree 1.0.x Developer mode on Ubuntu 24.04
 
-This guide will help you Install Inventree 1.0.x in Developer mode on Ubuntu 24.04 (<http://dev-inventree.local>). In Dev mode media content is served directly from a Django webserver so that changes can be looked at in real time, but this is not considered safe for production. I run this on a small private network behinde a NAT box that only I have access to.
+This guide will help you Install Inventree 1.x in Developer mode on Ubuntu 24.04 (<http://dev-inventree.local>). In Dev mode media content is served directly from a Django webserver so that changes can be looked at in real time, but this is not considered safe for production. I run this on a small private network behinde a NAT box that only I have access to.
 
 ## Prerequisite Docker
 
@@ -231,7 +231,7 @@ sudo docker compose --project-directory . -f contrib/container/dev-docker-compos
 
 ### d. Update Containers
 
-Updates are not working with dev just goto Nuke and remove everything (e.g., rm -rf InvenTree) then back to Clone form github.
+Updates are not working with dev just goto Nuke and remove everything (e.g., Down the docker services, prune, rm -rf InvenTree) then back to Clone form github.
 
 ```bash
 cd ~/git/InvenTree
@@ -291,8 +291,10 @@ sudo docker system prune
 # Dev should run out of the github folder so no need to clear the persistent folders, such as caddy,data,media,pgdata,static to avoid conflicts:
 # sudo rm -rf ~/inventree-data/{caddy,data,media,pgdata,static}
 # probably should update InvenTree repository so the local repo has the latest files
-cd ~/git/InvenTree
-git pull
+cd ~/git
+sudo rm -rf InvenTree
+git clone --branch stable https://github.com/inventree/InvenTree.git ~/git/InvenTree
+# other steps found after the previous instance of the above line.
 ```
 
 ### f. Optional Enhancements
